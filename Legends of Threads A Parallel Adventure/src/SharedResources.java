@@ -1,11 +1,11 @@
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * SharedResources - Thread-safe shared resource management system
@@ -245,8 +245,8 @@ public class SharedResources {
      * Trade for an item at the trading post
      */
     public boolean tradeForItem(String itemName, String characterName) {
-        String status = tradingPost.replace(itemName, "Available", "Sold to " + characterName);
-        if (status != null && status.equals("Available")) {
+        String oldStatus = tradingPost.replace(itemName, "Sold to " + characterName);
+        if (oldStatus != null && oldStatus.equals("Available")) {
             System.out.println("🏪 " + characterName + " successfully traded for " + itemName + "!");
             
             // Restore the item after some time (simulate restocking)

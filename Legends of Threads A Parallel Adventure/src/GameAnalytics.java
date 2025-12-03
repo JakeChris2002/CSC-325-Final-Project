@@ -1,10 +1,10 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 /**
  * GameAnalytics - Lambda expressions and stream operations for logging, filtering, and aggregating results
@@ -210,11 +210,11 @@ public class GameAnalytics {
         
         long totalDamageDealt = characterBattles.stream()
             .mapToInt(battle -> battle.damageDealt)
-            .reduce(0, sumReducer);
+            .reduce(0, Integer::sum);
         
         long totalDamageReceived = characterBattles.stream()
             .mapToInt(battle -> battle.damageReceived)
-            .reduce(0, sumReducer);
+            .reduce(0, Integer::sum);
         
         // Find favorite enemies (most fought)
         List<String> favoriteEnemies = characterBattles.stream()

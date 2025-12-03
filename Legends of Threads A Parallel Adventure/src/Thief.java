@@ -15,9 +15,11 @@ public class Thief extends GameCharacter {
     private String currentHeist;
     private boolean onTheRun;
     private int guardsEluded;
+    private final GameWorld gameWorld;
     
-    public Thief(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+    public Thief(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics, GameWorld gameWorld) {
         super(name, 80, startX, startY, sharedResources, analytics); // Medium health
+        this.gameWorld = gameWorld;
         this.stealth = 25;
         this.agility = 30;
         this.random = new Random();

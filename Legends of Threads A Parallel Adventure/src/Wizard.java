@@ -17,9 +17,11 @@ public class Wizard extends GameCharacter {
     private boolean inMagicalStorm;
     private int artifactsDiscovered;
     private int apprenticesHelped;
+    private final GameWorld gameWorld;
     
-    public Wizard(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+    public Wizard(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics, GameWorld gameWorld) {
         super(name, 70, startX, startY, sharedResources, analytics); // Lower health but has magic
+        this.gameWorld = gameWorld;
         this.mana = 100;
         this.maxMana = 100;
         this.intelligence = 35;

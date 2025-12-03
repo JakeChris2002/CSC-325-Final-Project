@@ -16,6 +16,7 @@ public class GameEngine {
     private ReentrantLock gameLock;
     private SharedResources sharedResources;
     private GameAnalytics analytics;
+    private final GameWorld gameWorld;
     private long gameStartTime;
     private int gameRounds;
     private static final long ADVENTURE_DURATION = 60000; // 60 seconds
@@ -30,6 +31,7 @@ public class GameEngine {
         this.gameRounds = 0;
         this.sharedResources = new SharedResources();
         this.analytics = new GameAnalytics();
+        this.gameWorld = new GameWorld();
     }
     
     /**
@@ -42,9 +44,9 @@ public class GameEngine {
         System.out.println("===============================================\n");
         
         // Create the three main characters with shared resources and analytics
-        Knight knight = new Knight("Sir Galahad", 0, 0, sharedResources, analytics);
-        Thief thief = new Thief("Shadowstep", 5, 5, sharedResources, analytics);
-        Wizard wizard = new Wizard("Arcanum", 10, 10, sharedResources, analytics);
+        Knight knight = new Knight("Sir Galahad", 0, 0, sharedResources, analytics, gameWorld);
+        Thief thief = new Thief("Shadowstep", 5, 5, sharedResources, analytics, gameWorld);
+        Wizard wizard = new Wizard("Arcanum", 10, 10, sharedResources, analytics, gameWorld);
         
         // Add characters to our management lists
         characters.add(knight);
@@ -275,17 +277,17 @@ public class GameEngine {
             if (character.isAlive()) {
                 // Reset character state
                 if (character instanceof Knight knight) {
-                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources, analytics);
+                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources, analytics, gameWorld);
                     int index = characters.indexOf(character);
                     characters.set(index, newKnight);
                     character = newKnight;
                 } else if (character instanceof Thief thief) {
-                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources, analytics);
+                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources, analytics, gameWorld);
                     int index = characters.indexOf(character);
                     characters.set(index, newThief);
                     character = newThief;
                 } else if (character instanceof Wizard wizard) {
-                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources, analytics);
+                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources, analytics, gameWorld);
                     int index = characters.indexOf(character);
                     characters.set(index, newWizard);
                     character = newWizard;

@@ -13,9 +13,11 @@ public class Knight extends GameCharacter {
     private String currentQuest;
     private boolean inCombat;
     private int villagersSaved;
+    private final GameWorld gameWorld;
     
-    public Knight(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+    public Knight(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics, GameWorld gameWorld) {
         super(name, 120, startX, startY, sharedResources, analytics); // High health
+        this.gameWorld = gameWorld;
         this.armor = 15;
         this.strength = 20;
         this.random = new Random();
