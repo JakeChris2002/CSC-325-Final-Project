@@ -10,6 +10,10 @@ public class Thief extends GameCharacter {
     private Random random;
     private boolean isHiding;
     private int itemsStolen;
+    private int reputation; // Thief's underground reputation
+    private String currentHeist;
+    private boolean onTheRun;
+    private int guardsEluded;
     
     public Thief(String name, int startX, int startY) {
         super(name, 80, startX, startY, null); // Medium health
@@ -18,8 +22,13 @@ public class Thief extends GameCharacter {
         this.random = new Random();
         this.isHiding = false;
         this.itemsStolen = 0;
+        this.reputation = 20; // Starting reputation in thieves' guild
+        this.currentHeist = "Infiltrate the Noble's Manor";
+        this.onTheRun = false;
+        this.guardsEluded = 0;
         addToInventory("Lockpicks");
         addToInventory("Throwing Dagger");
+        System.out.println("🗡️ " + name + " the Thief emerges from the shadows with a new target in mind!");
     }
     
     @Override
@@ -86,14 +95,73 @@ public class Thief extends GameCharacter {
     }
     
     private void attemptSteal() {
-        if (random.nextInt(3) == 0) { // 33% chance of finding something to steal
+        int event = random.nextInt(10);
+        
+        if (event == 0) { // 10% chance - Major heist success
+            itemsStolen += 3;
+            reputation += 15;
+            addToInventory("Priceless Gem");
+            System.out.println("💎 " + name + " pulls off the heist '" + currentHeist + "'! Reputation soars!");
+            generateNewHeist();
+            
+        } else if (event <= 2) { // 20% chance - Regular theft
             itemsStolen++;
             String stolenItem = "Stolen Treasure " + itemsStolen;
             addToInventory(stolenItem);
-            System.out.println(name + " successfully pilfers " + stolenItem + "!");
+            System.out.println("🏺 " + name + " successfully pilfers " + stolenItem + "!");
+            reputation += 2;
+            
+        } else if (event <= 4) { // 20% chance - Close call with guards
+            handleGuardEncounter();
+            
+        } else if (event == 5) { // 10% chance - Find secret passage
+            System.out.println("🚪 " + name + " discovers a hidden passage! New opportunities await.");
+            addToInventory("Secret Map");
+            
         } else {
-            System.out.println(name + " searches for opportunities but finds nothing of value.");
+            System.out.println("👁️ " + name + " scouts for the perfect opportunity for '" + currentHeist + "'");
         }
+    }
+    
+    private void generateNewHeist() {
+        String[] heists = {
+            "Rob the Royal Treasury",
+            "Steal the Wizard's Spellbook",
+            "Infiltrate the Merchant's Vault",
+            "Acquire the Knight's Legendary Sword",
+            "Pilfer the Dragon's Hoard"
+        };
+        currentHeist = heists[random.nextInt(heists.length)];
+        System.out.println("📋 " + name + " plans the next heist: '" + currentHeist + "'");
+    }
+    
+    private void handleGuardEncounter() {
+        System.out.println("🚨 " + name + " is spotted by guards!");
+        
+        Thread chaseThread = new Thread(() -> {
+            try {
+                onTheRun = true;
+                System.out.println("🏃 " + name + " flees through the winding alleys...");
+                Thread.sleep(1500);
+                
+                if (random.nextInt(stealth) > 15) { // Stealth check
+                    System.out.println("✅ " + name + " vanishes into the shadows! Guards lost.");
+                    guardsEluded++;
+                    reputation += 3;
+                    useSpecialAbility(); // Auto-activate stealth
+                } else {
+                    System.out.println("💥 " + name + " takes a hit while escaping!");
+                    takeDamage(10);
+                }
+                
+                Thread.sleep(1000);
+                onTheRun = false;
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        chaseThread.start();
     }
     
     private void hide() {

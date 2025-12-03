@@ -9,6 +9,10 @@ public class Knight extends GameCharacter {
     private int strength;
     private Random random;
     private int questsCompleted;
+    private int honor; // Knight's honor level
+    private String currentQuest;
+    private boolean inCombat;
+    private int villagersSaved;
     
     public Knight(String name, int startX, int startY) {
         super(name, 120, startX, startY, null); // High health
@@ -16,8 +20,13 @@ public class Knight extends GameCharacter {
         this.strength = 20;
         this.random = new Random();
         this.questsCompleted = 0;
+        this.honor = 50; // Starting honor
+        this.currentQuest = "Seek the Ancient Artifact";
+        this.inCombat = false;
+        this.villagersSaved = 0;
         addToInventory("Iron Sword");
         addToInventory("Shield");
+        System.out.println("⚔️ " + name + " the Knight swears an oath to protect the innocent!");
     }
     
     @Override
@@ -80,13 +89,73 @@ public class Knight extends GameCharacter {
     }
     
     private void searchForQuests() {
-        if (random.nextInt(5) == 0) { // 20% chance
+        int event = random.nextInt(10);
+        
+        if (event == 0) { // 10% chance - Major quest completion
             questsCompleted++;
-            addToInventory("Quest Reward " + questsCompleted);
-            System.out.println(name + " completes a noble quest and gains honor!");
+            honor += 10;
+            addToInventory("Legendary Artifact " + questsCompleted);
+            System.out.println("🏆 " + name + " completes the legendary quest '" + currentQuest + "'! Honor increased!");
+            generateNewQuest();
+            
+        } else if (event <= 2) { // 20% chance - Save villagers
+            villagersSaved++;
+            honor += 5;
+            System.out.println("🛡️ " + name + " rescues villagers from danger! (" + villagersSaved + " saved)");
+            
+        } else if (event <= 4) { // 20% chance - Random challenge
+            handleRandomChallenge();
+            
         } else {
-            System.out.println(name + " searches the land for those in need of aid.");
+            System.out.println("⚔️ " + name + " continues the quest: '" + currentQuest + "'");
         }
+    }
+    
+    private void generateNewQuest() {
+        String[] quests = {
+            "Slay the Shadow Dragon",
+            "Recover the Lost Crown",
+            "Defend the Sacred Temple",
+            "Unite the Warring Kingdoms",
+            "Purify the Cursed Lands"
+        };
+        currentQuest = quests[random.nextInt(quests.length)];
+        System.out.println("📜 " + name + " receives a new quest: '" + currentQuest + "'");
+    }
+    
+    private void handleRandomChallenge() {
+        String[] challenges = {
+            "faces a pack of dire wolves",
+            "encounters a mysterious hooded figure",
+            "discovers a cursed weapon",
+            "meets a fellow knight in distress",
+            "finds a village under siege"
+        };
+        
+        String challenge = challenges[random.nextInt(challenges.length)];
+        System.out.println("⚡ " + name + " " + challenge + "!");
+        
+        // Create a challenge resolution thread
+        Thread challengeThread = new Thread(() -> {
+            try {
+                inCombat = true;
+                System.out.println("⚔️ " + name + " prepares for battle...");
+                Thread.sleep(2000); // Battle duration
+                
+                if (random.nextBoolean()) {
+                    System.out.println("✅ " + name + " emerges victorious!");
+                    honor += 3;
+                    heal(10);
+                } else {
+                    System.out.println("💥 " + name + " takes heavy damage but fights on!");
+                    takeDamage(15);
+                }
+                inCombat = false;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        challengeThread.start();
     }
     
     private void rest() {

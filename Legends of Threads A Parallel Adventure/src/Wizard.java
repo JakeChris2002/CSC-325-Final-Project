@@ -11,6 +11,11 @@ public class Wizard extends GameCharacter {
     private Random random;
     private int spellsCast;
     private boolean isMeditating;
+    private int wisdom; // Wizard's accumulated wisdom
+    private String currentResearch;
+    private boolean inMagicalStorm;
+    private int artifactsDiscovered;
+    private int apprenticesHelped;
     
     public Wizard(String name, int startX, int startY) {
         super(name, 70, startX, startY, null); // Lower health but has magic
@@ -20,9 +25,15 @@ public class Wizard extends GameCharacter {
         this.random = new Random();
         this.spellsCast = 0;
         this.isMeditating = false;
+        this.wisdom = 25; // Starting wisdom
+        this.currentResearch = "Unraveling the Mysteries of Time Magic";
+        this.inMagicalStorm = false;
+        this.artifactsDiscovered = 0;
+        this.apprenticesHelped = 0;
         addToInventory("Spell Book");
         addToInventory("Magic Staff");
         addToInventory("Crystal Orb");
+        System.out.println("🧙 " + name + " the Wizard begins their quest for ultimate magical knowledge!");
     }
     
     @Override
@@ -65,11 +76,79 @@ public class Wizard extends GameCharacter {
     }
     
     private void study() {
-        System.out.println(name + " studies ancient tomes and magical theories.");
-        if (random.nextInt(3) == 0) { // 33% chance of learning new spell
-            addToInventory("New Spell: " + generateSpellName());
-            System.out.println(name + " learns a new magical incantation!");
+        int event = random.nextInt(10);
+        
+        if (event == 0) { // 10% chance - Major research breakthrough
+            wisdom += 20;
+            intelligence += 2;
+            maxMana += 10;
+            mana += 10;
+            addToInventory("Forbidden Knowledge Scroll");
+            System.out.println("📚 " + name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
+            generateNewResearch();
+            
+        } else if (event <= 2) { // 20% chance - Discover magical artifact
+            artifactsDiscovered++;
+            String artifact = "Ancient Artifact #" + artifactsDiscovered;
+            addToInventory(artifact);
+            System.out.println("🔮 " + name + " uncovers " + artifact + " with mysterious properties!");
+            wisdom += 5;
+            
+        } else if (event <= 4) { // 20% chance - Help an apprentice
+            apprenticesHelped++;
+            wisdom += 3;
+            System.out.println("👨‍🎓 " + name + " mentors a young apprentice in the magical arts! (" + apprenticesHelped + " helped)");
+            
+        } else if (event == 5) { // 10% chance - Magical storm
+            handleMagicalStorm();
+            
+        } else {
+            System.out.println("📖 " + name + " delves deeper into '" + currentResearch + "'");
+            wisdom += 1;
         }
+    }
+    
+    private void generateNewResearch() {
+        String[] research = {
+            "Mastering Dimensional Portal Magic",
+            "Deciphering Ancient Dragon Prophecies",
+            "Perfecting Immortality Elixirs",
+            "Understanding Cosmic Energy Flows",
+            "Creating Sentient Magical Constructs"
+        };
+        currentResearch = research[random.nextInt(research.length)];
+        System.out.println("🔬 " + name + " begins new research: '" + currentResearch + "'");
+    }
+    
+    private void handleMagicalStorm() {
+        System.out.println("⚡ " + name + " senses a powerful magical storm approaching!");
+        
+        Thread stormThread = new Thread(() -> {
+            try {
+                inMagicalStorm = true;
+                System.out.println("🌪️ " + name + " is caught in a chaotic magical vortex!");
+                Thread.sleep(2500);
+                
+                if (random.nextInt(wisdom) > 30) { // Wisdom check
+                    System.out.println("✨ " + name + " harnesses the storm's power! Mana greatly increased!");
+                    mana = maxMana;
+                    addToInventory("Storm-Charged Crystal");
+                    wisdom += 10;
+                } else {
+                    System.out.println("💫 " + name + " is overwhelmed by chaotic energies!");
+                    mana = Math.max(mana - 30, 0);
+                    takeDamage(8);
+                }
+                
+                Thread.sleep(1500);
+                System.out.println("🌅 The magical storm subsides...");
+                inMagicalStorm = false;
+                
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        stormThread.start();
     }
     
     private void castSpell() {
