@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -17,8 +18,8 @@ public class Wizard extends GameCharacter {
     private int artifactsDiscovered;
     private int apprenticesHelped;
     
-    public Wizard(String name, int startX, int startY, SharedResources sharedResources) {
-        super(name, 70, startX, startY, sharedResources); // Lower health but has magic
+    public Wizard(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+        super(name, 70, startX, startY, sharedResources, analytics); // Lower health but has magic
         this.mana = 100;
         this.maxMana = 100;
         this.intelligence = 35;
@@ -163,9 +164,15 @@ public class Wizard extends GameCharacter {
             String spell = generateSpellName();
             System.out.println(name + " casts " + spell + "! Mana: " + mana + "/" + maxMana);
             
+            // Log spell casting
+            analytics.logEvent(name, GameAnalytics.EventType.SPELL_CAST, 
+                "Cast spell: " + spell + " (Mana used: 20)");
+            
             // Consume from global mana pool for powerful spells
             if (sharedResources.consumeMana(15, name)) {
                 System.out.println("💫 " + name + " channels global mana for enhanced spell power!");
+                analytics.logEvent(name, GameAnalytics.EventType.MANA_CONSUMED, 
+                    "Consumed 15 global mana for " + spell);
             }
             
             // Different spell effects
@@ -238,10 +245,31 @@ public class Wizard extends GameCharacter {
             case 2: move(0, -1); break; // South
             case 3: move(-1, 0); break; // West
         }
-        System.out.println(name + " explores mystical energies at (" + x + ", " + y + ")");
+        
+        String location = analytics.getRandomWorldLocation();
+        System.out.println(name + " explores mystical energies near " + location + " at (" + x + ", " + y + ")");
+        
+        // Use lambda to filter and find magical elements
+        List<String> magicalElements = java.util.Arrays.asList(
+            "Ancient Rune", "Ley Line Nexus", "Spirit Portal", "Magic Crystal Formation", 
+            "Enchanted Grove", "Celestial Observatory", "Elemental Shrine"
+        );
+        
+        java.util.Optional<String> discoveredElement = magicalElements.stream()
+            .filter(element -> random.nextInt(10) < 2) // 20% chance for each
+            .findFirst();
+        
+        if (discoveredElement.isPresent()) {
+            String element = discoveredElement.get();
+            System.out.println("✨ " + name + " discovers a " + element + " at " + location + "!");
+            analytics.logEvent(name, GameAnalytics.EventType.ENCHANTMENT, 
+                "Discovered " + element + " while exploring " + location);
+        }
         
         if (random.nextInt(5) == 0) { // 20% chance of finding magical item
-            addToInventory("Magical Artifact " + (spellsCast + 1));
+            String artifact = "Magical Artifact from " + location;
+            addToInventory(artifact);
+            analytics.logItemCollection(name, artifact, "Magical Exploration");
             System.out.println(name + " discovers a mysterious magical artifact!");
         }
     }

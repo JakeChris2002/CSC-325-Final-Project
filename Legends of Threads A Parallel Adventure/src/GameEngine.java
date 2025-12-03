@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -14,6 +15,7 @@ public class GameEngine {
     private Scanner scanner;
     private ReentrantLock gameLock;
     private SharedResources sharedResources;
+    private GameAnalytics analytics;
     private long gameStartTime;
     private int gameRounds;
     private static final long ADVENTURE_DURATION = 60000; // 60 seconds
@@ -27,6 +29,7 @@ public class GameEngine {
         this.gameLock = new ReentrantLock();
         this.gameRounds = 0;
         this.sharedResources = new SharedResources();
+        this.analytics = new GameAnalytics();
     }
     
     /**
@@ -38,10 +41,10 @@ public class GameEngine {
         System.out.println("    A Parallel Adventure Awaits!");
         System.out.println("===============================================\n");
         
-        // Create the three main characters with shared resources
-        Knight knight = new Knight("Sir Galahad", 0, 0, sharedResources);
-        Thief thief = new Thief("Shadowstep", 5, 5, sharedResources);
-        Wizard wizard = new Wizard("Arcanum", 10, 10, sharedResources);
+        // Create the three main characters with shared resources and analytics
+        Knight knight = new Knight("Sir Galahad", 0, 0, sharedResources, analytics);
+        Thief thief = new Thief("Shadowstep", 5, 5, sharedResources, analytics);
+        Wizard wizard = new Wizard("Arcanum", 10, 10, sharedResources, analytics);
         
         // Add characters to our management lists
         characters.add(knight);
@@ -179,6 +182,8 @@ public class GameEngine {
         System.out.println("💬 GAME COMMANDS:");
         System.out.println("   'status' - Show current game status");
         System.out.println("   'resources' - Show detailed shared resource status");
+        System.out.println("   'analytics' - Show comprehensive game analytics");
+        System.out.println("   'stats [character]' - Show specific character statistics");
         System.out.println("   'interact' - Force character interactions");
         System.out.println("   'pause' - Pause all characters");
         System.out.println("   'resume' - Resume all characters");
@@ -194,6 +199,9 @@ public class GameEngine {
                     break;
                 case "resources":
                     displayDetailedResourceStatus();
+                    break;
+                case "analytics":
+                    displayGameAnalytics();
                     break;
                 case "interact":
                     forceCharacterInteractions();
@@ -212,7 +220,13 @@ public class GameEngine {
                     // Just continue watching
                     break;
                 default:
-                    System.out.println("❓ Unknown command. Type 'quit' to end the adventure.");
+                    // Handle stats command with lambda
+                    if (input.startsWith("stats ")) {
+                        String characterName = input.substring(6).trim();
+                        displayCharacterAnalytics(characterName);
+                    } else {
+                        System.out.println("❓ Unknown command. Type 'quit' to end the adventure.");
+                    }
             }
         }
     }
@@ -261,17 +275,17 @@ public class GameEngine {
             if (character.isAlive()) {
                 // Reset character state
                 if (character instanceof Knight knight) {
-                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources);
+                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources, analytics);
                     int index = characters.indexOf(character);
                     characters.set(index, newKnight);
                     character = newKnight;
                 } else if (character instanceof Thief thief) {
-                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources);
+                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources, analytics);
                     int index = characters.indexOf(character);
                     characters.set(index, newThief);
                     character = newThief;
                 } else if (character instanceof Wizard wizard) {
-                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources);
+                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources, analytics);
                     int index = characters.indexOf(character);
                     characters.set(index, newWizard);
                     character = newWizard;
@@ -431,6 +445,128 @@ public class GameEngine {
         }
         
         System.out.println("=".repeat(60) + "\n");
+    }
+    
+    /**
+     * Display comprehensive game analytics using lambda expressions
+     */
+    private void displayGameAnalytics() {
+        System.out.println(analytics.generateComprehensiveReport());
+        
+        // Demonstrate lambda expressions for character analysis
+        System.out.println("🧑‍💻 CHARACTER PERFORMANCE ANALYSIS:");
+        System.out.println("=".repeat(50));
+        
+        characters.stream()
+            .filter(GameCharacter::isAlive)
+            .sorted((a, b) -> Integer.compare(b.getInventory().size(), a.getInventory().size()))
+            .forEach(character -> {
+                GameAnalytics.CharacterStats stats = analytics.getCharacterStats(character.getName());
+                System.out.printf("%-15s | Battles: %2d/%2d | Items: %2d | Spells: %2d | Win Rate: %5.1f%%\n",
+                    character.getName(),
+                    stats.battlesWon,
+                    stats.battlesWon + stats.battlesLost,
+                    stats.itemsCollected,
+                    stats.spellsCast,
+                    stats.winRate);
+            });
+        
+        System.out.println();
+        
+        // Show recent events using streams
+        List<String> recentEvents = analytics.getRecentEvents(5);
+        if (!recentEvents.isEmpty()) {
+            System.out.println("🕜 RECENT EVENTS:");
+            recentEvents.forEach(event -> System.out.println("   " + event));
+            System.out.println();
+        }
+    }
+    
+    /**
+     * Display specific character analytics
+     */
+    private void displayCharacterAnalytics(String characterName) {
+        // Use lambda to find character
+        characters.stream()
+            .filter(c -> c.getName().equalsIgnoreCase(characterName))
+            .findFirst()
+            .ifPresentOrElse(
+                character -> {
+                    GameAnalytics.CharacterStats stats = analytics.getCharacterStats(character.getName());
+                    System.out.println("\n🏆 DETAILED STATS for " + character.getName().toUpperCase());
+                    System.out.println("=".repeat(40));
+                    System.out.println("Character Type: " + character.getCharacterType());
+                    System.out.println("Health: " + character.getHealth() + "/" + character.getMaxHealth());
+                    System.out.println("Position: (" + character.getX() + ", " + character.getY() + ")");
+                    System.out.println("Status: " + (character.isAlive() ? "Alive" : "Defeated"));
+                    System.out.println();
+                    
+                    System.out.println("🎯 COMBAT STATISTICS:");
+                    System.out.println("   Battles Won: " + stats.battlesWon);
+                    System.out.println("   Battles Lost: " + stats.battlesLost);
+                    System.out.println("   Win Rate: " + String.format("%.1f%%", stats.winRate));
+                    System.out.println("   Total Damage Dealt: " + stats.totalDamageDealt);
+                    System.out.println("   Total Damage Received: " + stats.totalDamageReceived);
+                    System.out.println();
+                    
+                    System.out.println("🎒 COLLECTION STATISTICS:");
+                    System.out.println("   Items Collected: " + stats.itemsCollected);
+                    System.out.println("   Current Inventory Size: " + character.getInventory().size());
+                    if (!stats.commonItems.isEmpty()) {
+                        System.out.println("   Most Common Items: " + String.join(", ", stats.commonItems));
+                    }
+                    System.out.println();
+                    
+                    if (stats.spellsCast > 0) {
+                        System.out.println("✨ MAGIC STATISTICS:");
+                        System.out.println("   Spells Cast: " + stats.spellsCast);
+                        System.out.println();
+                    }
+                    
+                    if (!stats.favoriteEnemies.isEmpty()) {
+                        System.out.println("⚔️ FAVORITE OPPONENTS:");
+                        stats.favoriteEnemies.forEach(enemy -> System.out.println("   - " + enemy));
+                        System.out.println();
+                    }
+                },
+                () -> System.out.println("❓ Character '" + characterName + "' not found. Available characters: " + 
+                    characters.stream().map(GameCharacter::getName).collect(java.util.stream.Collectors.joining(", ")))
+            );
+    }
+    
+    /**
+     * Demonstrate advanced lambda operations on character data
+     */
+    private void demonstrateAdvancedAnalytics() {
+        System.out.println("🔬 ADVANCED ANALYTICS DEMONSTRATION:");
+        System.out.println("=".repeat(50));
+        
+        // Find character with highest health percentage using streams
+        characters.stream()
+            .filter(GameCharacter::isAlive)
+            .max(java.util.Comparator.comparingDouble(c -> (double) c.getHealth() / c.getMaxHealth()))
+            .ifPresent(c -> System.out.println("Healthiest Character: " + c.getName() + 
+                " (" + String.format("%.1f%%", (double) c.getHealth() / c.getMaxHealth() * 100) + ")"));
+        
+        // Calculate average inventory size using streams
+        double avgInventorySize = characters.stream()
+            .mapToInt(c -> c.getInventory().size())
+            .average()
+            .orElse(0.0);
+        System.out.println("Average Inventory Size: " + String.format("%.1f", avgInventorySize));
+        
+        // Group characters by type and count using streams
+        Map<String, Long> characterTypeCount = characters.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                GameCharacter::getCharacterType, 
+                java.util.stream.Collectors.counting()
+            ));
+        
+        System.out.println("Characters by Type:");
+        characterTypeCount.forEach((type, count) -> 
+            System.out.println("   " + type + ": " + count));
+        
+        System.out.println();
     }
     
     /**

@@ -14,8 +14,8 @@ public class Knight extends GameCharacter {
     private boolean inCombat;
     private int villagersSaved;
     
-    public Knight(String name, int startX, int startY, SharedResources sharedResources) {
-        super(name, 120, startX, startY, sharedResources); // High health
+    public Knight(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+        super(name, 120, startX, startY, sharedResources, analytics); // High health
         this.armor = 15;
         this.strength = 20;
         this.random = new Random();
@@ -144,22 +144,35 @@ public class Knight extends GameCharacter {
         };
         
         String challenge = challenges[random.nextInt(challenges.length)];
-        System.out.println("⚡ " + name + " " + challenge + "!");
+        String enemyType = analytics.getRandomEnemyType();
+        System.out.println("⚡ " + name + " " + challenge + " featuring " + enemyType + "!");
         
-        // Create a challenge resolution thread
+        // Create a challenge resolution thread using lambda
         Thread challengeThread = new Thread(() -> {
             try {
                 inCombat = true;
-                System.out.println("⚔️ " + name + " prepares for battle...");
+                System.out.println("⚔️ " + name + " prepares for battle against " + enemyType + "...");
                 Thread.sleep(2000); // Battle duration
                 
-                if (random.nextBoolean()) {
-                    System.out.println("✅ " + name + " emerges victorious!");
+                int damageDealt = 15 + random.nextInt(20);
+                int damageReceived = random.nextInt(20);
+                boolean victory = random.nextBoolean();
+                
+                // Log battle using analytics
+                analytics.logBattle(name, enemyType, victory, damageDealt, damageReceived);
+                
+                if (victory) {
+                    System.out.println("✅ " + name + " emerges victorious against " + enemyType + "!");
                     honor += 3;
                     heal(10);
+                    
+                    // Log item found as battle reward
+                    String loot = "Battle Trophy (" + enemyType + ")";
+                    addToInventory(loot);
+                    analytics.logItemCollection(name, loot, "Battle Victory");
                 } else {
                     System.out.println("💥 " + name + " takes heavy damage but fights on!");
-                    takeDamage(15);
+                    takeDamage(damageReceived);
                 }
                 inCombat = false;
             } catch (InterruptedException e) {

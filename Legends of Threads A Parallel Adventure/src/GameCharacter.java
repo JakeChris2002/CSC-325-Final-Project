@@ -16,10 +16,11 @@ public abstract class GameCharacter implements Runnable {
     protected boolean isActive;
     protected List<String> inventory;
     protected SharedResources sharedResources; // Reference to shared resources
+    protected GameAnalytics analytics; // Reference to game analytics
     protected ReentrantLock characterLock; // For thread safety
     
     // Constructor
-    public GameCharacter(String name, int health, int startX, int startY, SharedResources sharedResources) {
+    public GameCharacter(String name, int health, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
         this.name = name;
         this.health = health;
         this.maxHealth = health;
@@ -29,6 +30,7 @@ public abstract class GameCharacter implements Runnable {
         this.isActive = true;
         this.inventory = new ArrayList<>();
         this.sharedResources = sharedResources;
+        this.analytics = analytics;
         this.characterLock = new ReentrantLock();
     }
     
@@ -50,6 +52,10 @@ public abstract class GameCharacter implements Runnable {
                 if (newX >= -10 && newX <= 10 && newY >= -10 && newY <= 10) {
                     x = newX;
                     y = newY;
+                    
+                    // Log movement with analytics
+                    analytics.logEvent(name, GameAnalytics.EventType.MOVEMENT, 
+                        "Moved to (" + x + ", " + y + ")");
                 }
             }
         } finally {
@@ -67,6 +73,10 @@ public abstract class GameCharacter implements Runnable {
                 System.out.println("💀 " + name + " has been defeated!");
             } else {
                 System.out.println("🩸 " + name + " took " + damage + " damage. Health: " + health + "/" + maxHealth);
+                
+                // Log damage event
+                analytics.logEvent(name, GameAnalytics.EventType.BATTLE_LOST, 
+                    "Received " + damage + " damage");
             }
         } finally {
             characterLock.unlock();
@@ -79,6 +89,10 @@ public abstract class GameCharacter implements Runnable {
             if (isAlive) {
                 health = Math.min(health + amount, maxHealth);
                 System.out.println("💚 " + name + " healed for " + amount + ". Health: " + health + "/" + maxHealth);
+                
+                // Log healing event
+                analytics.logEvent(name, GameAnalytics.EventType.HEALING, 
+                    "Healed for " + amount + " HP");
             }
         } finally {
             characterLock.unlock();

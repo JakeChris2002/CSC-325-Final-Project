@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -15,8 +16,8 @@ public class Thief extends GameCharacter {
     private boolean onTheRun;
     private int guardsEluded;
     
-    public Thief(String name, int startX, int startY, SharedResources sharedResources) {
-        super(name, 80, startX, startY, sharedResources); // Medium health
+    public Thief(String name, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
+        super(name, 80, startX, startY, sharedResources, analytics); // Medium health
         this.stealth = 25;
         this.agility = 30;
         this.random = new Random();
@@ -192,10 +193,27 @@ public class Thief extends GameCharacter {
     }
     
     private void scout() {
-        System.out.println(name + " scouts the area, gathering information about surroundings.");
+        String location = analytics.getRandomWorldLocation();
+        System.out.println("👁️ " + name + " scouts the area near " + location + ", gathering information.");
+        
+        // Use streams to check for nearby threats
+        List<String> nearbyEnemies = analytics.getAllEnemyTypes().stream()
+            .filter(enemy -> random.nextInt(10) < 3) // 30% chance each enemy type is nearby
+            .limit(2) // Max 2 enemy types
+            .collect(java.util.stream.Collectors.toList());
+        
+        if (!nearbyEnemies.isEmpty()) {
+            String threats = String.join(" and ", nearbyEnemies);
+            System.out.println("⚠️ " + name + " spots " + threats + " in the area!");
+            analytics.logEvent(name, GameAnalytics.EventType.INTERACTION, 
+                "Scouted threats: " + threats + " near " + location);
+        }
+        
         if (random.nextInt(4) == 0) { // 25% chance of finding useful info
-            addToInventory("Secret Information");
-            System.out.println(name + " discovers valuable intelligence!");
+            String intelType = analytics.getRandomTreasureCategory() + " Intelligence";
+            addToInventory(intelType);
+            analytics.logItemCollection(name, intelType, "Scouting " + location);
+            System.out.println(name + " discovers valuable intelligence about " + intelType + "!");
         }
     }
     
