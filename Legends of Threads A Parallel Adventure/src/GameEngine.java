@@ -1,5 +1,5 @@
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -15,6 +15,8 @@ public class GameEngine {
     private ReentrantLock gameLock;
     private long gameStartTime;
     private int gameRounds;
+    private static final long ADVENTURE_DURATION = 60000; // 60 seconds
+    private Thread monitorThread;
     
     public GameEngine() {
         this.characters = new ArrayList<>();
@@ -71,11 +73,14 @@ public class GameEngine {
         System.out.println("\n✨ All threads are running in parallel! Watch the adventure unfold...\n");
         
         // Start the game monitoring thread
-        Thread monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
+        monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
         monitorThread.start();
         
         // Start user interaction
         handleUserInteraction();
+        
+        // Wait for all threads to complete
+        waitForAdventureCompletion();
     }
     
     /**
@@ -87,6 +92,24 @@ public class GameEngine {
                 Thread.sleep(10000); // Update every 10 seconds
                 gameRounds++;
                 displayGameStatus();
+                
+                // Check if adventure should end naturally
+                long elapsedTime = System.currentTimeMillis() - gameStartTime;
+                if (elapsedTime >= ADVENTURE_DURATION) {
+                    System.out.println("\n⏰ The adventure has reached its natural conclusion after " + 
+                                     (elapsedTime / 1000) + " seconds!");
+                    gameRunning = false;
+                    break;
+                }
+                
+                // Check if all characters are defeated
+                boolean anyAlive = characters.stream().anyMatch(GameCharacter::isAlive);
+                if (!anyAlive) {
+                    System.out.println("\n💀 All heroes have fallen! The adventure ends in tragedy...");
+                    gameRunning = false;
+                    break;
+                }
+                
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -173,7 +196,8 @@ public class GameEngine {
                     resumeAllCharacters();
                     break;
                 case "quit":
-                    endAdventure();
+                    System.out.println("🛑 User requested to end the adventure...");
+                    gameRunning = false; // This will trigger cleanup in waitForAdventureCompletion
                     return;
                 case "":
                     // Just continue watching
@@ -264,10 +288,35 @@ public class GameEngine {
             character.stop();
         }
         
-        // Wait for all threads to finish
-        for (Thread thread : characterThreads) {
+        // Wait for all character threads to finish using join()
+        System.out.println("⏳ Waiting for all character threads to complete...");
+        for (int i = 0; i < characterThreads.size(); i++) {
+            Thread thread = characterThreads.get(i);
             try {
-                thread.join(2000); // Wait up to 2 seconds for each thread
+                System.out.println("   Waiting for " + thread.getName() + " to finish...");
+                thread.join(3000); // Wait up to 3 seconds for each thread
+                if (thread.isAlive()) {
+                    System.out.println("   ⚠️ " + thread.getName() + " did not finish gracefully, interrupting...");
+                    thread.interrupt();
+                    thread.join(1000); // Give it 1 more second after interrupt
+                } else {
+                    System.out.println("   ✅ " + thread.getName() + " completed successfully.");
+                }
+            } catch (InterruptedException e) {
+                System.out.println("   ❌ Interrupted while waiting for " + thread.getName());
+                Thread.currentThread().interrupt();
+            }
+        }
+        
+        // Wait for monitor thread to finish
+        if (monitorThread != null && monitorThread.isAlive()) {
+            try {
+                System.out.println("   Waiting for monitor thread to finish...");
+                monitorThread.join(2000);
+                if (monitorThread.isAlive()) {
+                    monitorThread.interrupt();
+                }
+                System.out.println("   ✅ Monitor thread completed.");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -276,6 +325,7 @@ public class GameEngine {
         // Display final statistics
         displayFinalStats();
         
+        System.out.println("\n🧵 All threads have been properly synchronized and closed.");
         System.out.println("👋 Thank you for playing Legends of Threads!");
         System.out.println("===============================================");
     }
@@ -309,6 +359,39 @@ public class GameEngine {
      */
     public List<GameCharacter> getAllCharacters() {
         return new ArrayList<>(characters);
+    }
+    
+    /**
+     * Wait for the adventure to complete naturally or by user command
+     * Ensures proper synchronization of all threads
+     */
+    private void waitForAdventureCompletion() {
+        System.out.println("\n🕐 Adventure will run for " + (ADVENTURE_DURATION / 1000) + " seconds or until ended manually.");
+        
+        // Wait for either the game to end naturally or user to quit
+        while (gameRunning) {
+            try {
+                Thread.sleep(1000); // Check every second
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        
+        // End the adventure and ensure all threads are properly joined
+        if (gameRunning) {
+            endAdventure();
+        }
+    }
+    
+    /**
+     * Graceful shutdown method - can be called from shutdown hook
+     */
+    public void shutdown() {
+        if (gameRunning) {
+            System.out.println("\n🛑 Shutdown requested - ending adventure gracefully...");
+            endAdventure();
+        }
     }
     
     /**
