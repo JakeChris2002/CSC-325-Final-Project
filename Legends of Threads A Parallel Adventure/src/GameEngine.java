@@ -13,6 +13,7 @@ public class GameEngine {
     private boolean gameRunning;
     private Scanner scanner;
     private ReentrantLock gameLock;
+    private SharedResources sharedResources;
     private long gameStartTime;
     private int gameRounds;
     private static final long ADVENTURE_DURATION = 60000; // 60 seconds
@@ -25,6 +26,7 @@ public class GameEngine {
         this.scanner = new Scanner(System.in);
         this.gameLock = new ReentrantLock();
         this.gameRounds = 0;
+        this.sharedResources = new SharedResources();
     }
     
     /**
@@ -36,10 +38,10 @@ public class GameEngine {
         System.out.println("    A Parallel Adventure Awaits!");
         System.out.println("===============================================\n");
         
-        // Create the three main characters
-        Knight knight = new Knight("Sir Galahad", 0, 0);
-        Thief thief = new Thief("Shadowstep", 5, 5);
-        Wizard wizard = new Wizard("Arcanum", 10, 10);
+        // Create the three main characters with shared resources
+        Knight knight = new Knight("Sir Galahad", 0, 0, sharedResources);
+        Thief thief = new Thief("Shadowstep", 5, 5, sharedResources);
+        Wizard wizard = new Wizard("Arcanum", 10, 10, sharedResources);
         
         // Add characters to our management lists
         characters.add(knight);
@@ -142,6 +144,9 @@ public class GameEngine {
             
             // Display character-specific stats
             displayCharacterStats();
+            
+            // Display shared resource status
+            System.out.println(sharedResources.getResourceStatus());
             System.out.println("=".repeat(50) + "\n");
             
         } finally {
@@ -173,6 +178,7 @@ public class GameEngine {
     private void handleUserInteraction() {
         System.out.println("💬 GAME COMMANDS:");
         System.out.println("   'status' - Show current game status");
+        System.out.println("   'resources' - Show detailed shared resource status");
         System.out.println("   'interact' - Force character interactions");
         System.out.println("   'pause' - Pause all characters");
         System.out.println("   'resume' - Resume all characters");
@@ -185,6 +191,9 @@ public class GameEngine {
             switch (input) {
                 case "status":
                     displayGameStatus();
+                    break;
+                case "resources":
+                    displayDetailedResourceStatus();
                     break;
                 case "interact":
                     forceCharacterInteractions();
@@ -252,17 +261,17 @@ public class GameEngine {
             if (character.isAlive()) {
                 // Reset character state
                 if (character instanceof Knight knight) {
-                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY());
+                    Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources);
                     int index = characters.indexOf(character);
                     characters.set(index, newKnight);
                     character = newKnight;
                 } else if (character instanceof Thief thief) {
-                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY());
+                    Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources);
                     int index = characters.indexOf(character);
                     characters.set(index, newThief);
                     character = newThief;
                 } else if (character instanceof Wizard wizard) {
-                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY());
+                    Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources);
                     int index = characters.indexOf(character);
                     characters.set(index, newWizard);
                     character = newWizard;
@@ -321,6 +330,9 @@ public class GameEngine {
                 Thread.currentThread().interrupt();
             }
         }
+        
+        // Stop shared resource generation
+        sharedResources.stopResourceGeneration();
         
         // Display final statistics
         displayFinalStats();
@@ -392,6 +404,33 @@ public class GameEngine {
             System.out.println("\n🛑 Shutdown requested - ending adventure gracefully...");
             endAdventure();
         }
+    }
+    
+    /**
+     * Display detailed shared resource status
+     */
+    private void displayDetailedResourceStatus() {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("🏛️ DETAILED SHARED RESOURCE STATUS");
+        System.out.println("=".repeat(60));
+        
+        // Display treasure vault
+        System.out.print(sharedResources.viewTreasureVault("SYSTEM"));
+        
+        // Display trading post
+        System.out.print(sharedResources.viewTradingPost("SYSTEM"));
+        
+        // Display resource summary
+        System.out.println(sharedResources.getResourceStatus());
+        
+        // Display shared inventory
+        List<String> sharedInv = sharedResources.viewSharedInventory("SYSTEM");
+        System.out.println("📦 Shared Inventory Items: " + sharedInv.size());
+        if (!sharedInv.isEmpty()) {
+            sharedInv.forEach(item -> System.out.println("   - " + item));
+        }
+        
+        System.out.println("=".repeat(60) + "\n");
     }
     
     /**

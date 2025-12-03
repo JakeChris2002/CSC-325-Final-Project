@@ -14,8 +14,8 @@ public class Knight extends GameCharacter {
     private boolean inCombat;
     private int villagersSaved;
     
-    public Knight(String name, int startX, int startY) {
-        super(name, 120, startX, startY, null); // High health
+    public Knight(String name, int startX, int startY, SharedResources sharedResources) {
+        super(name, 120, startX, startY, sharedResources); // High health
         this.armor = 15;
         this.strength = 20;
         this.random = new Random();
@@ -96,12 +96,23 @@ public class Knight extends GameCharacter {
             honor += 10;
             addToInventory("Legendary Artifact " + questsCompleted);
             System.out.println("🏆 " + name + " completes the legendary quest '" + currentQuest + "'! Honor increased!");
+            
+            // Deposit quest reward to treasure vault
+            sharedResources.depositTreasure("Gold Coins", 100, name);
+            sharedResources.addToSharedInventory("Quest Completion Certificate", name);
+            
             generateNewQuest();
             
         } else if (event <= 2) { // 20% chance - Save villagers
             villagersSaved++;
             honor += 5;
             System.out.println("🛡️ " + name + " rescues villagers from danger! (" + villagersSaved + " saved)");
+            
+            // Try to grab some loot as reward
+            String loot = sharedResources.tryTakeLoot(name);
+            if (loot != null) {
+                addToInventory(loot);
+            }
             
         } else if (event <= 4) { // 20% chance - Random challenge
             handleRandomChallenge();
@@ -161,6 +172,17 @@ public class Knight extends GameCharacter {
     private void rest() {
         heal(5);
         System.out.println(name + " takes a moment to rest and recover strength.");
+        
+        // Try to use mana for enhanced healing
+        if (sharedResources.consumeMana(20, name)) {
+            heal(10); // Extra healing with mana
+            System.out.println("✨ " + name + " uses mana for enhanced healing!");
+        }
+        
+        // Check treasure vault occasionally
+        if (random.nextInt(4) == 0) {
+            System.out.print(sharedResources.viewTreasureVault(name));
+        }
     }
     
     @Override

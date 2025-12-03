@@ -15,8 +15,8 @@ public class Thief extends GameCharacter {
     private boolean onTheRun;
     private int guardsEluded;
     
-    public Thief(String name, int startX, int startY) {
-        super(name, 80, startX, startY, null); // Medium health
+    public Thief(String name, int startX, int startY, SharedResources sharedResources) {
+        super(name, 80, startX, startY, sharedResources); // Medium health
         this.stealth = 25;
         this.agility = 30;
         this.random = new Random();
@@ -89,6 +89,12 @@ public class Thief extends GameCharacter {
                 case 3: move(-1, 0); break;
             }
             System.out.println(name + " moves swiftly and silently to (" + x + ", " + y + ")");
+            
+            // Chance to find loot while moving quickly
+            String loot = sharedResources.tryTakeLoot(name);
+            if (loot != null) {
+                addToInventory(loot);
+            }
         } else {
             System.out.println(name + " sneaks carefully to (" + x + ", " + y + ")");
         }
@@ -102,6 +108,17 @@ public class Thief extends GameCharacter {
             reputation += 15;
             addToInventory("Priceless Gem");
             System.out.println("💎 " + name + " pulls off the heist '" + currentHeist + "'! Reputation soars!");
+            
+            // Steal from treasure vault
+            if (sharedResources.withdrawTreasure("Precious Gems", 5, name)) {
+                // Successfully stolen gems
+            }
+            
+            // Try to trade at trading post
+            if (sharedResources.tradeForItem("Invisibility Cloak", name)) {
+                addToInventory("Invisibility Cloak");
+            }
+            
             generateNewHeist();
             
         } else if (event <= 2) { // 20% chance - Regular theft

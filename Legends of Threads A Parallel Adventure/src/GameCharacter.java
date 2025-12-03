@@ -1,6 +1,6 @@
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Abstract base class for all game characters
@@ -15,11 +15,11 @@ public abstract class GameCharacter implements Runnable {
     protected boolean isAlive;
     protected boolean isActive;
     protected List<String> inventory;
-    protected GameWorld world; // Reference to shared game world
+    protected SharedResources sharedResources; // Reference to shared resources
     protected ReentrantLock characterLock; // For thread safety
     
     // Constructor
-    public GameCharacter(String name, int health, int startX, int startY, GameWorld world) {
+    public GameCharacter(String name, int health, int startX, int startY, SharedResources sharedResources) {
         this.name = name;
         this.health = health;
         this.maxHealth = health;
@@ -28,7 +28,7 @@ public abstract class GameCharacter implements Runnable {
         this.isAlive = true;
         this.isActive = true;
         this.inventory = new ArrayList<>();
-        this.world = world;
+        this.sharedResources = sharedResources;
         this.characterLock = new ReentrantLock();
     }
     
@@ -46,11 +46,10 @@ public abstract class GameCharacter implements Runnable {
                 int newX = x + deltaX;
                 int newY = y + deltaY;
                 
-                // Validate move with game world
-                if (world.isValidPosition(newX, newY)) {
+                // Simple boundary check (no GameWorld needed)
+                if (newX >= -10 && newX <= 10 && newY >= -10 && newY <= 10) {
                     x = newX;
                     y = newY;
-                    world.logEvent(name + " moved to (" + x + ", " + y + ")");
                 }
             }
         } finally {
@@ -65,9 +64,9 @@ public abstract class GameCharacter implements Runnable {
             if (health <= 0) {
                 health = 0;
                 isAlive = false;
-                world.logEvent(name + " has been defeated!");
+                System.out.println("💀 " + name + " has been defeated!");
             } else {
-                world.logEvent(name + " took " + damage + " damage. Health: " + health + "/" + maxHealth);
+                System.out.println("🩸 " + name + " took " + damage + " damage. Health: " + health + "/" + maxHealth);
             }
         } finally {
             characterLock.unlock();
@@ -79,7 +78,7 @@ public abstract class GameCharacter implements Runnable {
         try {
             if (isAlive) {
                 health = Math.min(health + amount, maxHealth);
-                world.logEvent(name + " healed for " + amount + ". Health: " + health + "/" + maxHealth);
+                System.out.println("💚 " + name + " healed for " + amount + ". Health: " + health + "/" + maxHealth);
             }
         } finally {
             characterLock.unlock();
@@ -90,7 +89,7 @@ public abstract class GameCharacter implements Runnable {
         characterLock.lock();
         try {
             inventory.add(item);
-            world.logEvent(name + " acquired: " + item);
+            System.out.println("🎒 " + name + " acquired: " + item);
         } finally {
             characterLock.unlock();
         }
@@ -126,7 +125,7 @@ public abstract class GameCharacter implements Runnable {
                 break;
             }
         }
-        world.logEvent(name + " (" + getCharacterType() + ") has stopped acting.");
+        System.out.println("🛑 " + name + " (" + getCharacterType() + ") has stopped acting.");
     }
     
     // Getters

@@ -17,8 +17,8 @@ public class Wizard extends GameCharacter {
     private int artifactsDiscovered;
     private int apprenticesHelped;
     
-    public Wizard(String name, int startX, int startY) {
-        super(name, 70, startX, startY, null); // Lower health but has magic
+    public Wizard(String name, int startX, int startY, SharedResources sharedResources) {
+        super(name, 70, startX, startY, sharedResources); // Lower health but has magic
         this.mana = 100;
         this.maxMana = 100;
         this.intelligence = 35;
@@ -85,6 +85,11 @@ public class Wizard extends GameCharacter {
             mana += 10;
             addToInventory("Forbidden Knowledge Scroll");
             System.out.println("📚 " + name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
+            
+            // Contribute knowledge to shared resources
+            sharedResources.addToSharedInventory("Ancient Knowledge: " + currentResearch, name);
+            sharedResources.restoreMana(50, name); // Give back mana to global pool
+            
             generateNewResearch();
             
         } else if (event <= 2) { // 20% chance - Discover magical artifact
@@ -158,6 +163,11 @@ public class Wizard extends GameCharacter {
             String spell = generateSpellName();
             System.out.println(name + " casts " + spell + "! Mana: " + mana + "/" + maxMana);
             
+            // Consume from global mana pool for powerful spells
+            if (sharedResources.consumeMana(15, name)) {
+                System.out.println("💫 " + name + " channels global mana for enhanced spell power!");
+            }
+            
             // Different spell effects
             int effect = random.nextInt(3);
             switch (effect) {
@@ -195,6 +205,20 @@ public class Wizard extends GameCharacter {
                     mana = Math.min(mana + 40, maxMana);
                     isMeditating = false;
                     System.out.println(name + " completes meditation. Mana restored: " + mana + "/" + maxMana);
+                    
+                    // Sometimes share mana with global pool after meditation
+                    if (random.nextInt(3) == 0) {
+                        sharedResources.restoreMana(30, name);
+                    }
+                    
+                    // Check for magical loot
+                    try {
+                        String loot = sharedResources.takeLoot(name);
+                        addToInventory(loot);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                    
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
