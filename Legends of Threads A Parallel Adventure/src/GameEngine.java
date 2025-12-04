@@ -24,6 +24,8 @@ public class GameEngine {
     private GameCharacter playerCharacter;
     private volatile boolean waitingForPlayerInput;
     private volatile String playerAction;
+    private volatile boolean playerTurn;
+    private volatile boolean gameInProgress;
     
     public GameEngine() {
         this.characters = new ArrayList<>();
@@ -35,6 +37,8 @@ public class GameEngine {
         this.sharedResources = new SharedResources();
         this.analytics = new GameAnalytics();
         this.gameWorld = new GameWorld();
+        this.playerTurn = false;
+        this.gameInProgress = true;
     }
     
     /**
@@ -55,6 +59,11 @@ public class GameEngine {
         characters.add(knight);
         characters.add(thief);
         characters.add(wizard);
+        
+        // Set GameEngine reference for turn management
+        knight.setGameEngine(this);
+        thief.setGameEngine(this);
+        wizard.setGameEngine(this);
         
         System.out.println("📋 HEROES ASSEMBLED:");
         characters.forEach(character -> {
@@ -120,6 +129,7 @@ public class GameEngine {
             System.out.println("  [Explore] - Investigate magical phenomena");
         }
         System.out.println("  [Status] - View character and world status");
+        System.out.println("  [Wait/Skip] - End your turn and let AI act");
         System.out.println("  [Help] - Show this help again");
         System.out.println("  [Quit] - End the adventure\n");
     }
@@ -141,7 +151,7 @@ public class GameEngine {
             System.out.println("🧵 Started thread for " + character.getName() + " the " + character.getCharacterType());
         }
         
-        System.out.println("\n✨ All threads are running in parallel! Watch the adventure unfold...\n");
+        System.out.println("\n✨ All threads are running! Turn-based adventure begins...\n");
         
         // Start the game monitoring thread
         monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
@@ -149,6 +159,9 @@ public class GameEngine {
         
         // Start player control thread
         startPlayerControlThread();
+        
+        // Begin with player turn
+        startPlayerTurn();
         
         // Wait for all threads to complete
         waitForAdventureCompletion();
@@ -242,38 +255,81 @@ public class GameEngine {
     }
     
     /**
+     * Start player's turn
+     */
+    private void startPlayerTurn() {
+        playerTurn = true;
+        System.out.println("\n🎯 === YOUR TURN ===");
+        System.out.println("💭 All AI characters are paused. What will " + playerCharacter.getName() + " do?");
+    }
+    
+    public boolean isPlayerTurn() {
+        return playerTurn;
+    }
+    
+    /**
+     * End player's turn and start AI turns
+     */
+    public void endPlayerTurn() {
+        playerTurn = false;
+        System.out.println("\n⚡ === AI TURN ===");
+        System.out.println("🤖 AI characters are now acting...\n");
+        
+        // Let AI characters act for a few seconds
+        try {
+            Thread.sleep(3000); // 3 seconds of AI activity
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        if (gameRunning) {
+            startPlayerTurn();
+        }
+    }
+    
+    /**
      * Start the player control thread
      */
     private void startPlayerControlThread() {
         Thread playerThread = new Thread(() -> {
-            System.out.println("\n🎮 You now control " + playerCharacter.getName() + "! Your party members will act automatically.");
-            System.out.println("💡 Your character will only act when you enter a command.\n");
+            System.out.println("\n🎮 You now control " + playerCharacter.getName() + "! This is a turn-based adventure.");
+            System.out.println("💡 AI characters will pause during your turn, then take their turns.\n");
             
             while (gameRunning) {
                 try {
-                    System.out.print("[" + playerCharacter.getName() + "] Enter command > ");
-                    String input = scanner.nextLine().trim().toLowerCase();
-                    
-                    if (input.isEmpty()) {
-                        System.out.println("💭 " + playerCharacter.getName() + " waits patiently for your decision...");
-                        continue;
-                    }
-                    
-                    switch (input) {
-                        case "quit", "exit" -> {
-                            System.out.println("\n🏃 Ending adventure...");
-                            gameRunning = false;
-                            return;
+                    // Only accept input during player turn
+                    if (playerTurn) {
+                        System.out.print("[YOUR TURN - " + playerCharacter.getName() + "] Enter command > ");
+                        String input = scanner.nextLine().trim().toLowerCase();
+                        
+                        if (input.isEmpty()) {
+                            System.out.println("💭 " + playerCharacter.getName() + " waits for your decision...");
+                            continue;
                         }
-                        case "status" -> displayGameStatus();
-                        case "help" -> displayPlayerControls();
-                        default -> {
-                            // Send action to player character
-                            if (playerCharacter != null) {
-                                System.out.println("📝 Command sent to " + playerCharacter.getName() + ": " + input);
-                                playerCharacter.setPlayerAction(input);
+                        
+                        switch (input) {
+                            case "quit", "exit" -> {
+                                System.out.println("\n🏃 Ending adventure...");
+                                gameRunning = false;
+                                return;
+                            }
+                            case "status" -> displayGameStatus();
+                            case "help" -> displayPlayerControls();
+                            case "wait", "skip" -> {
+                                System.out.println("⏭️ " + playerCharacter.getName() + " waits and observes.");
+                                endPlayerTurn();
+                            }
+                            default -> {
+                                // Send action to player character
+                                if (playerCharacter != null) {
+                                    System.out.println("📝 " + playerCharacter.getName() + " executes: " + input);
+                                    playerCharacter.setPlayerAction(input);
+                                }
                             }
                         }
+                    } else {
+                        // During AI turn, just wait
+                        Thread.sleep(100);
                     }
                 } catch (Exception e) {
                     if (gameRunning) {

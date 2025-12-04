@@ -22,6 +22,8 @@ public abstract class GameCharacter implements Runnable {
     protected volatile String pendingPlayerAction; // Action waiting to be executed by player
     
     // Constructor
+    protected GameEngine gameEngine; // Reference to game engine for turn management
+    
     public GameCharacter(String name, int health, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
         this.name = name;
         this.health = health;
@@ -36,6 +38,7 @@ public abstract class GameCharacter implements Runnable {
         this.characterLock = new ReentrantLock();
         this.isPlayerControlled = false;
         this.pendingPlayerAction = null;
+        this.gameEngine = null; // Will be set by GameEngine
     }
     
     // Abstract methods that must be implemented by subclasses
@@ -55,6 +58,10 @@ public abstract class GameCharacter implements Runnable {
     
     public void setPlayerAction(String action) {
         this.pendingPlayerAction = action;
+    }
+    
+    public void setGameEngine(GameEngine gameEngine) {
+        this.gameEngine = gameEngine;
     }
     
     public String getPlayerAction() {
@@ -162,16 +169,24 @@ public abstract class GameCharacter implements Runnable {
         while (isAlive && isActive) {
             try {
                 if (isPlayerControlled) {
-                    // Player controlled character waits for player input
-                    handlePlayerControl();
-                    // After action, show waiting message again
-                    if (isAlive && isActive) {
-                        System.out.println("⏳ " + name + " awaits your next command...");
+                    // Player controlled character only acts during player turn
+                    if (shouldActThisTurn()) {
+                        handlePlayerControl();
+                        // After action, end player turn and start AI turn
+                        if (isAlive && isActive) {
+                            notifyTurnComplete();
+                        }
+                    } else {
+                        Thread.sleep(200); // Wait for player turn
                     }
                 } else {
-                    // AI controlled character acts automatically
-                    act();
-                    Thread.sleep(1000); // Wait 1 second between actions
+                    // AI controlled character only acts during AI turn
+                    if (!shouldActThisTurn()) {
+                        act();
+                        Thread.sleep(800); // Shorter sleep for AI turns
+                    } else {
+                        Thread.sleep(200); // Wait during player turn
+                    }
                 }
             } catch (InterruptedException e) {
                 System.out.println(name + " thread interrupted.");
@@ -206,6 +221,23 @@ public abstract class GameCharacter implements Runnable {
      */
     protected void executePlayerAction(String action) {
         System.out.println(name + " doesn't understand the command: " + action);
+    }
+    
+    /**
+     * Check if this character should act this turn
+     */
+    protected boolean shouldActThisTurn() {
+        if (gameEngine == null) return !isPlayerControlled;
+        return gameEngine.isPlayerTurn() == isPlayerControlled;
+    }
+    
+    /**
+     * Notify that turn is complete (for player characters)
+     */
+    protected void notifyTurnComplete() {
+        if (gameEngine != null && isPlayerControlled) {
+            gameEngine.endPlayerTurn();
+        }
     }
     
     // Getters
