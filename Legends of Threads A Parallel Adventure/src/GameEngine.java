@@ -26,7 +26,8 @@ public class GameEngine {
     private volatile String playerAction;
     private volatile boolean playerTurn;
     private volatile boolean gameInProgress;
-    private static final int TEXT_DELAY_MS = 800; // Delay between text lines for readability
+    // Text now waits for player input instead of automatic delays
+    private boolean skipTextPrompts = false;
     
     // Cave exploration system
     private CaveExplorer caveExplorer;
@@ -49,13 +50,51 @@ public class GameEngine {
     }
     
     /**
-     * Add a delay to make text easier to read
+     * Wait for player to press Enter before continuing (unless skip mode is enabled)
      */
     private void textDelay() {
+        if (skipTextPrompts) {
+            // Small delay so text doesn't appear instantly
+            try {
+                Thread.sleep(400);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return;
+        }
+        
+        System.out.print("\n    ⏎ Press Enter to continue (or type 'skip' to disable prompts)...");
         try {
-            Thread.sleep(TEXT_DELAY_MS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            String input = "";
+            if (System.console() != null) {
+                input = System.console().readLine();
+            } else {
+                // Fallback for environments without console
+                Scanner tempScanner = new Scanner(System.in);
+                input = tempScanner.nextLine();
+            }
+            
+            // Check if player wants to skip future prompts
+            if (input != null && input.toLowerCase().contains("skip")) {
+                skipTextPrompts = true;
+                System.out.println("\n    ✓ Text prompts disabled. Text will scroll automatically.");
+                System.out.println("      (You can re-enable prompts by typing 'prompts' during gameplay)");
+                try {
+                    Thread.sleep(1500); // Give time to read the message
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            
+            // Clear the prompt line
+            System.out.print("\033[1A\033[2K"); // Move up one line and clear it
+        } catch (Exception e) {
+            // Final fallback to time delay if input fails
+            try {
+                Thread.sleep(800);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
     
