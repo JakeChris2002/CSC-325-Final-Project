@@ -299,6 +299,11 @@ public class SharedResources {
                 try {
                     Thread.sleep(8000); // Generate resources every 8 seconds
                     
+                    // Skip resource generation during cave mode
+                    if (caveMode) {
+                        continue;
+                    }
+                    
                     // Generate random treasure
                     String[] treasureTypes = {"Gold Coins", "Silver Coins", "Precious Gems", "Magic Crystals"};
                     String treasureType = treasureTypes[random.nextInt(treasureTypes.length)];
@@ -332,6 +337,11 @@ public class SharedResources {
             while (resourceGenerationActive) {
                 try {
                     Thread.sleep(5000); // Generate loot every 5 seconds
+                    
+                    // Skip loot generation during cave mode
+                    if (caveMode) {
+                        continue;
+                    }
                     
                     String loot = lootItems[random.nextInt(lootItems.length)] + " #" + (resourcesGenerated.get() + 1);
                     addLoot(loot);
