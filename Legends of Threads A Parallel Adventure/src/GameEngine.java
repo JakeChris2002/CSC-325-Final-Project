@@ -26,6 +26,7 @@ public class GameEngine {
     private volatile String playerAction;
     private volatile boolean playerTurn;
     private volatile boolean gameInProgress;
+    private static final int TEXT_DELAY_MS = 800; // Delay between text lines for readability
     
     // Cave exploration system
     private CaveExplorer caveExplorer;
@@ -48,12 +49,26 @@ public class GameEngine {
     }
     
     /**
+     * Add a delay to make text easier to read
+     */
+    private void textDelay() {
+        try {
+            Thread.sleep(TEXT_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+    
+    /**
      * Initialize the game world and create characters
      */
     public void initializeGame() {
         System.out.println("===============================================");
+        textDelay();
         System.out.println("WELCOME TO LEGENDS OF THREADS");
+        textDelay();
         System.out.println("    A Parallel Adventure Awaits!");
+        textDelay();
         System.out.println("===============================================\n");
         
         // Create the three main characters with shared resources and analytics
@@ -86,9 +101,13 @@ public class GameEngine {
      */
     private void selectPlayerCharacter() {
         System.out.println("\nCHOOSE YOUR HERO TO CONTROL:");
+        textDelay();
         System.out.println("1. Sir Galahad (Knight) - Noble warrior with high defense and honor");
+        textDelay();
         System.out.println("2. Shadowstep (Thief) - Stealthy rogue with agility and cunning");
+        textDelay();
         System.out.println("3. Arcanum (Wizard) - Powerful mage with magic and wisdom");
+        textDelay();
         System.out.print("\nEnter your choice (1-3): ");
         
         int choice = -1;
@@ -508,9 +527,11 @@ public class GameEngine {
      */
     private void handleExploration() {
         System.out.println("\n" + playerCharacter.getName() + " explores the surrounding area...");
+        textDelay();
         
         // Move to a new random location
         playerCharacter.moveRandomly();
+        textDelay();
         
         // Check for discoveries
         if (Math.random() < 0.3) { // 30% chance of finding something
@@ -518,9 +539,11 @@ public class GameEngine {
                                   "Sacred Grove", "Abandoned Camp", "Crystal Formation"};
             String discovery = discoveries[(int)(Math.random() * discoveries.length)];
             System.out.println(playerCharacter.getName() + " discovers: " + discovery + "!");
+            textDelay();
             gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
         } else {
             System.out.println("The exploration yields nothing of immediate interest.");
+            textDelay();
         }
     }
     
@@ -529,9 +552,11 @@ public class GameEngine {
      */
     private void handleTrading() {
         System.out.println("\n" + playerCharacter.getName() + " seeks out trading opportunities...");
+        textDelay();
         
         // Check trading post
         sharedResources.checkTradingPost(playerCharacter.getName());
+        textDelay();
         
         // Attempt to trade if items are available
         if (Math.random() < 0.5) { // 50% chance of successful trade
@@ -541,9 +566,11 @@ public class GameEngine {
             if (sharedResources.tryTradeForItem(playerCharacter.getName(), item)) {
                 playerCharacter.addToInventory(item);
                 System.out.println(playerCharacter.getName() + " successfully traded for " + item + "!");
+                textDelay();
             }
         } else {
             System.out.println("No suitable trades are available at this time.");
+            textDelay();
         }
     }
     
@@ -591,10 +618,15 @@ public class GameEngine {
      */
     private void showPlayerChoiceMenu() {
         System.out.println("\n=== CHOOSE YOUR ACTION ===");
+        textDelay();
         System.out.println("1. Explore the area (search for discoveries)");
+        textDelay();
         System.out.println("2. Move to a new location");
+        textDelay();
         System.out.println("3. Interact with nearby characters/objects");
+        textDelay();
         System.out.println("4. Visit the trading post");
+        textDelay();
         
         // Character-specific action (slot 5)
         if (playerCharacter instanceof Knight) {
@@ -604,12 +636,18 @@ public class GameEngine {
         } else if (playerCharacter instanceof Wizard) {
             System.out.println("5. Use magical abilities (cast, meditate, research)");
         }
+        textDelay();
         
         System.out.println("6. Check your inventory");
+        textDelay();
         System.out.println("7. View detailed status");
+        textDelay();
         System.out.println("8. Look around (examine surroundings)");
+        textDelay();
         System.out.println("9. Wait/Skip turn (let AI act)");
+        textDelay();
         System.out.println("10. Quit adventure");
+        textDelay();
         System.out.println("============================");
     }
     
