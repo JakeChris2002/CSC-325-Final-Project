@@ -27,6 +27,12 @@ public class GameEngine {
     private volatile boolean playerTurn;
     private volatile boolean gameInProgress;
     
+    // Cave exploration system
+    private CaveExplorer caveExplorer;
+    private boolean caveMode = false;
+    private boolean gameWon = false;
+    private List<GameCharacter> aiCharacters;
+    
     public GameEngine() {
         this.characters = new ArrayList<>();
         this.characterThreads = new ArrayList<>();
@@ -103,6 +109,14 @@ public class GameEngine {
         System.out.println("\n✨ You have chosen to control " + playerCharacter.getName() + " the " + playerCharacter.getCharacterType() + "!");
         System.out.println("The other heroes will fight alongside you as AI party members.\n");
         
+        // Prepare AI characters list (all except player character)
+        aiCharacters = new ArrayList<>();
+        for (GameCharacter character : characters) {
+            if (character != playerCharacter) {
+                aiCharacters.add(character);
+            }
+        }
+        
         // Display player controls
         displayPlayerControls();
     }
@@ -138,33 +152,81 @@ public class GameEngine {
      * Start all character threads and begin the adventure
      */
     public void startAdventure() {
-        gameRunning = true;
-        gameStartTime = System.currentTimeMillis();
+        // Ask if player wants to explore the cave
+        System.out.println("\n🏔️ === ADVENTURE CHOICE ===\n");
+        System.out.println("You and your party stand before the entrance to the mysterious Crystal Caverns.");
+        System.out.println("Legend speaks of ancient treasures and a powerful guardian within...");
+        System.out.println();
+        System.out.println("1. 🕳️  Enter the Crystal Caverns (Turn-based dungeon crawler)");
+        System.out.println("2. 🌍  Continue the open world adventure (Original gameplay)");
+        System.out.print("\nChoose your path (1-2): ");
         
-        System.out.println("🚀 ADVENTURE BEGINS! All heroes start their quests...\n");
-        
-        // Create and start threads for each character
-        for (GameCharacter character : characters) {
-            Thread characterThread = new Thread(character, character.getName() + "Thread");
-            characterThreads.add(characterThread);
-            characterThread.start();
-            System.out.println("🧵 Started thread for " + character.getName() + " the " + character.getCharacterType());
+        int pathChoice = -1;
+        while (pathChoice < 1 || pathChoice > 2) {
+            try {
+                pathChoice = Integer.parseInt(scanner.nextLine().trim());
+                if (pathChoice < 1 || pathChoice > 2) {
+                    System.out.print("Invalid choice. Please enter 1 or 2: ");
+                }
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter 1 or 2: ");
+            }
         }
         
-        System.out.println("\n✨ All threads are running! Turn-based adventure begins...\n");
-        
-        // Start the game monitoring thread
-        monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
-        monitorThread.start();
-        
-        // Start player control thread
-        startPlayerControlThread();
-        
-        // Begin with player turn
-        startPlayerTurn();
-        
-        // Wait for all threads to complete
-        waitForAdventureCompletion();
+        if (pathChoice == 1) {
+            // Cave exploration mode
+            caveMode = true;
+            System.out.println("\n🏔️ Entering turn-based cave exploration mode!");
+            caveExplorer = new CaveExplorer(playerCharacter, aiCharacters, scanner);
+            gameWon = caveExplorer.exploreCave();
+            
+            if (gameWon) {
+                System.out.println("\n🎉 === CONGRATULATIONS! YOU HAVE WON THE GAME! ===\n");
+                System.out.println("You have conquered the Crystal Caverns and defeated the Ancient Guardian!");
+                System.out.println("Your legend will be told for generations to come!");
+                System.out.println("\n🔑 Press ESC or type 'exit' to end the game.");
+                
+                // Wait for exit input
+                String exitInput;
+                do {
+                    System.out.print("Enter 'exit' to quit: ");
+                    exitInput = scanner.nextLine().toLowerCase().trim();
+                } while (!exitInput.equals("exit") && !exitInput.equals("esc"));
+                
+                System.out.println("\n👑 Thank you for playing Legends of Threads: Crystal Caverns Adventure!");
+            } else {
+                System.out.println("\n💀 Your adventure ends here... Better luck next time!");
+            }
+        } else {
+            // Original gameplay mode
+            gameRunning = true;
+            gameStartTime = System.currentTimeMillis();
+            
+            System.out.println("🚀 ADVENTURE BEGINS! All heroes start their quests...\n");
+            
+            // Create and start threads for each character
+            for (GameCharacter character : characters) {
+                Thread characterThread = new Thread(character, character.getName() + "Thread");
+                characterThreads.add(characterThread);
+                characterThread.start();
+                System.out.println("🧵 Started thread for " + character.getName() + " the " + character.getCharacterType());
+            }
+            
+            System.out.println("\n✨ All threads are running! Turn-based adventure begins...\n");
+            
+            // Start the game monitoring thread
+            monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
+            monitorThread.start();
+            
+            // Start player control thread
+            startPlayerControlThread();
+            
+            // Begin with player turn
+            startPlayerTurn();
+            
+            // Wait for all threads to complete
+            waitForAdventureCompletion();
+        }
     }
     
     /**
