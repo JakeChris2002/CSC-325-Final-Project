@@ -650,6 +650,7 @@ public class CaveExplorer {
         int enemyHealth = getEnemyMaxHealth(enemy);
         int enemyMaxHealth = enemyHealth;
         int enemyAttack = getEnemyAttack(enemy);
+        int enemyArmor = getEnemyArmor(enemy);
         
         if (prepared) {
             System.out.println("🛡️ Your party is well-prepared for this battle!\n");
@@ -674,10 +675,10 @@ public class CaveExplorer {
                 if (partyHealth.get(character.getName()) > 0 && enemyHealth > 0) {
                     if (character == player) {
                         // Player's turn
-                        enemyHealth = handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared);
+                        enemyHealth = handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, prepared);
                     } else {
                         // AI character's turn
-                        enemyHealth = handleAITurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, random);
+                        enemyHealth = handleAITurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, random);
                     }
                     
                     if (enemyHealth <= 0) {
@@ -822,16 +823,16 @@ public class CaveExplorer {
     
     private int getEnemyMaxHealth(String enemy) {
         switch (enemy) {
-            case "Cave Rat": return 25;
-            case "Goblin Scout": return 35;
-            case "Stone Gargoyle": return 45;
-            case "Fire Salamander": return 40;
-            case "Shadow Wraith": return 35;
-            case "Crystal Golem": return 60;
-            case "Cave Troll": return 70;
-            case "Dark Wizard": return 50;
-            case "Dragon Whelp": return 80;
-            default: return 30;
+            case "Cave Rat": return 45;        // 3-4 hits to kill
+            case "Goblin Scout": return 65;    // 4-5 hits to kill
+            case "Stone Gargoyle": return 85;  // 5-6 hits to kill (high armor)
+            case "Fire Salamander": return 70; // 4-5 hits to kill
+            case "Shadow Wraith": return 60;   // 4-5 hits to kill (evasive)
+            case "Crystal Golem": return 120;  // 7-8 hits to kill (tank)
+            case "Cave Troll": return 140;     // 8-10 hits to kill (boss-tier)
+            case "Dark Wizard": return 90;     // 6-7 hits to kill (magical defense)
+            case "Dragon Whelp": return 160;   // 10-12 hits to kill (mini-boss)
+            default: return 55;
         }
     }
     
@@ -847,6 +848,21 @@ public class CaveExplorer {
             case "Dark Wizard": return 16;
             case "Dragon Whelp": return 22;
             default: return 10;
+        }
+    }
+    
+    private int getEnemyArmor(String enemy) {
+        switch (enemy) {
+            case "Cave Rat": return 0;         // No armor, full damage
+            case "Goblin Scout": return 1;     // Light armor
+            case "Stone Gargoyle": return 4;   // Heavy stone armor
+            case "Fire Salamander": return 2;  // Scales provide protection
+            case "Shadow Wraith": return 1;    // Ethereal, some resistance
+            case "Crystal Golem": return 6;    // Very heavy crystal armor
+            case "Cave Troll": return 3;       // Thick hide
+            case "Dark Wizard": return 2;      // Magical protection
+            case "Dragon Whelp": return 5;     // Dragon scales
+            default: return 1;
         }
     }
     
@@ -875,7 +891,7 @@ public class CaveExplorer {
     }
     
     private int handlePlayerTurn(GameCharacter character, String enemy, int enemyHealth, 
-                                Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, boolean prepared) {
+                                Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, int enemyArmor, boolean prepared) {
         System.out.println("\n🎯 " + character.getName() + "'s turn!");
         System.out.println("What would you like to do?");
         System.out.println("1. ⚔️  Attack the " + enemy);
@@ -893,9 +909,15 @@ public class CaveExplorer {
         
         switch (choice) {
             case 1: // Attack
-                int damage = calculateAttackDamage(character, prepared, random);
+                int rawDamage = calculateAttackDamage(character, prepared, random);
+                int damage = Math.max(1, rawDamage - enemyArmor); // Minimum 1 damage
                 enemyHealth = Math.max(0, enemyHealth - damage);
-                System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+                if (enemyArmor > 0 && rawDamage > damage) {
+                    System.out.printf("⚔️ %s attacks for %d damage! (%d absorbed by armor)%n", 
+                                    character.getName(), damage, rawDamage - damage);
+                } else {
+                    System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+                }
                 if (enemyHealth <= 0) {
                     System.out.println("💀 The " + enemy + " has been defeated!");
                 }
@@ -918,21 +940,28 @@ public class CaveExplorer {
                                     character.getName(), newHealth - currentHealth);
                 } else {
                     System.out.println("❌ No Health Potions available!");
-                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared); // Retry turn
+                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, prepared); // Retry turn
                 }
                 break;
                 
             case 4: // Cast Spell (Wizard only)
                 if (character.getClass().getSimpleName().equals("Wizard")) {
-                    int spellDamage = 20 + random.nextInt(21); // 20-40 damage
+                    int rawSpellDamage = 15 + random.nextInt(11); // 15-25 damage (reduced from 20-40)
+                    // Magic partially ignores armor (only half armor applies)
+                    int spellDamage = Math.max(1, rawSpellDamage - (enemyArmor / 2));
                     enemyHealth = Math.max(0, enemyHealth - spellDamage);
-                    System.out.printf("✨ %s casts a powerful spell for %d damage!%n", character.getName(), spellDamage);
+                    if (enemyArmor > 0 && rawSpellDamage > spellDamage) {
+                        System.out.printf("✨ %s casts a spell for %d damage! (%d partially resisted)%n", 
+                                        character.getName(), spellDamage, rawSpellDamage - spellDamage);
+                    } else {
+                        System.out.printf("✨ %s casts a powerful spell for %d damage!%n", character.getName(), spellDamage);
+                    }
                     if (enemyHealth <= 0) {
                         System.out.println("💀 The " + enemy + " has been defeated by magic!");
                     }
                 } else {
                     System.out.println("❌ Only wizards can cast spells!");
-                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared); // Retry turn
+                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, prepared); // Retry turn
                 }
                 break;
         }
@@ -941,7 +970,7 @@ public class CaveExplorer {
     }
     
     private int handleAITurn(GameCharacter character, String enemy, int enemyHealth, 
-                           Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, Random random) {
+                           Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, int enemyArmor, Random random) {
         System.out.println("\n🤖 " + character.getName() + "'s turn!");
         
         // Simple AI logic based on character type
@@ -1026,21 +1055,25 @@ public class CaveExplorer {
         
         switch (characterType) {
             case "Knight":
-                baseDamage = 15 + random.nextInt(11); // 15-25 damage
+                baseDamage = 12 + random.nextInt(7); // 12-18 damage (consistent, reliable)
                 break;
             case "Thief":
-                baseDamage = 12 + random.nextInt(9); // 12-20 damage
+                baseDamage = 8 + random.nextInt(9); // 8-16 damage (variable, can crit)
+                if (random.nextInt(100) < 25) { // 25% critical hit chance
+                    baseDamage = (int)(baseDamage * 1.5);
+                    System.out.println("💥 Critical hit!");
+                }
                 break;
             case "Wizard":
-                baseDamage = 10 + random.nextInt(11); // 10-20 damage
+                baseDamage = 10 + random.nextInt(11); // 10-20 damage (magic ignores some armor)
                 break;
             default:
-                baseDamage = 10 + random.nextInt(6); // 10-15 damage
+                baseDamage = 8 + random.nextInt(5); // 8-12 damage
                 break;
         }
         
         if (prepared) {
-            baseDamage += 5; // Preparation bonus
+            baseDamage += 3; // Reduced preparation bonus for balance
         }
         
         return baseDamage;
