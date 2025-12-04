@@ -318,6 +318,28 @@ public class Wizard extends GameCharacter {
         return "Wizard";
     }
     
+    protected void executePlayerAction(String action) {
+        switch (action.toLowerCase()) {
+            case "c", "cast" -> {
+                System.out.println("✨ " + name + " (You) prepares to cast a spell!");
+                castSpell();
+            }
+            case "m", "meditate" -> {
+                System.out.println("🧘 " + name + " (You) begins meditation!");
+                meditate();
+            }
+            case "r", "research" -> {
+                System.out.println("📚 " + name + " (You) delves into research!");
+                study();
+            }
+            case "explore" -> {
+                System.out.println("🔮 " + name + " (You) explores ancient mysteries!");
+                explore();
+            }
+            default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
+        }
+    }
+    
     // Wizard-specific methods
     public void enchant(GameCharacter target) {
         if (target.isAlive() && mana >= 30 && distanceTo(target) <= 2) {

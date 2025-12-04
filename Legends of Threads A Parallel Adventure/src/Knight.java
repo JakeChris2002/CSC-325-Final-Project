@@ -234,6 +234,29 @@ public class Knight extends GameCharacter {
         return "Knight";
     }
     
+    protected void executePlayerAction(String action) {
+        switch (action.toLowerCase()) {
+            case "a", "attack" -> {
+                System.out.println("⚔️ " + name + " (You) seeks combat!");
+                seekCombat();
+            }
+            case "p", "patrol" -> {
+                System.out.println("🚪 " + name + " (You) begins patrolling!");
+                patrol();
+            }
+            case "q", "quest" -> {
+                System.out.println("🏆 " + name + " (You) undertakes a quest!");
+                searchForQuests();
+            }
+            case "d", "defend" -> {
+                System.out.println("🛡️ " + name + " (You) takes a defensive stance!");
+                armor += 5;
+                System.out.println(name + " raises shield! Armor temporarily increased to " + armor);
+            }
+            default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
+        }
+    }
+    
     // Knight-specific methods
     public void challenge(GameCharacter opponent) {
         if (opponent.isAlive() && distanceTo(opponent) <= 1) {

@@ -21,6 +21,9 @@ public class GameEngine {
     private int gameRounds;
     private static final long ADVENTURE_DURATION = 60000; // 60 seconds
     private Thread monitorThread;
+    private GameCharacter playerCharacter;
+    private volatile boolean waitingForPlayerInput;
+    private volatile String playerAction;
     
     public GameEngine() {
         this.characters = new ArrayList<>();
@@ -58,6 +61,67 @@ public class GameEngine {
             System.out.println("   " + character.toString());
         });
         System.out.println();
+        
+        // Let player choose which character to control
+        selectPlayerCharacter();
+    }
+    
+    /**
+     * Let the player choose which character to control
+     */
+    private void selectPlayerCharacter() {
+        System.out.println("\n🎮 CHOOSE YOUR HERO TO CONTROL:");
+        System.out.println("1. ⚔️  Sir Galahad (Knight) - Noble warrior with high defense and honor");
+        System.out.println("2. 🗡️  Shadowstep (Thief) - Stealthy rogue with agility and cunning");
+        System.out.println("3. 🔮 Arcanum (Wizard) - Powerful mage with magic and wisdom");
+        System.out.print("\nEnter your choice (1-3): ");
+        
+        int choice = -1;
+        while (choice < 1 || choice > 3) {
+            try {
+                choice = Integer.parseInt(scanner.nextLine().trim());
+                if (choice < 1 || choice > 3) {
+                    System.out.print("Invalid choice. Please enter 1, 2, or 3: ");
+                }
+            } catch (NumberFormatException e) {
+                System.out.print("Invalid input. Please enter 1, 2, or 3: ");
+            }
+        }
+        
+        playerCharacter = characters.get(choice - 1);
+        playerCharacter.setPlayerControlled(true);
+        
+        System.out.println("\n✨ You have chosen to control " + playerCharacter.getName() + " the " + playerCharacter.getCharacterType() + "!");
+        System.out.println("The other heroes will fight alongside you as AI party members.\n");
+        
+        // Display player controls
+        displayPlayerControls();
+    }
+    
+    /**
+     * Display the available player controls
+     */
+    private void displayPlayerControls() {
+        System.out.println("🎮 PLAYER CONTROLS:");
+        if (playerCharacter instanceof Knight) {
+            System.out.println("  [A]ttack - Engage in combat");
+            System.out.println("  [P]atrol - Move and guard area");
+            System.out.println("  [Q]uest - Undertake a noble quest");
+            System.out.println("  [D]efend - Protect party members");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println("  [S]teal - Attempt to steal treasure");
+            System.out.println("  [H]ide - Enter stealth mode");
+            System.out.println("  [Scout] - Gather information");
+            System.out.println("  [E]scape - Evade from danger");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println("  [C]ast - Cast a magical spell");
+            System.out.println("  [M]editate - Restore mana");
+            System.out.println("  [R]esearch - Study ancient knowledge");
+            System.out.println("  [Explore] - Investigate magical phenomena");
+        }
+        System.out.println("  [Status] - View character and world status");
+        System.out.println("  [Help] - Show this help again");
+        System.out.println("  [Quit] - End the adventure\n");
     }
     
     /**
@@ -83,8 +147,8 @@ public class GameEngine {
         monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
         monitorThread.start();
         
-        // Start user interaction
-        handleUserInteraction();
+        // Start player control thread
+        startPlayerControlThread();
         
         // Wait for all threads to complete
         waitForAdventureCompletion();
@@ -178,7 +242,47 @@ public class GameEngine {
     }
     
     /**
-     * Handle user interaction during the game
+     * Start the player control thread
+     */
+    private void startPlayerControlThread() {
+        Thread playerThread = new Thread(() -> {
+            System.out.println("\n🎮 You can now control " + playerCharacter.getName() + "! Enter commands:");
+            
+            while (gameRunning) {
+                try {
+                    System.out.print("> ");
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    
+                    if (input.isEmpty()) continue;
+                    
+                    switch (input) {
+                        case "quit", "exit" -> {
+                            System.out.println("\n🏃 Ending adventure...");
+                            gameRunning = false;
+                            return;
+                        }
+                        case "status" -> displayGameStatus();
+                        case "help" -> displayPlayerControls();
+                        default -> {
+                            // Send action to player character
+                            if (playerCharacter != null) {
+                                playerCharacter.setPlayerAction(input);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    if (gameRunning) {
+                        System.out.println("Error reading input: " + e.getMessage());
+                    }
+                }
+            }
+        }, "PlayerControlThread");
+        
+        playerThread.start();
+    }
+    
+    /**
+     * Handle user input during the game (legacy method - now replaced by player control)
      */
     private void handleUserInteraction() {
         System.out.println("💬 GAME COMMANDS:");
@@ -278,16 +382,28 @@ public class GameEngine {
                 // Reset character state
                 if (character instanceof Knight knight) {
                     Knight newKnight = new Knight(knight.getName(), knight.getX(), knight.getY(), sharedResources, analytics, gameWorld);
+                    newKnight.setPlayerControlled(knight.isPlayerControlled());
+                    if (knight.isPlayerControlled()) {
+                        playerCharacter = newKnight;
+                    }
                     int index = characters.indexOf(character);
                     characters.set(index, newKnight);
                     character = newKnight;
                 } else if (character instanceof Thief thief) {
                     Thief newThief = new Thief(thief.getName(), thief.getX(), thief.getY(), sharedResources, analytics, gameWorld);
+                    newThief.setPlayerControlled(thief.isPlayerControlled());
+                    if (thief.isPlayerControlled()) {
+                        playerCharacter = newThief;
+                    }
                     int index = characters.indexOf(character);
                     characters.set(index, newThief);
                     character = newThief;
                 } else if (character instanceof Wizard wizard) {
                     Wizard newWizard = new Wizard(wizard.getName(), wizard.getX(), wizard.getY(), sharedResources, analytics, gameWorld);
+                    newWizard.setPlayerControlled(wizard.isPlayerControlled());
+                    if (wizard.isPlayerControlled()) {
+                        playerCharacter = newWizard;
+                    }
                     int index = characters.indexOf(character);
                     characters.set(index, newWizard);
                     character = newWizard;

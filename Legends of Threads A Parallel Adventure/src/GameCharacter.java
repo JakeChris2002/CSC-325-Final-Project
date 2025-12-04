@@ -18,6 +18,8 @@ public abstract class GameCharacter implements Runnable {
     protected SharedResources sharedResources; // Reference to shared resources
     protected GameAnalytics analytics; // Reference to game analytics
     protected ReentrantLock characterLock; // For thread safety
+    protected boolean isPlayerControlled; // Whether this character is controlled by the player
+    protected volatile String pendingPlayerAction; // Action waiting to be executed by player
     
     // Constructor
     public GameCharacter(String name, int health, int startX, int startY, SharedResources sharedResources, GameAnalytics analytics) {
@@ -32,6 +34,8 @@ public abstract class GameCharacter implements Runnable {
         this.sharedResources = sharedResources;
         this.analytics = analytics;
         this.characterLock = new ReentrantLock();
+        this.isPlayerControlled = false;
+        this.pendingPlayerAction = null;
     }
     
     // Abstract methods that must be implemented by subclasses
@@ -39,6 +43,25 @@ public abstract class GameCharacter implements Runnable {
     public abstract void interact(GameCharacter other);
     public abstract void useSpecialAbility();
     public abstract String getCharacterType();
+    
+    // Player control methods
+    public void setPlayerControlled(boolean playerControlled) {
+        this.isPlayerControlled = playerControlled;
+    }
+    
+    public boolean isPlayerControlled() {
+        return isPlayerControlled;
+    }
+    
+    public void setPlayerAction(String action) {
+        this.pendingPlayerAction = action;
+    }
+    
+    public String getPlayerAction() {
+        String action = pendingPlayerAction;
+        pendingPlayerAction = null;
+        return action;
+    }
     
     // Concrete methods shared by all characters
     public void move(int deltaX, int deltaY) {

@@ -253,6 +253,28 @@ public class Thief extends GameCharacter {
         return "Thief";
     }
     
+    protected void executePlayerAction(String action) {
+        switch (action.toLowerCase()) {
+            case "s", "steal" -> {
+                System.out.println("🎯 " + name + " (You) attempts to steal!");
+                attemptSteal();
+            }
+            case "h", "hide" -> {
+                System.out.println("🕵️ " + name + " (You) hides in the shadows!");
+                hide();
+            }
+            case "scout" -> {
+                System.out.println("🔍 " + name + " (You) scouts the area!");
+                scout();
+            }
+            case "e", "escape" -> {
+                System.out.println("🏃 " + name + " (You) sneaks away!");
+                sneak();
+            }
+            default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
+        }
+    }
+    
     // Thief-specific methods
     public void pickpocket(GameCharacter target) {
         if (target.isAlive() && distanceTo(target) <= 1 && !target.getInventory().isEmpty()) {
