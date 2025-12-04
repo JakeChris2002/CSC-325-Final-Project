@@ -493,4 +493,62 @@ public class GameWorld {
     public Map<String, Boolean> getArtifactStatus() {
         return new HashMap<>(artifacts);
     }
+    
+    /**
+     * Handle character actions in the world
+     */
+    public void handleCharacterAction(String characterName, String action, String description) {
+        worldLock.writeLock().lock();
+        try {
+            String actionText = characterName + " " + description;
+            logWorldEvent("CHARACTER ACTION", actionText);
+            
+            // Actions can affect world stability
+            switch (action.toLowerCase()) {
+                case "explore" -> {
+                    worldStability.addAndGet(1); // Exploration slightly improves stability
+                }
+                case "discover" -> {
+                    ancientMagicFragments.incrementAndGet(); // Discoveries help restore magic
+                    worldStability.addAndGet(2);
+                }
+                case "combat" -> {
+                    corruptionLevel.addAndGet(-1); // Combat reduces corruption
+                }
+            }
+            
+            // Ensure bounds
+            worldStability.set(Math.max(0, Math.min(100, worldStability.get())));
+            corruptionLevel.set(Math.max(0, Math.min(100, corruptionLevel.get())));
+            
+        } finally {
+            worldLock.writeLock().unlock();
+        }
+    }
+    
+    /**
+     * Display current world state for players
+     */
+    public void displayCurrentWorldState() {
+        worldLock.readLock().lock();
+        try {
+            System.out.println("=== THE SHATTERED REALM ===");
+            System.out.println("World Stability: " + worldStability.get() + "/100");
+            System.out.println("Ancient Magic Fragments: " + ancientMagicFragments.get());
+            System.out.println("Corruption Level: " + corruptionLevel.get() + "/100");
+            System.out.println("Current Crisis: " + currentCrisis);
+            System.out.println("Game Phase: " + getPhaseName() + " (" + gamePhase + "/3)");
+            
+            // Show recent events
+            List<String> recentEvents = getRecentWorldEvents(3);
+            if (!recentEvents.isEmpty()) {
+                System.out.println("Recent Events:");
+                recentEvents.forEach(event -> System.out.println("  - " + event));
+            }
+            System.out.println("===========================");
+            
+        } finally {
+            worldLock.readLock().unlock();
+        }
+    }
 }

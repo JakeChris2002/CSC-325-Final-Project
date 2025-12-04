@@ -425,12 +425,61 @@ public class SharedResources {
      * Get comprehensive resource status
      */
     public String getResourceStatus() {
-        StringBuilder sb = new StringBuilder("🌍 GLOBAL RESOURCE STATUS:\n");
-        sb.append("   Global Mana Pool: ").append(globalManaPool.get()).append("\n");
-        sb.append("   Total Mana Consumed: ").append(totalManaConsumed.get()).append("\n");
-        sb.append("   Loot Queue Size: ").append(lootQueue.size()).append("\n");
-        sb.append("   Shared Inventory Items: ").append(sharedInventory.size()).append("\n");
-        sb.append("   Resources Generated: ").append(resourcesGenerated.get()).append("\n");
+        StringBuilder sb = new StringBuilder("GLOBAL RESOURCE STATUS:\\n");
+        sb.append("   Global Mana Pool: ").append(globalManaPool.get()).append("\\n");
+        sb.append("   Total Mana Consumed: ").append(totalManaConsumed.get()).append("\\n");
+        sb.append("   Loot Queue Size: ").append(lootQueue.size()).append("\\n");
+        sb.append("   Shared Inventory Items: ").append(sharedInventory.size()).append("\\n");
+        sb.append("   Resources Generated: ").append(resourcesGenerated.get()).append("\\n");
         return sb.toString();
+    }
+    
+    /**
+     * Display global status for player
+     */
+    public void displayGlobalStatus() {
+        System.out.println(getResourceStatus());
+    }
+    
+    /**
+     * Check trading post contents
+     */
+    public void checkTradingPost(String characterName) {
+        StringBuilder sb = new StringBuilder("TRADING POST INVENTORY:\\n");
+        if (tradingPost.isEmpty()) {
+            sb.append("   No items available for trade\\n");
+        } else {
+            tradingPost.forEach((item, description) -> 
+                sb.append("   ").append(item).append(" - ").append(description).append("\\n"));
+        }
+        System.out.println(sb.toString());
+    }
+    
+    /**
+     * Attempt to trade for an item
+     */
+    public boolean tryTradeForItem(String characterName, String itemName) {
+        if (tradingPost.containsKey(itemName)) {
+            // Simple trade - remove from trading post
+            String description = tradingPost.remove(itemName);
+            System.out.println(characterName + " successfully traded for " + itemName + "!");
+            
+            // Randomly restock the item later
+            if (Math.random() < 0.3) { // 30% chance to restock
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(5000); // Restock after 5 seconds
+                        tradingPost.put(itemName, description);
+                        System.out.println(itemName + " has been restocked at the trading post!");
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }).start();
+            }
+            return true;
+        } else {
+            System.out.println(characterName + " failed to trade for " + itemName + " - not available!");
+            return false;
+        }
     }
 }

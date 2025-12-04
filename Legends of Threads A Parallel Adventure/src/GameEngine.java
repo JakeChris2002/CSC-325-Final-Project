@@ -19,7 +19,7 @@ public class GameEngine {
     private final GameWorld gameWorld;
     private long gameStartTime;
     private int gameRounds;
-    private static final long ADVENTURE_DURATION = 60000; // 60 seconds
+    // Removed time limit - players can explore indefinitely
     private Thread monitorThread;
     private GameCharacter playerCharacter;
     private volatile boolean waitingForPlayerInput;
@@ -220,12 +220,12 @@ public class GameEngine {
             caveMode = false;
             gameStartTime = System.currentTimeMillis();
             
-            // Enable character auto-actions and resource messages for open world mode
+            // Set characters to turn-based mode (similar to cave mode for AI pausing)
             for (GameCharacter character : characters) {
-                character.setCaveMode(false);
+                character.setCaveMode(true); // Use cave mode to enable turn-based behavior
             }
-            sharedResources.setCaveMode(false);
-            gameWorld.setCaveMode(false);
+            sharedResources.setCaveMode(true);
+            gameWorld.setCaveMode(true);
             
             System.out.println("ADVENTURE BEGINS! All heroes start their quests...\n");
             
@@ -262,16 +262,9 @@ public class GameEngine {
             try {
                 Thread.sleep(10000); // Update every 10 seconds
                 gameRounds++;
-                displayGameStatus();
+                // Removed automatic status display - players can check status manually
                 
-                // Check if adventure should end naturally
-                long elapsedTime = System.currentTimeMillis() - gameStartTime;
-                if (elapsedTime >= ADVENTURE_DURATION) {
-                    System.out.println("\n⏰ The adventure has reached its natural conclusion after " + 
-                                     (elapsedTime / 1000) + " seconds!");
-                    gameRunning = false;
-                    break;
-                }
+                // Time limit removed - players can explore indefinitely
                 
                 // Check if all characters are defeated
                 boolean anyAlive = characters.stream().anyMatch(GameCharacter::isAlive);
@@ -347,7 +340,12 @@ public class GameEngine {
     private void startPlayerTurn() {
         playerTurn = true;
         System.out.println("\n=== YOUR TURN ===");
-        System.out.println("All AI characters are paused. What will " + playerCharacter.getName() + " do?");
+        
+        // Provide contextual description of current situation
+        describeCurrentSituation();
+        
+        // Show numbered menu choices
+        showPlayerChoiceMenu();
     }
     
     public boolean isPlayerTurn() {
@@ -362,11 +360,26 @@ public class GameEngine {
         System.out.println("\n=== AI TURN ===");
         System.out.println("AI characters are now acting...\n");
         
-        // Let AI characters act for a few seconds
+        // Temporarily resume AI activity for their turns
+        for (GameCharacter character : characters) {
+            if (character != playerCharacter && character.isAlive()) {
+                // Allow each AI character to take one action
+                character.resumeForOneTurn();
+            }
+        }
+        
+        // Let AI characters complete their actions
         try {
-            Thread.sleep(3000); // 3 seconds of AI activity
+            Thread.sleep(2000); // 2 seconds for AI actions
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        }
+        
+        // Pause AI characters again
+        for (GameCharacter character : characters) {
+            if (character != playerCharacter) {
+                character.pauseForPlayerTurn();
+            }
         }
         
         if (gameRunning) {
@@ -386,34 +399,15 @@ public class GameEngine {
                 try {
                     // Only accept input during player turn
                     if (playerTurn) {
-                        System.out.print("[YOUR TURN - " + playerCharacter.getName() + "] Enter command > ");
-                        String input = scanner.nextLine().trim().toLowerCase();
+                        System.out.print("\nChoose your action (1-10): ");
+                        String input = scanner.nextLine().trim();
                         
                         if (input.isEmpty()) {
                             System.out.println(playerCharacter.getName() + " waits for your decision...");
                             continue;
                         }
                         
-                        switch (input) {
-                            case "quit", "exit" -> {
-                                System.out.println("\nEnding adventure...");
-                                gameRunning = false;
-                                return;
-                            }
-                            case "status" -> displayGameStatus();
-                            case "help" -> displayPlayerControls();
-                            case "wait", "skip" -> {
-                                System.out.println("⏭️ " + playerCharacter.getName() + " waits and observes.");
-                                endPlayerTurn();
-                            }
-                            default -> {
-                                // Send action to player character
-                                if (playerCharacter != null) {
-                                    System.out.println(playerCharacter.getName() + " executes: " + input);
-                                    playerCharacter.setPlayerAction(input);
-                                }
-                            }
-                        }
+                        handlePlayerChoice(input);
                     } else {
                         // During AI turn, just wait
                         Thread.sleep(100);
@@ -485,6 +479,300 @@ public class GameEngine {
         }
     }
     
+    /**
+     * Handle world interaction for player character
+     */
+    private void handleWorldInteraction() {
+        System.out.println("\n" + playerCharacter.getName() + " looks for something to interact with...");
+        
+        // Check for nearby characters
+        boolean foundInteraction = false;
+        for (GameCharacter other : characters) {
+            if (other != playerCharacter && other.isAlive() && playerCharacter.distanceTo(other) < 3.0) {
+                System.out.println(playerCharacter.getName() + " interacts with " + other.getName() + "!");
+                playerCharacter.interact(other);
+                other.interact(playerCharacter);
+                foundInteraction = true;
+                break;
+            }
+        }
+        
+        if (!foundInteraction) {
+            // Interact with the world environment
+            gameWorld.handleCharacterAction(playerCharacter.getName(), "explore", "searches the surrounding area");
+        }
+    }
+    
+    /**
+     * Handle exploration for player character
+     */
+    private void handleExploration() {
+        System.out.println("\n" + playerCharacter.getName() + " explores the surrounding area...");
+        
+        // Move to a new random location
+        playerCharacter.moveRandomly();
+        
+        // Check for discoveries
+        if (Math.random() < 0.3) { // 30% chance of finding something
+            String[] discoveries = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
+                                  "Sacred Grove", "Abandoned Camp", "Crystal Formation"};
+            String discovery = discoveries[(int)(Math.random() * discoveries.length)];
+            System.out.println(playerCharacter.getName() + " discovers: " + discovery + "!");
+            gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
+        } else {
+            System.out.println("The exploration yields nothing of immediate interest.");
+        }
+    }
+    
+    /**
+     * Handle trading for player character
+     */
+    private void handleTrading() {
+        System.out.println("\n" + playerCharacter.getName() + " seeks out trading opportunities...");
+        
+        // Check trading post
+        sharedResources.checkTradingPost(playerCharacter.getName());
+        
+        // Attempt to trade if items are available
+        if (Math.random() < 0.5) { // 50% chance of successful trade
+            String[] items = {"Health Potion", "Magic Scroll", "Iron Sword", "Silver Coin", "Ancient Artifact"};
+            String item = items[(int)(Math.random() * items.length)];
+            
+            if (sharedResources.tryTradeForItem(playerCharacter.getName(), item)) {
+                playerCharacter.addToInventory(item);
+                System.out.println(playerCharacter.getName() + " successfully traded for " + item + "!");
+            }
+        } else {
+            System.out.println("No suitable trades are available at this time.");
+        }
+    }
+    
+    /**
+     * Describe the current situation to give player context
+     */
+    private void describeCurrentSituation() {
+        System.out.println("\n=== CURRENT SITUATION ===");
+        System.out.println(playerCharacter.getName() + " stands at position (" + playerCharacter.getX() + ", " + playerCharacter.getY() + ")");
+        
+        // Check for nearby characters
+        boolean foundNearbyCharacter = false;
+        for (GameCharacter other : characters) {
+            if (other != playerCharacter && other.isAlive() && playerCharacter.distanceTo(other) < 5.0) {
+                System.out.println("Nearby: " + other.getName() + " the " + other.getCharacterType() + 
+                                 " (Distance: " + String.format("%.1f", playerCharacter.distanceTo(other)) + ")");
+                foundNearbyCharacter = true;
+            }
+        }
+        
+        if (!foundNearbyCharacter) {
+            System.out.println("You are alone in this area of the realm.");
+        }
+        
+        // Show current environment
+        String[] environments = {"ancient forest clearing", "misty mountain path", "abandoned village square", 
+                               "crystal cave entrance", "mystical shrine", "crossroads junction", 
+                               "ruined watchtower", "enchanted grove", "desert oasis"};
+        String currentEnv = environments[Math.abs((playerCharacter.getX() + playerCharacter.getY()) % environments.length)];
+        System.out.println("Environment: You find yourself in a " + currentEnv + ".");
+        
+        // Random environmental details
+        if (Math.random() < 0.4) {
+            String[] details = {"Strange magical energy pulses in the air", "You hear distant sounds of adventure",
+                              "Ancient runes glow faintly nearby", "The wind carries whispers of old legends",
+                              "Mysterious shadows dance at the edge of your vision", "You sense hidden treasures in the area"};
+            String detail = details[(int)(Math.random() * details.length)];
+            System.out.println("Notice: " + detail + ".");
+        }
+        System.out.println("=========================");
+    }
+    
+    /**
+     * Show numbered choice menu to the player
+     */
+    private void showPlayerChoiceMenu() {
+        System.out.println("\n=== CHOOSE YOUR ACTION ===");
+        System.out.println("1. Explore the area (search for discoveries)");
+        System.out.println("2. Move to a new location");
+        System.out.println("3. Interact with nearby characters/objects");
+        System.out.println("4. Visit the trading post");
+        
+        // Character-specific action (slot 5)
+        if (playerCharacter instanceof Knight) {
+            System.out.println("5. Seek combat or undertake a quest");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println("5. Use stealth abilities (hide, scout, steal)");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println("5. Use magical abilities (cast, meditate, research)");
+        }
+        
+        System.out.println("6. Check your inventory");
+        System.out.println("7. View detailed status");
+        System.out.println("8. Look around (examine surroundings)");
+        System.out.println("9. Wait/Skip turn (let AI act)");
+        System.out.println("10. Quit adventure");
+        System.out.println("============================");
+    }
+    
+    /**
+     * Show player inventory
+     */
+    private void showPlayerInventory() {
+        System.out.println("\n=== " + playerCharacter.getName().toUpperCase() + "'S INVENTORY ===");
+        List<String> inventory = playerCharacter.getInventory();
+        if (inventory.isEmpty()) {
+            System.out.println("Your inventory is empty.");
+        } else {
+            System.out.println("Items carried:");
+            for (int i = 0; i < inventory.size(); i++) {
+                System.out.println("  " + (i + 1) + ". " + inventory.get(i));
+            }
+        }
+        System.out.println("Health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth());
+        System.out.println("===========================\n");
+    }
+    
+    /**
+     * Handle player movement
+     */
+    private void handleMovement() {
+        System.out.println("\n" + playerCharacter.getName() + " decides to travel to a new location...");
+        
+        // Move the character
+        playerCharacter.moveRandomly();
+        
+        // Describe the new location
+        String[] locations = {"a hidden valley", "an ancient crossroads", "a mystical clearing", 
+                            "a abandoned ruins", "a crystal formation", "a sacred grove", 
+                            "a mountain overlook", "a forest glade", "a desert shrine"};
+        String newLocation = locations[(int)(Math.random() * locations.length)];
+        System.out.println(playerCharacter.getName() + " arrives at " + newLocation + ".");
+        
+        // Chance of random encounter
+        if (Math.random() < 0.3) {
+            String[] encounters = {"a group of traveling merchants", "signs of ancient magic", 
+                                 "a mysterious artifact", "traces of other adventurers",
+                                 "a hidden passage", "an old campsite"};
+            String encounter = encounters[(int)(Math.random() * encounters.length)];
+            System.out.println("During your travels, you encounter " + encounter + "!");
+            gameWorld.handleCharacterAction(playerCharacter.getName(), "encounter", "encountered " + encounter + " while traveling");
+        }
+    }
+    
+    /**
+     * Display detailed status for everything
+     */
+    private void displayDetailedStatus() {
+        System.out.println("\n=== DETAILED STATUS ===");
+        System.out.println("=== PARTY STATUS ===");
+        for (GameCharacter character : characters) {
+            System.out.println("   " + character.getName() + " - Health: " + character.getHealth() + 
+                             "/" + character.getMaxHealth() + ", Position: (" + character.getX() + 
+                             ", " + character.getY() + "), Status: " + 
+                             (character.isAlive() ? "Alive" : "Defeated"));
+        }
+        System.out.println("======================\n");
+    }
+
+    /**
+     * Handle player's numbered choice selection
+     */
+    private void handlePlayerChoice(String input) {
+        try {
+            int choice = Integer.parseInt(input);
+            
+            switch (choice) {
+                case 1 -> {
+                    System.out.println(playerCharacter.getName() + " explores the surrounding area...");
+                    handleExploration();
+                    endPlayerTurn();
+                }
+                case 2 -> {
+                    System.out.println(playerCharacter.getName() + " decides to travel somewhere new...");
+                    handleMovement();
+                    endPlayerTurn();
+                }
+                case 3 -> {
+                    System.out.println(playerCharacter.getName() + " looks for someone or something to interact with...");
+                    handleWorldInteraction();
+                    endPlayerTurn();
+                }
+                case 4 -> {
+                    System.out.println(playerCharacter.getName() + " heads to the trading post...");
+                    handleTrading();
+                    endPlayerTurn();
+                }
+                case 5 -> {
+                    // Character-specific action
+                    handleCharacterSpecificAction();
+                    endPlayerTurn();
+                }
+                case 6 -> {
+                    showPlayerInventory();
+                    // Don't end turn for info commands
+                }
+                case 7 -> {
+                    displayDetailedStatus();
+                    displayWorldStatus();
+                    // Don't end turn for info commands
+                }
+                case 8 -> {
+                    describeCurrentSituation();
+                    showPlayerChoiceMenu();
+                    // Don't end turn for look command
+                }
+                case 9 -> {
+                    System.out.println(playerCharacter.getName() + " waits and observes the world...");
+                    endPlayerTurn();
+                }
+                case 10 -> {
+                    System.out.println("\nEnding adventure...");
+                    gameRunning = false;
+                }
+                default -> {
+                    System.out.println("Invalid choice. Please select a number from 1-10.");
+                }
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Please enter a number from 1-10.");
+        }
+    }
+    
+    /**
+     * Handle character-specific actions based on class
+     */
+    private void handleCharacterSpecificAction() {
+        if (playerCharacter instanceof Knight) {
+            System.out.println(playerCharacter.getName() + " seeks out challenges worthy of a noble knight...");
+            // Randomly choose between combat, quest, or patrol
+            String[] knightActions = {"combat", "quest", "patrol"};
+            String action = knightActions[(int)(Math.random() * knightActions.length)];
+            playerCharacter.executePlayerAction(action);
+            System.out.println(playerCharacter.getName() + " engages in " + action + "!");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println(playerCharacter.getName() + " uses their stealthy skills...");
+            String[] thiefActions = {"hide", "scout", "steal"};
+            String action = thiefActions[(int)(Math.random() * thiefActions.length)];
+            playerCharacter.executePlayerAction(action);
+            System.out.println(playerCharacter.getName() + " attempts to " + action + "!");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println(playerCharacter.getName() + " channels their magical abilities...");
+            String[] wizardActions = {"cast", "meditate", "research"};
+            String action = wizardActions[(int)(Math.random() * wizardActions.length)];
+            playerCharacter.executePlayerAction(action);
+            System.out.println(playerCharacter.getName() + " begins to " + action + "!");
+        }
+    }
+
+    /**
+     * Display current world status
+     */
+    private void displayWorldStatus() {
+        System.out.println("\n=== WORLD STATUS ===");
+        sharedResources.displayGlobalStatus();
+        gameWorld.displayCurrentWorldState();
+        System.out.println("=====================\n");
+    }
+
     /**
      * Force interactions between characters
      */
@@ -658,7 +946,7 @@ public class GameEngine {
      * Ensures proper synchronization of all threads
      */
     private void waitForAdventureCompletion() {
-        System.out.println("\n🕐 Adventure will run for " + (ADVENTURE_DURATION / 1000) + " seconds or until ended manually.");
+        System.out.println("\n🕐 Adventure will continue indefinitely - type 'quit' or 'exit' to end manually.");
         
         // Wait for either the game to end naturally or user to quit
         while (gameRunning) {

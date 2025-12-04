@@ -110,6 +110,14 @@ public abstract class GameCharacter implements Runnable {
         }
     }
     
+    public void moveRandomly() {
+        // Move to a random nearby location
+        int deltaX = (int)(Math.random() * 6) - 3; // -3 to +3
+        int deltaY = (int)(Math.random() * 6) - 3; // -3 to +3
+        move(deltaX, deltaY);
+        System.out.println(name + " moves to (" + x + ", " + y + ")");
+    }
+    
     public void takeDamage(int damage) {
         characterLock.lock();
         try {
@@ -198,10 +206,12 @@ public abstract class GameCharacter implements Runnable {
                     }
                 } else {
                     // AI controlled character only acts during AI turn
-                    if (!shouldActThisTurn()) {
+                    if (shouldActThisTurn()) {
+                        // It's AI turn, so this AI character can act
                         act();
                         Thread.sleep(800); // Shorter sleep for AI turns
                     } else {
+                        // It's player turn, so AI waits
                         Thread.sleep(200); // Wait during player turn
                     }
                 }
@@ -246,6 +256,26 @@ public abstract class GameCharacter implements Runnable {
     protected boolean shouldActThisTurn() {
         if (gameEngine == null) return !isPlayerControlled;
         return gameEngine.isPlayerTurn() == isPlayerControlled;
+    }
+    
+    /**
+     * Resume AI activity for one turn (used in turn-based mode)
+     */
+    public void resumeForOneTurn() {
+        if (!isPlayerControlled) {
+            // Temporarily allow the AI to act
+            synchronized (this) {
+                this.notify(); // Wake up if waiting
+            }
+        }
+    }
+    
+    /**
+     * Pause AI activity during player turn
+     */
+    public void pauseForPlayerTurn() {
+        // This method is used by GameEngine to coordinate turn-based gameplay
+        // The actual pausing is handled in the run() method by checking gameEngine.isPlayerTurn()
     }
     
     /**
