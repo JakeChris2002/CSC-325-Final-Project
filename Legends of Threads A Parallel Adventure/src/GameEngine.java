@@ -28,6 +28,8 @@ public class GameEngine {
     private volatile boolean gameInProgress;
     // Text now waits for player input instead of automatic delays
     private boolean skipTextPrompts = false;
+    private boolean instructionsShown = false;
+    private volatile boolean displayingText = false; // Prevents choice prompts during text display
     
     // Cave exploration system
     private CaveExplorer caveExplorer;
@@ -50,48 +52,71 @@ public class GameEngine {
     }
     
     /**
+     * Show text scrolling instructions only once at the beginning
+     */
+    private void showTextInstructions() {
+        if (!instructionsShown) {
+            System.out.println("\n" + "=".repeat(60));
+            System.out.println("                    TEXT SCROLLING CONTROLS");
+            System.out.println("=".repeat(60));
+            System.out.println("  • Press ENTER after each text section to continue");
+            System.out.println("  • Type 'SKIP' and press ENTER to enable automatic scrolling");
+            System.out.println("  • Enjoy the rich story at your own pace!");
+            System.out.println("=".repeat(60));
+            System.out.print("\nPress Enter to begin your adventure...");
+            
+            try {
+                String input = scanner.nextLine();
+                if (input != null && input.toLowerCase().contains("skip")) {
+                    skipTextPrompts = true;
+                    System.out.println("\n✓ Auto-scroll enabled. Text will appear automatically.");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            } catch (Exception e) {
+                // Continue if input fails
+            }
+            
+            instructionsShown = true;
+            System.out.println(); // Extra line for spacing
+        }
+    }
+
+    /**
      * Wait for player to press Enter before continuing (unless skip mode is enabled)
      */
     private void textDelay() {
         if (skipTextPrompts) {
             // Small delay so text doesn't appear instantly
             try {
-                Thread.sleep(400);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
             return;
         }
         
-        System.out.print("\n    ⏎ Press Enter to continue (or type 'skip' to disable prompts)...");
+        // Simple, clean Enter prompt
+        System.out.print("\n    [Press Enter to continue]");
         try {
-            String input = "";
-            if (System.console() != null) {
-                input = System.console().readLine();
-            } else {
-                // Fallback for environments without console
-                Scanner tempScanner = new Scanner(System.in);
-                input = tempScanner.nextLine();
-            }
+            // Use scanner for consistency and to avoid conflicts
+            scanner.nextLine();
             
-            // Check if player wants to skip future prompts
-            if (input != null && input.toLowerCase().contains("skip")) {
-                skipTextPrompts = true;
-                System.out.println("\n    ✓ Text prompts disabled. Text will scroll automatically.");
-                System.out.println("      (You can re-enable prompts by typing 'prompts' during gameplay)");
-                try {
-                    Thread.sleep(1500); // Give time to read the message
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            
-            // Clear the prompt line
-            System.out.print("\033[1A\033[2K"); // Move up one line and clear it
+            // Clear both the input line and prompt line
+            System.out.print("\033[2A"); // Move up 2 lines
+            System.out.print("\033[2K"); // Clear current line
+            System.out.print("\033[1B"); // Move down 1 line
+            System.out.print("\033[2K"); // Clear this line too
+            System.out.print("\033[1A"); // Move back up
         } catch (Exception e) {
-            // Final fallback to time delay if input fails
+            // If input fails, just use a short delay and continue
             try {
                 Thread.sleep(800);
+                // Still try to clear the prompt
+                System.out.print("\033[1A\033[2K\r");
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
@@ -102,6 +127,9 @@ public class GameEngine {
      * Initialize the game world and create characters
      */
     public void initializeGame() {
+        // Show text scrolling instructions first
+        showTextInstructions();
+        
         System.out.println("===============================================");
         textDelay();
         System.out.println("WELCOME TO LEGENDS OF THREADS");
@@ -397,6 +425,8 @@ public class GameEngine {
      */
     private void startPlayerTurn() {
         playerTurn = true;
+        displayingText = true; // Prevent choice prompts during text display
+        
         System.out.println("\n=== YOUR TURN ===");
         
         // Provide contextual description of current situation
@@ -404,6 +434,8 @@ public class GameEngine {
         
         // Show numbered menu choices
         showPlayerChoiceMenu();
+        
+        displayingText = false; // Allow choice prompts now
     }
     
     public boolean isPlayerTurn() {
@@ -455,12 +487,30 @@ public class GameEngine {
             
             while (gameRunning) {
                 try {
-                    // Only accept input during player turn
-                    if (playerTurn) {
+                    // Only accept input during player turn and not while displaying text
+                    if (playerTurn && !displayingText) {
                         System.out.print("\nChoose your action (1-10): ");
-                        String input = scanner.nextLine().trim();
                         
-                        if (input.isEmpty()) {
+                        String input = null;
+                        try {
+                            input = scanner.nextLine();
+                            if (input != null) {
+                                input = input.trim();
+                            }
+                        } catch (Exception inputEx) {
+                            // If scanner fails, create a new one
+                            scanner = new Scanner(System.in);
+                            System.out.println("\nInput refreshed. Please enter your choice: ");
+                            try {
+                                input = scanner.nextLine().trim();
+                            } catch (Exception retryEx) {
+                                System.out.println("\nInput unavailable. Ending game.");
+                                gameRunning = false;
+                                break;
+                            }
+                        }
+                        
+                        if (input == null || input.isEmpty()) {
                             System.out.println(playerCharacter.getName() + " waits for your decision...");
                             continue;
                         }
@@ -472,7 +522,9 @@ public class GameEngine {
                     }
                 } catch (Exception e) {
                     if (gameRunning) {
-                        System.out.println("Error reading input: " + e.getMessage());
+                        System.out.println("\nUnexpected error. Ending game gracefully.");
+                        gameRunning = false;
+                        break;
                     }
                 }
             }
