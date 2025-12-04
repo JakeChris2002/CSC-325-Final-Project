@@ -239,19 +239,23 @@ public class Knight extends GameCharacter {
             case "a", "attack" -> {
                 System.out.println("⚔️ " + name + " (You) seeks combat!");
                 seekCombat();
+                System.out.println("✅ Action completed.");
             }
             case "p", "patrol" -> {
                 System.out.println("🚪 " + name + " (You) begins patrolling!");
                 patrol();
+                System.out.println("✅ Patrol completed.");
             }
             case "q", "quest" -> {
                 System.out.println("🏆 " + name + " (You) undertakes a quest!");
                 searchForQuests();
+                System.out.println("✅ Quest action completed.");
             }
             case "d", "defend" -> {
                 System.out.println("🛡️ " + name + " (You) takes a defensive stance!");
                 armor += 5;
                 System.out.println(name + " raises shield! Armor temporarily increased to " + armor);
+                System.out.println("✅ Defense stance ready.");
             }
             default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
         }

@@ -153,16 +153,59 @@ public abstract class GameCharacter implements Runnable {
     // Runnable implementation for threading
     @Override
     public void run() {
-        while (isActive && isAlive) {
+        System.out.println("🧵 " + name + " thread started!" + (isPlayerControlled ? " (Player Controlled)" : " (AI Party Member)"));
+        
+        if (isPlayerControlled) {
+            System.out.println("⏳ " + name + " awaits your command...");
+        }
+        
+        while (isAlive && isActive) {
             try {
-                act(); // Call the abstract act method
-                Thread.sleep(1000); // Wait 1 second between actions
+                if (isPlayerControlled) {
+                    // Player controlled character waits for player input
+                    handlePlayerControl();
+                    // After action, show waiting message again
+                    if (isAlive && isActive) {
+                        System.out.println("⏳ " + name + " awaits your next command...");
+                    }
+                } else {
+                    // AI controlled character acts automatically
+                    act();
+                    Thread.sleep(1000); // Wait 1 second between actions
+                }
             } catch (InterruptedException e) {
+                System.out.println(name + " thread interrupted.");
                 Thread.currentThread().interrupt();
                 break;
             }
         }
-        System.out.println("🛑 " + name + " (" + getCharacterType() + ") has stopped acting.");
+        
+        System.out.println("💀 " + name + " has stopped acting.");
+    }
+    
+    /**
+     * Handle player control input
+     */
+    protected void handlePlayerControl() throws InterruptedException {
+        // Wait until player provides an action
+        String action = null;
+        while (action == null && isAlive && isActive) {
+            action = getPlayerAction();
+            if (action == null) {
+                Thread.sleep(200); // Wait for player input
+            }
+        }
+        
+        if (action != null && isAlive && isActive) {
+            executePlayerAction(action);
+        }
+    }
+    
+    /**
+     * Execute a player action - to be overridden by subclasses
+     */
+    protected void executePlayerAction(String action) {
+        System.out.println(name + " doesn't understand the command: " + action);
     }
     
     // Getters

@@ -246,14 +246,18 @@ public class GameEngine {
      */
     private void startPlayerControlThread() {
         Thread playerThread = new Thread(() -> {
-            System.out.println("\n🎮 You can now control " + playerCharacter.getName() + "! Enter commands:");
+            System.out.println("\n🎮 You now control " + playerCharacter.getName() + "! Your party members will act automatically.");
+            System.out.println("💡 Your character will only act when you enter a command.\n");
             
             while (gameRunning) {
                 try {
-                    System.out.print("> ");
+                    System.out.print("[" + playerCharacter.getName() + "] Enter command > ");
                     String input = scanner.nextLine().trim().toLowerCase();
                     
-                    if (input.isEmpty()) continue;
+                    if (input.isEmpty()) {
+                        System.out.println("💭 " + playerCharacter.getName() + " waits patiently for your decision...");
+                        continue;
+                    }
                     
                     switch (input) {
                         case "quit", "exit" -> {
@@ -266,6 +270,7 @@ public class GameEngine {
                         default -> {
                             // Send action to player character
                             if (playerCharacter != null) {
+                                System.out.println("📝 Command sent to " + playerCharacter.getName() + ": " + input);
                                 playerCharacter.setPlayerAction(input);
                             }
                         }

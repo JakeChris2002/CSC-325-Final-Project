@@ -323,18 +323,22 @@ public class Wizard extends GameCharacter {
             case "c", "cast" -> {
                 System.out.println("✨ " + name + " (You) prepares to cast a spell!");
                 castSpell();
+                System.out.println("✅ Spell casting completed.");
             }
             case "m", "meditate" -> {
                 System.out.println("🧘 " + name + " (You) begins meditation!");
                 meditate();
+                System.out.println("✅ Meditation completed.");
             }
             case "r", "research" -> {
                 System.out.println("📚 " + name + " (You) delves into research!");
                 study();
+                System.out.println("✅ Research completed.");
             }
             case "explore" -> {
                 System.out.println("🔮 " + name + " (You) explores ancient mysteries!");
                 explore();
+                System.out.println("✅ Exploration completed.");
             }
             default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
         }

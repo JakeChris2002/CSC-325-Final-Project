@@ -258,18 +258,22 @@ public class Thief extends GameCharacter {
             case "s", "steal" -> {
                 System.out.println("🎯 " + name + " (You) attempts to steal!");
                 attemptSteal();
+                System.out.println("✅ Theft attempt completed.");
             }
             case "h", "hide" -> {
                 System.out.println("🕵️ " + name + " (You) hides in the shadows!");
                 hide();
+                System.out.println("✅ Now hidden.");
             }
             case "scout" -> {
                 System.out.println("🔍 " + name + " (You) scouts the area!");
                 scout();
+                System.out.println("✅ Scouting completed.");
             }
             case "e", "escape" -> {
                 System.out.println("🏃 " + name + " (You) sneaks away!");
                 sneak();
+                System.out.println("✅ Escape completed.");
             }
             default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
         }
