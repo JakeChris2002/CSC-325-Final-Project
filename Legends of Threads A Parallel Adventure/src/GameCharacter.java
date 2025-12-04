@@ -20,6 +20,7 @@ public abstract class GameCharacter implements Runnable {
     protected ReentrantLock characterLock; // For thread safety
     protected boolean isPlayerControlled; // Whether this character is controlled by the player
     protected volatile String pendingPlayerAction; // Action waiting to be executed by player
+    protected boolean caveMode; // Whether character is in cave exploration mode
     
     // Constructor
     protected GameEngine gameEngine; // Reference to game engine for turn management
@@ -39,6 +40,7 @@ public abstract class GameCharacter implements Runnable {
         this.isPlayerControlled = false;
         this.pendingPlayerAction = null;
         this.gameEngine = null; // Will be set by GameEngine
+        this.caveMode = false;
     }
     
     // Abstract methods that must be implemented by subclasses
@@ -62,6 +64,14 @@ public abstract class GameCharacter implements Runnable {
     
     public void setGameEngine(GameEngine gameEngine) {
         this.gameEngine = gameEngine;
+    }
+    
+    public void setCaveMode(boolean caveMode) {
+        this.caveMode = caveMode;
+    }
+    
+    public boolean isCaveMode() {
+        return caveMode;
     }
     
     public String getPlayerAction() {

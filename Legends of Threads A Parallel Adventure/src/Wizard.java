@@ -41,7 +41,7 @@ public class Wizard extends GameCharacter {
     
     @Override
     public void act() {
-        if (!isAlive || !isActive) return;
+        if (!isAlive || !isActive || caveMode) return;
         
         // Wizard's behavior: study, cast spells, meditate, explore
         int action = random.nextInt(4);

@@ -31,6 +31,7 @@ public class SharedResources {
     // === RESOURCE GENERATION (using volatile) ===
     private volatile boolean resourceGenerationActive = true;
     private final AtomicInteger resourcesGenerated = new AtomicInteger(0);
+    private volatile boolean caveMode = false; // Suppress messages during cave exploration
     
     // === TRADING POST (using ConcurrentHashMap) ===
     private final ConcurrentHashMap<String, String> tradingPost = new ConcurrentHashMap<>();
@@ -42,6 +43,10 @@ public class SharedResources {
         initializeTradingPost();
         startResourceGeneration();
         startLootGeneration();
+    }
+    
+    public void setCaveMode(boolean caveMode) {
+        this.caveMode = caveMode;
     }
     
     // ===============================================
@@ -129,7 +134,9 @@ public class SharedResources {
             currentMana = globalManaPool.get(); // Re-read for next attempt
         }
         
-        System.out.println("❌ " + characterName + " failed to consume " + amount + " mana - insufficient mana!");
+        if (!caveMode) {
+            System.out.println("❌ " + characterName + " failed to consume " + amount + " mana - insufficient mana!");
+        }
         return false;
     }
     
@@ -138,7 +145,9 @@ public class SharedResources {
      */
     public void restoreMana(int amount, String characterName) {
         int newTotal = globalManaPool.addAndGet(amount);
-        System.out.println("🌟 " + characterName + " restored " + amount + " mana to the global pool. New total: " + newTotal);
+        if (!caveMode) {
+            System.out.println("🌟 " + characterName + " restored " + amount + " mana to the global pool. New total: " + newTotal);
+        }
     }
     
     public int getGlobalMana() {
@@ -179,7 +188,9 @@ public class SharedResources {
     public boolean addLoot(String loot) {
         boolean added = lootQueue.offer(loot);
         if (added) {
-            System.out.println("📦 New loot appeared: " + loot + " (Queue size: " + lootQueue.size() + ")");
+            if (!caveMode) {
+                System.out.println("📦 New loot appeared: " + loot + " (Queue size: " + lootQueue.size() + ")");
+            }
         }
         return added;
     }

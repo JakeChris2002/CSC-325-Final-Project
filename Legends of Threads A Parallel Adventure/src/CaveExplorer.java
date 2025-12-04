@@ -1,5 +1,9 @@
 import java.util.*;
 
+/**
+ * CaveExplorer - Enhanced descriptive adventure system
+ * Provides rich story descriptions and clear player choices
+ */
 public class CaveExplorer {
     private GameCharacter player;
     private List<GameCharacter> party;
@@ -48,13 +52,19 @@ public class CaveExplorer {
     }
     
     public boolean exploreCave() {
-        System.out.println("\\n🏔️ === ENTERING THE CRYSTAL CAVERNS ===\\n");
-        System.out.println("You and your party step into the mysterious caverns.");
-        System.out.println("The air is thick with ancient magic and hidden dangers...");
-        System.out.println("\\n👥 Your Party:");
+        System.out.println("\n🏔️ === ENTERING THE CRYSTAL CAVERNS ===\n");
+        System.out.println("As you step through the ancient stone archway, the warm sunlight behind you");
+        System.out.println("fades into cool, mysterious shadows. The air carries whispers of forgotten");
+        System.out.println("magic and the distant echo of dripping water. Crystalline formations on the");
+        System.out.println("walls pulse with an otherworldly blue glow, providing just enough light to");
+        System.out.println("see the path ahead.\n");
+        
+        System.out.println("👥 Your brave party consists of:");
         for (GameCharacter character : party) {
-            System.out.println("   " + getCharacterIcon(character) + " " + character.getName() + " the " + character.getCharacterType());
+            System.out.println("   " + getCharacterIcon(character) + " " + character.getName() + 
+                             " the " + character.getCharacterType() + " - " + getCharacterDescription(character));
         }
+        System.out.println();
         
         while (currentRoom <= BOSS_ROOM && !bossDefeated) {
             exploreCurrentRoom();
@@ -62,7 +72,7 @@ public class CaveExplorer {
                 return true;
             }
             if (currentRoom < BOSS_ROOM) {
-                offerRoomChoices();
+                offerNavigationChoices();
             }
         }
         
@@ -70,9 +80,9 @@ public class CaveExplorer {
     }
     
     private void exploreCurrentRoom() {
-        System.out.println("\\n" + "=".repeat(50));
-        System.out.println("🏛️ ROOM " + currentRoom + (currentRoom == BOSS_ROOM ? " - BOSS CHAMBER" : ""));
-        System.out.println("=".repeat(50));
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("🏛️ " + getRoomTitle(currentRoom));
+        System.out.println("=".repeat(60));
         
         if (currentRoom == BOSS_ROOM) {
             exploreBossRoom();
@@ -82,334 +92,624 @@ public class CaveExplorer {
     }
     
     private void exploreNormalRoom() {
-        System.out.println("🔍 You enter a " + getRoomDescription(currentRoom));
+        System.out.println(getDetailedRoomDescription(currentRoom));
         System.out.println();
         
-        String enemy = roomEnemies.get(currentRoom);
-        if (enemy != null) {
-            System.out.println("⚠️ A " + enemy + " blocks your path!");
-            boolean victory = handleCombat(enemy);
-            if (!victory) {
-                System.out.println("💀 Your party has been defeated! Game Over.");
-                return;
-            }
-        }
-        
-        List<String> treasures = roomTreasures.get(currentRoom);
-        if (treasures != null && !treasures.isEmpty()) {
-            System.out.println("✨ You discovered treasures in this room:");
-            for (int i = 0; i < treasures.size(); i++) {
-                System.out.println("   " + (i + 1) + ". " + treasures.get(i));
-            }
-            handleTreasureCollection(treasures);
-        }
-        
-        displayInventory();
+        // Present room exploration choices without revealing hidden elements
+        presentRoomChoices();
     }
     
-    private void exploreBossRoom() {
-        System.out.println("🏛️ You enter the massive boss chamber...");
-        System.out.println("Ancient pillars stretch toward a vaulted ceiling covered in glowing crystals.");
-        System.out.println("At the center of the room stands the ANCIENT GUARDIAN - a massive stone titan!");
-        System.out.println();
-        System.out.println("💀 ANCIENT GUARDIAN awakens and prepares for battle!");
-        System.out.println("This is the final test of your adventure!");
+    private void presentRoomChoices() {
+        boolean roomCompleted = false;
+        String enemy = roomEnemies.get(currentRoom);
+        List<String> treasures = roomTreasures.get(currentRoom);
+        boolean enemyDefeated = false;
+        boolean treasuresLooted = false;
+        boolean enemyDiscovered = false;
+        boolean treasuresDiscovered = false;
         
-        boolean victory = handleBossFight();
-        if (victory) {
-            bossDefeated = true;
-            System.out.println("\\n🎉 === VICTORY! ===\\n");
-            System.out.println("The Ancient Guardian crumbles to dust, revealing the greatest treasures!");
+        while (!roomCompleted) {
+            System.out.println("\n🤔 What would you like to do?");
+            List<String> options = new ArrayList<>();
             
-            List<String> finalTreasures = roomTreasures.get(10);
-            if (finalTreasures != null) {
-                System.out.println("🏆 LEGENDARY REWARDS:");
-                for (String treasure : finalTreasures) {
-                    System.out.println("   ✨ " + treasure);
-                    if (playerInventory.size() < MAX_INVENTORY) {
-                        playerInventory.add(treasure);
-                        System.out.println("     (Added to inventory)");
+            // Always available options
+            options.add("👀 Look around the room carefully");
+            options.add("🔍 Search for hidden dangers");
+            options.add("💎 Search for valuable items");
+            options.add("📋 Check your inventory and party status");
+            
+            // Enemy-related options (only after discovery)
+            if (enemy != null && !enemyDefeated && enemyDiscovered) {
+                options.add("⚔️  Approach the " + enemy + " for combat");
+                options.add("🤫 Try to sneak past the " + enemy + " quietly");
+                options.add("🛡️  Prepare defenses before engaging");
+            }
+            
+            // Treasure-related options (only after discovery)
+            if (treasures != null && !treasures.isEmpty() && !treasuresLooted && treasuresDiscovered && (enemy == null || enemyDefeated)) {
+                options.add("💰 Collect the discovered treasures");
+                options.add("🎯 Choose specific treasures to take");
+            }
+            
+            // Navigation options
+            if ((enemy == null || enemyDefeated)) {
+                if (currentRoom < BOSS_ROOM) {
+                    options.add("➡️  Continue deeper into the caverns");
+                } else {
+                    options.add("🚪 Approach the final chamber");
+                }
+            }
+            
+            // Display options with clear numbering
+            for (int i = 0; i < options.size(); i++) {
+                System.out.println("   " + (i + 1) + ". " + options.get(i));
+            }
+            
+            System.out.print("\n📝 Choose your action (1-" + options.size() + "): ");
+            int choice = getPlayerChoice(1, options.size());
+            String selectedAction = options.get(choice - 1);
+            
+            // Handle the chosen action with detailed descriptions
+            if (selectedAction.contains("Look around")) {
+                describeSurroundings();
+            } else if (selectedAction.contains("Search for hidden dangers")) {
+                if (enemy != null && !enemyDiscovered) {
+                    System.out.println("\n⚠️ Alert! You discover a " + enemy + " lurking in the shadows!");
+                    describeEnemy(enemy);
+                    enemyDiscovered = true;
+                } else if (enemy == null) {
+                    System.out.println("\n✅ You search carefully but find no immediate threats in this chamber.");
+                } else {
+                    System.out.println("\n👁️ You've already spotted the " + enemy + " in this room.");
+                }
+            } else if (selectedAction.contains("Search for valuable items")) {
+                if (treasures != null && !treasures.isEmpty() && !treasuresDiscovered) {
+                    System.out.println("\n✨ Excellent! You discover hidden treasures:");
+                    describeTreasureDiscovery(treasures);
+                    treasuresDiscovered = true;
+                } else if (treasures == null || treasures.isEmpty()) {
+                    System.out.println("\n🔍 You search thoroughly but find no valuable items in this chamber.");
+                } else {
+                    System.out.println("\n💰 You've already found all the treasures in this room.");
+                }
+            } else if (selectedAction.contains("inventory")) {
+                showPartyStatus();
+            } else if (selectedAction.contains("Approach") && selectedAction.contains("combat")) {
+                System.out.println("\n⚔️ You steel yourself for battle and approach the " + enemy + "...");
+                System.out.println("The creature notices your approach and prepares to fight!");
+                enemyDefeated = handleCombat(enemy);
+                if (!enemyDefeated) {
+                    System.out.println("💀 Your party has been defeated! The adventure ends here...");
+                    return;
+                }
+            } else if (selectedAction.contains("sneak")) {
+                System.out.println("\n🤫 You motion to your party to move quietly...");
+                if (attemptStealth(enemy)) {
+                    System.out.println("✅ Success! You manage to slip past the " + enemy + " undetected!");
+                    enemyDefeated = true; // Bypassed, not defeated
+                } else {
+                    System.out.println("❌ The " + enemy + " spots you! Combat is unavoidable!");
+                    enemyDefeated = handleCombat(enemy);
+                    if (!enemyDefeated) {
+                        System.out.println("💀 Your party has been defeated! The adventure ends here...");
+                        return;
                     }
                 }
+            } else if (selectedAction.contains("defenses")) {
+                System.out.println("\n🛡️ You take time to prepare your party's defenses and strategy...");
+                System.out.println("Your tactical preparation will give you an advantage in the coming fight!");
+                enemyDefeated = handleCombat(enemy, true); // Combat with advantage
+                if (!enemyDefeated) {
+                    System.out.println("💀 Despite your preparations, your party has been defeated!");
+                    return;
+                }
+            } else if (selectedAction.contains("Collect the discovered")) {
+                System.out.println("\n💰 You begin collecting the treasures you found...");
+                handleTreasureCollection(treasures);
+                treasuresLooted = true;
+            } else if (selectedAction.contains("Choose specific treasures")) {
+                System.out.println("\n🎯 You carefully consider which treasures to take...");
+                handleSelectiveTreasureCollection(treasures);
+                treasuresLooted = true;
+            } else if (selectedAction.contains("Continue") || selectedAction.contains("Approach")) {
+                System.out.println("\n🚶 You signal to your party that it's time to move forward...");
+                roomCompleted = true;
             }
         }
     }
     
-    private boolean handleCombat(String enemy) {
-        System.out.println("\\n⚔️ === COMBAT BEGINS ===\\n");
-        System.out.println("🎯 Facing: " + enemy);
-        System.out.println("👥 Your party prepares for battle!");
-        
-        System.out.println("\\nChoose your combat strategy:");
-        System.out.println("1. ⚔️ Aggressive Attack (High damage, risky)");
-        System.out.println("2. 🛡️ Defensive Strategy (Safe, moderate damage)");
-        System.out.println("3. 🔮 Magic Focus (Variable results)");
-        System.out.print("\\nEnter your choice (1-3): ");
-        
-        int strategy = getPlayerChoice(1, 3);
-        
-        Random random = new Random();
-        int playerRoll = random.nextInt(20) + 1;
-        int enemyRoll = random.nextInt(20) + 1;
-        
-        switch (strategy) {
+    private String getDetailedRoomDescription(int roomNum) {
+        switch (roomNum) {
             case 1:
-                playerRoll += 3;
-                System.out.println("\\n⚔️ " + player.getName() + " leads an aggressive assault!");
+                return "🕳️ **The Entrance Chamber**\n" +
+                       "You find yourself in a vast circular chamber carved from living rock. Stalactites\n" +
+                       "hang like ancient teeth from the ceiling, and the floor is covered with smooth\n" +
+                       "stones worn by countless years of water flow. To your left and right, narrow\n" +
+                       "passages disappear into darkness. Straight ahead, a wider tunnel beckons with\n" +
+                       "the promise of deeper mysteries. The air smells of damp earth and old magic.";
+            case 2:
+                return "✨ **The Crystal Gallery** \n" +
+                       "The walls of this elongated chamber are embedded with thousands of tiny crystals\n" +
+                       "that catch and reflect your light, creating a dazzling display of colors. The\n" +
+                       "floor slopes gently downward, and you can see three distinct paths: one curves\n" +
+                       "to the left around a massive crystal formation, another heads straight through\n" +
+                       "a natural archway, and a third descends steeply to the right.";
+            case 3:
+                return "🗿 **The Hall of Statues**\n" +
+                       "Ancient stone statues line both sides of this grand hallway. Each depicts a\n" +
+                       "different warrior or mage from ages past, their faces weathered but still\n" +
+                       "proud. Some hold weapons, others clutch spell components. At the far end,\n" +
+                       "you can see the hall splits into two directions: left toward what sounds\n" +
+                       "like running water, and right toward a chamber that glows with warm light.";
+            case 4:
+                return "🔥 **The Forge Chamber**\n" +
+                       "Heat radiates from ancient forge fires that still burn with an otherworldly\n" +
+                       "flame. Hammers and anvils sit ready for use, though dust shows they haven't\n" +
+                       "been touched in decades. The air shimmers with heat, and you see paths\n" +
+                       "leading in three directions: north through a steam-filled passage, east\n" +
+                       "toward cooler air, and south back toward familiar territory.";
+            case 5:
+                return "🌫️ **The Mist-Shrouded Cavern**\n" +
+                       "A thick, supernatural mist fills this irregular chamber, making it difficult\n" +
+                       "to see more than a few feet in any direction. Strange whispers seem to echo\n" +
+                       "from the fog, and occasional glimpses of movement suggest you're not alone.\n" +
+                       "Through the mist, you can make out passages leading northeast toward clearer\n" +
+                       "air, northwest toward a faint blue glow, and southwest toward the sound of\n" +
+                       "dripping water.";
+            case 6:
+                return "💎 **The Gemstone Vault**\n" +
+                       "The walls of this chamber are embedded with precious gems of every color -\n" +
+                       "rubies, sapphires, emeralds, and diamonds that pulse with inner light.\n" +
+                       "The wealth here is staggering, but something feels dangerous about disturbing\n" +
+                       "it. You notice paths leading in four directions: north toward what sounds\n" +
+                       "like a great waterfall, south toward familiar ground, east up a steep\n" +
+                       "incline, and west through a narrow squeeze between gem-covered walls.";
+            case 7:
+                return "🦴 **The Bone Garden**\n" +
+                       "This unsettling chamber is filled with the remains of ancient creatures -\n" +
+                       "not just bones, but complete fossilized skeletons of beasts you can't\n" +
+                       "identify. Some are enormous, others tiny, all arranged as if this were\n" +
+                       "some macabre museum. The paths here lead north toward fresher air, east\n" +
+                       "toward a chamber filled with strange music, and west toward what might\n" +
+                       "be the sound of something very large breathing.";
+            case 8:
+                return "📚 **The Ancient Library**\n" +
+                       "Towering bookshelves carved directly from the cave walls contain thousands\n" +
+                       "of ancient tomes and scrolls. Some books glow softly, others seem to move\n" +
+                       "slightly when you're not looking directly at them. A reading area with\n" +
+                       "stone tables and chairs sits in the center. From here, passages lead\n" +
+                       "north toward what feels like the heart of the mountain, south toward\n" +
+                       "familiar territory, and up a spiral staircase carved into the east wall.";
+            case 9:
+                return "🌟 **The Celestial Observatory**\n" +
+                       "The ceiling of this chamber has been carved away to reveal the night sky,\n" +
+                       "though strange constellations shine overhead that you don't recognize.\n" +
+                       "Ancient astronomical instruments made of brass and crystal fill the room.\n" +
+                       "This feels like the antechamber to something greater - a single passage\n" +
+                       "leads north toward a chamber that hums with power, while other exits\n" +
+                       "lead back to safer, more familiar ground.";
+            default:
+                return "🏛️ You find yourself in an unremarkable stone chamber with passages\n" +
+                       "leading in multiple directions.";
+        }
+    }
+    
+    private String getRoomTitle(int roomNum) {
+        switch (roomNum) {
+            case 1: return "THE ENTRANCE CHAMBER";
+            case 2: return "THE CRYSTAL GALLERY";
+            case 3: return "THE HALL OF STATUES";
+            case 4: return "THE FORGE CHAMBER";
+            case 5: return "THE MIST-SHROUDED CAVERN";
+            case 6: return "THE GEMSTONE VAULT";
+            case 7: return "THE BONE GARDEN";
+            case 8: return "THE ANCIENT LIBRARY";
+            case 9: return "THE CELESTIAL OBSERVATORY";
+            case 10: return "THE GUARDIAN'S SANCTUM - FINAL CHAMBER";
+            default: return "CHAMBER " + roomNum;
+        }
+    }
+    
+    private void describeSurroundings() {
+        System.out.println("\n👁️ You take a moment to carefully observe your surroundings...\n");
+        
+        // Describe environmental details without revealing hidden elements
+        switch (currentRoom) {
+            case 1:
+                System.out.println("🔍 The entrance chamber shows signs of recent passage - footprints in");
+                System.out.println("   the dust suggest others have been here before you. The air currents");
+                System.out.println("   indicate multiple passages ahead. Some shadows seem deeper than others.");
                 break;
             case 2:
-                playerRoll += 1;
-                System.out.println("\\n🛡️ Your party forms a defensive formation!");
+                System.out.println("🔍 The crystals seem to respond to your presence, glowing slightly");
+                System.out.println("   brighter. You notice some crystals have been recently harvested.");
+                System.out.println("   The play of light creates many hiding spots throughout the chamber.");
                 break;
             case 3:
-                playerRoll += random.nextInt(6);
-                System.out.println("\\n🔮 Magical energies surge through the party!");
-                break;
-        }
-        
-        for (GameCharacter character : party) {
-            playerRoll += 1;
-        }
-        
-        System.out.println("\\n🎲 Combat Resolution:");
-        System.out.println("   Your Party Roll: " + playerRoll);
-        System.out.println("   " + enemy + " Roll: " + enemyRoll);
-        
-        if (playerRoll >= enemyRoll) {
-            System.out.println("\\n🏆 VICTORY! Your party defeats the " + enemy + "!");
-            String reward = getRandomCombatReward();
-            System.out.println("💎 You found: " + reward);
-            if (playerInventory.size() < MAX_INVENTORY) {
-                playerInventory.add(reward);
-                System.out.println("   (Added to inventory)");
-            } else {
-                System.out.println("   (Inventory full - item left behind)");
-            }
-            return true;
-        } else {
-            System.out.println("\\n💔 Your party takes heavy damage but manages to retreat!");
-            System.out.println("You can try a different approach or continue exploring.");
-            return askRetryOrContinue();
-        }
-    }
-    
-    private boolean handleBossFight() {
-        System.out.println("\\n⚔️ === FINAL BOSS BATTLE ===\\n");
-        System.out.println("🏛️ The Ancient Guardian's eyes glow with ancient power!");
-        System.out.println("This battle will determine the fate of your quest!");
-        
-        for (int round = 1; round <= 3; round++) {
-            System.out.println("\\n--- ROUND " + round + " ---");
-            
-            System.out.println("\\nChoose your strategy for round " + round + ":");
-            System.out.println("1. ⚔️ Direct Assault (High risk/reward)");
-            System.out.println("2. 🛡️ Coordinated Defense (Steady progress)");
-            System.out.println("3. 🔮 Ultimate Spell Combo (All or nothing)");
-            System.out.println("4. 🏹 Ranged Attacks (Safe but slower)");
-            System.out.print("\\nEnter your choice (1-4): ");
-            
-            int strategy = getPlayerChoice(1, 4);
-            
-            if (executeBossStrategy(strategy, round)) {
-                System.out.println("\\n✨ BOSS DEFEATED! The Ancient Guardian falls!");
-                return true;
-            }
-        }
-        
-        System.out.println("\\n💀 The Ancient Guardian proves too powerful! Your quest ends here...");
-        return false;
-    }
-    
-    private boolean executeBossStrategy(int strategy, int round) {
-        Random random = new Random();
-        int successThreshold = 15 - (round * 2);
-        
-        switch (strategy) {
-            case 1:
-                System.out.println("\\n⚔️ Your party charges directly at the Guardian!");
-                int roll1 = random.nextInt(20) + 1 + 5;
-                System.out.println("🎲 Attack Roll: " + roll1);
-                if (roll1 >= successThreshold) {
-                    System.out.println("💥 Critical hit! The Guardian staggers!");
-                    return roll1 >= 18;
-                }
-                break;
-            case 2:
-                System.out.println("\\n🛡️ Your party works together in perfect harmony!");
-                int roll2 = random.nextInt(20) + 1 + 3;
-                System.out.println("🎲 Team Roll: " + roll2);
-                if (roll2 >= successThreshold) {
-                    System.out.println("🤝 Excellent teamwork! You find an opening!");
-                    return roll2 >= 16;
-                }
-                break;
-            case 3:
-                System.out.println("\\n🔮 All party members channel their magical power!");
-                int roll3 = random.nextInt(20) + 1 + random.nextInt(8);
-                System.out.println("🎲 Magic Roll: " + roll3);
-                if (roll3 >= successThreshold) {
-                    System.out.println("✨ Magical energies overwhelm the Guardian!");
-                    return roll3 >= 17;
-                }
+                System.out.println("🔍 The statues' eyes seem to follow your movement. Some bear inscriptions");
+                System.out.println("   in ancient languages, possibly warnings or blessings.");
+                System.out.println("   The spaces between statues are shrouded in mystery.");
                 break;
             case 4:
-                System.out.println("\\n🏹 Your party attacks from safe distance!");
-                int roll4 = random.nextInt(20) + 1 + 2;
-                System.out.println("🎲 Ranged Roll: " + roll4);
-                if (roll4 >= successThreshold) {
-                    System.out.println("🎯 Precise strikes wear down the Guardian!");
-                    return round == 3 && roll4 >= 14;
-                }
+                System.out.println("🔍 The forge fires cast dancing shadows on the walls. Ancient tools");
+                System.out.println("   lie scattered about, and the heat distorts the air making it hard");
+                System.out.println("   to see clearly into all corners of the chamber.");
                 break;
+            case 5:
+                System.out.println("🔍 The supernatural mist swirls around you, limiting visibility.");
+                System.out.println("   Whispers echo from unseen sources, and shapes move just beyond");
+                System.out.println("   the edge of sight. Anything could be hiding in this fog.");
+                break;
+            default:
+                System.out.println("🔍 You notice interesting details about the chamber's construction");
+                System.out.println("   and signs of who or what might have passed through recently.");
+                System.out.println("   Many areas remain unexplored and could hold secrets.");
         }
         
-        System.out.println("💨 The Guardian resists your attack but shows signs of wear!");
-        return false;
+        System.out.println("\n💡 To discover what this chamber truly holds, you'll need to search more actively.");
+        
+        System.out.println("\nPress Enter to continue...");
+        scanner.nextLine();
     }
     
-    private void handleTreasureCollection(List<String> treasures) {
-        if (treasures.isEmpty()) return;
-        
-        System.out.println("\\n💰 Would you like to collect treasures?");
-        for (String treasure : treasures) {
-            System.out.print("\\nTake " + treasure + "? (y/n): ");
-            String response = scanner.nextLine().toLowerCase().trim();
+    private void describeEnemy(String enemy) {
+        switch (enemy) {
+            case "Cave Rat":
+                System.out.println("   A large rat with glowing red eyes and unusually sharp teeth.");
+                System.out.println("   It seems more aggressive than normal rats, possibly mutated by cave magic.");
+                break;
+            case "Goblin Scout":
+                System.out.println("   A small but cunning goblin wearing crude leather armor.");
+                System.out.println("   It carries a rusty dagger and watches you with intelligent malice.");
+                break;
+            case "Stone Gargoyle":
+                System.out.println("   A creature of living stone that blends perfectly with the cave walls.");
+                System.out.println("   Its wings are folded, but its claws look razor-sharp.");
+                break;
+            case "Fire Salamander":
+                System.out.println("   A lizard-like creature wreathed in flames, leaving scorch marks on the stone.");
+                System.out.println("   Its breath steams in the cool cave air, and embers fall from its scales.");
+                break;
+            default:
+                System.out.println("   A dangerous creature that shouldn't be underestimated.");
+        }
+    }
+    
+    private void showPartyStatus() {
+        System.out.println("\n👥 === PARTY STATUS ===\n");
+        for (GameCharacter character : party) {
+            String status = "Healthy";
+            if (character.getHealth() < character.getMaxHealth() * 0.3) {
+                status = "Badly Wounded";
+            } else if (character.getHealth() < character.getMaxHealth() * 0.7) {
+                status = "Injured";
+            }
             
+            System.out.println(getCharacterIcon(character) + " " + character.getName() + " the " + character.getCharacterType());
+            System.out.println("   Status: " + status + " (" + character.getHealth() + "/" + character.getMaxHealth() + " HP)");
+            System.out.println("   " + getCharacterCurrentState(character));
+            System.out.println();
+        }
+        
+        System.out.println("🎒 === YOUR INVENTORY ===");
+        if (playerInventory.isEmpty()) {
+            System.out.println("   (Empty - " + MAX_INVENTORY + " slots available)");
+        } else {
+            System.out.println("   (" + playerInventory.size() + "/" + MAX_INVENTORY + " slots used)");
+            for (String item : playerInventory) {
+                System.out.println("   • " + item);
+            }
+        }
+        
+        System.out.println("\nPress Enter to continue...");
+        scanner.nextLine();
+    }
+    
+    private boolean attemptStealth(String enemy) {
+        Random random = new Random();
+        int stealthRoll = random.nextInt(20) + 1;
+        
+        // Thief gets bonus to stealth
+        if (player instanceof Thief) {
+            stealthRoll += 5;
+        }
+        
+        System.out.println("🎲 Stealth attempt: " + stealthRoll + "/20");
+        
+        return stealthRoll >= 12; // Base difficulty
+    }
+    
+    private void describeTreasureDiscovery(List<String> treasures) {
+        System.out.println("After searching carefully, you discover:");
+        for (String treasure : treasures) {
+            System.out.println("   ✨ " + treasure + " - " + getTreasureDescription(treasure));
+        }
+    }
+    
+    private void describeTreasureDetails(List<String> treasures) {
+        System.out.println("You examine each treasure carefully:");
+        for (String treasure : treasures) {
+            System.out.println("\n📝 " + treasure + ":");
+            System.out.println("   " + getTreasureDescription(treasure));
+            System.out.println("   " + getTreasureUsefulness(treasure));
+        }
+    }
+    
+    private String getTreasureDescription(String treasure) {
+        switch (treasure) {
+            case "Health Potion": return "A red liquid in a crystal vial that glows with healing energy";
+            case "Rusty Dagger": return "An old but still sharp blade with mysterious runes on the hilt";
+            case "Magic Crystal": return "A blue crystal that pulses with arcane power";
+            case "Ancient Coin": return "A gold coin with an unknown emperor's face, might be valuable";
+            case "Enchanted Ring": return "A silver ring that feels warm to the touch";
+            case "Cave Map": return "A detailed map showing secret passages through these caverns";
+            case "Fire Scroll": return "A scroll containing a powerful fire spell";
+            case "Iron Shield": return "A sturdy shield that could protect against enemy attacks";
+            default: return "A mysterious item with unknown properties";
+        }
+    }
+    
+    private String getTreasureUsefulness(String treasure) {
+        switch (treasure) {
+            case "Health Potion": return "Could save your life in a tough battle";
+            case "Magic Crystal": return "Useful for powering magical abilities";
+            case "Cave Map": return "Might reveal shortcuts or hidden areas";
+            case "Fire Scroll": return "Devastating against ice or plant enemies";
+            case "Iron Shield": return "Provides excellent protection in combat";
+            default: return "Might be useful later in your adventure";
+        }
+    }
+    
+    private void handleSelectiveTreasureCollection(List<String> treasures) {
+        for (String treasure : treasures) {
+            System.out.println("\n💰 Would you like to take the " + treasure + "?");
+            System.out.println("   (You have " + (MAX_INVENTORY - playerInventory.size()) + " inventory slots remaining)");
+            System.out.print("   Take it? (y/n): ");
+            
+            String response = scanner.nextLine().toLowerCase().trim();
             if (response.startsWith("y")) {
                 if (playerInventory.size() < MAX_INVENTORY) {
                     playerInventory.add(treasure);
-                    System.out.println("✅ Added " + treasure + " to inventory!");
+                    System.out.println("✅ " + treasure + " added to your inventory!");
                 } else {
-                    System.out.println("❌ Inventory full! Drop something first? (y/n): ");
+                    System.out.println("❌ Your inventory is full! Drop something first? (y/n): ");
                     String dropResponse = scanner.nextLine().toLowerCase().trim();
                     if (dropResponse.startsWith("y")) {
                         dropItemFromInventory();
                         if (playerInventory.size() < MAX_INVENTORY) {
                             playerInventory.add(treasure);
-                            System.out.println("✅ Added " + treasure + " to inventory!");
+                            System.out.println("✅ " + treasure + " added to your inventory!");
                         }
                     } else {
                         System.out.println("⏭️ Left " + treasure + " behind.");
                     }
                 }
             } else {
-                System.out.println("⏭️ Left " + treasure + " behind.");
+                System.out.println("⏭️ You decide to leave the " + treasure + " behind.");
             }
+        }
+    }
+    
+    private void offerNavigationChoices() {
+        System.out.println("\n🗺️ === CHOOSE YOUR PATH ===\n");
+        System.out.println("You've completed this chamber. Where would you like to go next?");
+        System.out.println();
+        System.out.println("1. ⬆️  Continue forward deeper into the caverns");
+        System.out.println("2. ⬅️  Explore a side passage to the left");  
+        System.out.println("3. ➡️  Investigate a passage to the right");
+        System.out.println("4. 📋 Check party status before deciding");
+        System.out.println("5. 💭 Think carefully about your options");
+        
+        System.out.print("\nWhat is your choice? (1-5): ");
+        int choice = getPlayerChoice(1, 5);
+        
+        switch (choice) {
+            case 1:
+                currentRoom++;
+                System.out.println("\n🚶 Your party moves deeper into the mysterious caverns...");
+                break;
+            case 2:
+                System.out.println("\n🚶 You decide to explore the left passage...");
+                // Could lead to the same next room or special areas
+                currentRoom++;
+                break;
+            case 3:
+                System.out.println("\n🚶 You choose the right-hand passage...");
+                currentRoom++;
+                break;
+            case 4:
+                showPartyStatus();
+                offerNavigationChoices(); // Recursive call to choose again
+                return;
+            case 5:
+                System.out.println("\n💭 You take a moment to consider your options carefully...");
+                System.out.println("The deeper you go, the more dangerous it becomes, but also");
+                System.out.println("the greater the potential rewards. Your party seems ready to continue.");
+                offerNavigationChoices(); // Recursive call to choose again
+                return;
+        }
+        
+        System.out.println("The adventure continues...\n");
+    }
+    
+    // Boss room and combat methods
+    private void exploreBossRoom() {
+        System.out.println("🏛️ **THE GUARDIAN'S SANCTUM**\n");
+        System.out.println("You enter a massive circular chamber with a domed ceiling that disappears");
+        System.out.println("into darkness above. Ancient pillars carved with mystical symbols support");
+        System.out.println("the vast space. At the center, on a raised dais, sits an enormous creature");
+        System.out.println("made of living crystal and shadow - the Ancient Guardian of the caverns.");
+        System.out.println();
+        System.out.println("The Guardian's eyes open as you approach, glowing with power accumulated");
+        System.out.println("over millennia. This is the final test of your adventure!");
+        System.out.println();
+        
+        bossDefeated = handleBossBattle();
+    }
+    
+    private boolean handleBossBattle() {
+        System.out.println("⚔️ === FINAL BATTLE: THE ANCIENT GUARDIAN ===\n");
+        
+        for (int round = 1; round <= 3; round++) {
+            System.out.println("--- ROUND " + round + " ---");
+            System.out.println("The Ancient Guardian " + getBossRoundDescription(round));
+            System.out.println();
+            
+            System.out.println("Choose your strategy for round " + round + ":");
+            System.out.println("1. ⚔️ Coordinated Attack - All party members strike together");
+            System.out.println("2. 🛡️ Defensive Strategy - Protect while looking for weaknesses");
+            System.out.println("3. 🔮 Magic Focus - Use all magical abilities and items");
+            System.out.println("4. 🎯 Tactical Strike - Target specific weak points");
+            System.out.print("\nEnter your choice (1-4): ");
+            
+            int strategy = getPlayerChoice(1, 4);
+            
+            if (executeBossStrategy(strategy, round)) {
+                System.out.println("\n🎉 === VICTORY! ===");
+                System.out.println("The Ancient Guardian's form begins to dissolve into sparkling light!");
+                System.out.println("'You have proven yourselves worthy,' its voice echoes as it fades.");
+                System.out.println("'Take these treasures as a reward for your courage and teamwork.'");
+                return true;
+            }
+        }
+        
+        System.out.println("\n💀 The Ancient Guardian's power proves overwhelming...");
+        System.out.println("Your party fought valiantly, but this challenge was too great.");
+        return false;
+    }
+    
+    private String getBossRoundDescription(int round) {
+        switch (round) {
+            case 1: return "rises from its throne, crystal formations crackling with energy.";
+            case 2: return "unleashes waves of magical force, the chamber shaking with power.";
+            case 3: return "glows with desperate fury, this is your final chance!";
+            default: return "prepares for battle.";
+        }
+    }
+    
+    private boolean executeBossStrategy(int strategy, int round) {
+        Random random = new Random();
+        int baseRoll = random.nextInt(20) + 1;
+        int totalRoll = baseRoll;
+        
+        switch (strategy) {
+            case 1: // Coordinated Attack
+                totalRoll += 3 + party.size(); // Bonus for teamwork
+                System.out.println("🎲 Teamwork Roll: " + totalRoll + " (base: " + baseRoll + " + teamwork bonus)");
+                break;
+            case 2: // Defensive Strategy  
+                totalRoll += 2;
+                System.out.println("🎲 Defense Roll: " + totalRoll + " (base: " + baseRoll + " + defense bonus)");
+                break;
+            case 3: // Magic Focus
+                totalRoll += 4; // High risk, high reward
+                System.out.println("🎲 Magic Roll: " + totalRoll + " (base: " + baseRoll + " + magic bonus)");
+                break;
+            case 4: // Tactical Strike
+                totalRoll += 1 + round; // Gets better each round
+                System.out.println("🎲 Precision Roll: " + totalRoll + " (base: " + baseRoll + " + tactical bonus)");
+                break;
+        }
+        
+        int difficulty = 15 - round; // Gets easier each round
+        System.out.println("🎯 Needed: " + difficulty + " or higher");
+        
+        if (totalRoll >= difficulty) {
+            System.out.println("✅ Your strategy succeeds! The Guardian staggers!");
+            return round == 3 || totalRoll >= 20; // Win on round 3 or critical success
+        } else {
+            System.out.println("❌ The Guardian resists, but shows signs of wear!");
+            return false;
+        }
+    }
+    
+    // Combat system
+    private boolean handleCombat(String enemy) {
+        return handleCombat(enemy, false);
+    }
+    
+    private boolean handleCombat(String enemy, boolean prepared) {
+        System.out.println("\n⚔️ === COMBAT: " + enemy.toUpperCase() + " ===\n");
+        
+        Random random = new Random();
+        int playerRoll = random.nextInt(20) + 1 + party.size();
+        int enemyRoll = random.nextInt(20) + 1;
+        
+        if (prepared) {
+            playerRoll += 3;
+            System.out.println("🛡️ Your preparation gives you an advantage!");
+        }
+        
+        System.out.println("🎲 Your party's attack: " + playerRoll);
+        System.out.println("🎲 " + enemy + "'s defense: " + enemyRoll);
+        
+        if (playerRoll >= enemyRoll) {
+            System.out.println("\n🎉 Victory! You defeat the " + enemy + "!");
+            System.out.println(getVictoryDescription(enemy));
+            return true;
+        } else {
+            System.out.println("\n💔 Defeat! The " + enemy + " proves too powerful...");
+            return false;
+        }
+    }
+    
+    private String getVictoryDescription(String enemy) {
+        switch (enemy) {
+            case "Cave Rat": return "The oversized rat squeaks once and scurries away into the darkness.";
+            case "Goblin Scout": return "The goblin drops its weapon and flees, muttering curses.";
+            case "Stone Gargoyle": return "The gargoyle crumbles back into ordinary stone.";
+            case "Fire Salamander": return "The salamander's flames dim and it retreats to the deeper caves.";
+            default: return "Your enemy is defeated and the path ahead is clear.";
+        }
+    }
+    
+    // Utility methods
+    private void handleTreasureCollection(List<String> treasures) {
+        System.out.println("\n💰 Treasures found in this room:");
+        for (String treasure : treasures) {
+            System.out.println("   ✨ " + treasure);
+        }
+        
+        System.out.println("\nWould you like to:");
+        System.out.println("1. 📦 Take all treasures (if space allows)");
+        System.out.println("2. 🎯 Choose specific treasures");
+        System.out.println("3. ⏭️ Leave all treasures behind");
+        
+        System.out.print("Your choice (1-3): ");
+        int choice = getPlayerChoice(1, 3);
+        
+        switch (choice) {
+            case 1:
+                for (String treasure : treasures) {
+                    if (playerInventory.size() < MAX_INVENTORY) {
+                        playerInventory.add(treasure);
+                        System.out.println("✅ Took " + treasure);
+                    } else {
+                        System.out.println("❌ No space for " + treasure);
+                    }
+                }
+                break;
+            case 2:
+                handleSelectiveTreasureCollection(treasures);
+                break;
+            case 3:
+                System.out.println("⏭️ You leave all treasures behind.");
+                break;
         }
     }
     
     private void dropItemFromInventory() {
-        if (playerInventory.isEmpty()) {
-            System.out.println("Your inventory is empty!");
-            return;
-        }
+        if (playerInventory.isEmpty()) return;
         
-        System.out.println("\\n🎒 Choose item to drop:");
+        System.out.println("\n🗑️ Which item would you like to drop?");
         for (int i = 0; i < playerInventory.size(); i++) {
-            System.out.println("   " + (i + 1) + ". " + playerInventory.get(i));
+            System.out.println((i + 1) + ". " + playerInventory.get(i));
         }
-        System.out.print("\\nDrop item number (1-" + playerInventory.size() + "): ");
         
+        System.out.print("Drop item (1-" + playerInventory.size() + "): ");
         int choice = getPlayerChoice(1, playerInventory.size());
-        String droppedItem = playerInventory.remove(choice - 1);
-        System.out.println("🗑️ Dropped " + droppedItem + " from inventory.");
-    }
-    
-    private void offerRoomChoices() {
-        System.out.println("\\n🚪 === CHOOSE YOUR PATH ===\\n");
-        
-        if (currentRoom == BOSS_ROOM - 1) {
-            System.out.println("You stand before the final chamber. The air thrums with ancient power.");
-            System.out.println("1. 🚪 Enter the Boss Chamber (Final Battle)");
-            System.out.print("\\nAre you ready for the final battle? (y/n): ");
-            
-            String response = scanner.nextLine().toLowerCase().trim();
-            if (response.startsWith("y")) {
-                currentRoom = BOSS_ROOM;
-            } else {
-                System.out.println("You decide to prepare more before the final battle.");
-                System.out.println("\\n📋 Current Status:");
-                displayInventory();
-                displayPartyStatus();
-                System.out.println("\\nPress Enter when ready to continue...");
-                scanner.nextLine();
-                currentRoom = BOSS_ROOM;
-            }
-        } else {
-            System.out.println("You see multiple paths ahead...");
-            System.out.println("1. 🚪 Continue to Room " + (currentRoom + 1));
-            if (currentRoom > 1) {
-                System.out.println("2. ↩️ Return to Room " + (currentRoom - 1));
-            }
-            System.out.println("3. 🎒 Manage Inventory");
-            System.out.println("4. 👥 Check Party Status");
-            
-            System.out.print("\\nEnter your choice: ");
-            int choice = getPlayerChoice(1, 4);
-            
-            switch (choice) {
-                case 1:
-                    currentRoom++;
-                    System.out.println("🚶 Moving forward to Room " + currentRoom + "...");
-                    break;
-                case 2:
-                    if (currentRoom > 1) {
-                        currentRoom--;
-                        System.out.println("↩️ Returning to Room " + currentRoom + "...");
-                    }
-                    break;
-                case 3:
-                    manageInventory();
-                    break;
-                case 4:
-                    displayPartyStatus();
-                    System.out.println("\\nPress Enter to continue...");
-                    scanner.nextLine();
-                    break;
-            }
-        }
-    }
-    
-    private void manageInventory() {
-        System.out.println("\\n🎒 === INVENTORY MANAGEMENT ===\\n");
-        displayInventory();
-        
-        if (!playerInventory.isEmpty()) {
-            System.out.println("\\n1. 🗑️ Drop an item");
-            System.out.println("2. 📋 Just view inventory");
-            System.out.print("\\nEnter choice (1-2): ");
-            
-            int choice = getPlayerChoice(1, 2);
-            if (choice == 1) {
-                dropItemFromInventory();
-            }
-        }
-        
-        System.out.println("\\nPress Enter to continue...");
-        scanner.nextLine();
-    }
-    
-    private void displayInventory() {
-        System.out.println("\\n🎒 INVENTORY (" + playerInventory.size() + "/" + MAX_INVENTORY + "):");
-        if (playerInventory.isEmpty()) {
-            System.out.println("   (Empty)");
-        } else {
-            for (int i = 0; i < playerInventory.size(); i++) {
-                System.out.println("   " + (i + 1) + ". " + playerInventory.get(i));
-            }
-        }
-    }
-    
-    private void displayPartyStatus() {
-        System.out.println("\\n👥 === PARTY STATUS ===\\n");
-        for (GameCharacter character : party) {
-            System.out.println(getCharacterIcon(character) + " " + character.getName() + " the " + character.getCharacterType());
-            System.out.println("   Health: " + character.getHealth() + "/" + character.getMaxHealth());
-            if (character instanceof Wizard) {
-                System.out.println("   Mana: 100/100");
-            }
-            System.out.println();
-        }
+        String dropped = playerInventory.remove(choice - 1);
+        System.out.println("🗑️ Dropped " + dropped + " from inventory.");
     }
     
     private int getPlayerChoice(int min, int max) {
@@ -422,47 +722,30 @@ public class CaveExplorer {
                     System.out.print("Invalid choice. Please enter " + min + "-" + max + ": ");
                 }
             } catch (NumberFormatException e) {
-                System.out.print("Invalid input. Please enter " + min + "-" + max + ": ");
+                System.out.print("Invalid input. Please enter a number " + min + "-" + max + ": ");
             }
         }
         return choice;
     }
     
-    private boolean askRetryOrContinue() {
-        System.out.println("\\n1. 🔄 Try fighting again");
-        System.out.println("2. ➡️ Continue exploring (bypass enemy)");
-        System.out.print("\\nEnter choice (1-2): ");
-        
-        int choice = getPlayerChoice(1, 2);
-        return choice == 1 ? handleCombat(roomEnemies.get(currentRoom)) : true;
-    }
-    
-    private String getRandomCombatReward() {
-        String[] rewards = {"Health Potion", "Gold Coins", "Magic Gem", "Ancient Relic", "Enchanted Item", "Mysterious Key"};
-        return rewards[new Random().nextInt(rewards.length)];
-    }
-    
-    private String getRoomDescription(int room) {
-        String[] descriptions = {
-            "",
-            "damp cave entrance with moss-covered walls and echoing drips",
-            "wider cavern with glowing crystals embedded in the ceiling",
-            "ancient chamber with mysterious carvings on the walls",
-            "hot volcanic room with lava pools casting eerie red light",
-            "misty chamber where shadows seem to move on their own",
-            "crystal formation room where light refracts in rainbow patterns",
-            "deep underground hall with massive stone pillars",
-            "magical library cave filled with floating books and scrolls",
-            "treasure vault guarded by ancient magical wards",
-            "massive boss chamber with towering ceilings and ancient power"
-        };
-        return room < descriptions.length ? descriptions[room] : "mysterious chamber";
-    }
-    
     private String getCharacterIcon(GameCharacter character) {
         if (character instanceof Knight) return "⚔️";
-        if (character instanceof Thief) return "🗡️";
+        if (character instanceof Thief) return "🗡️";  
         if (character instanceof Wizard) return "🔮";
         return "👤";
+    }
+    
+    private String getCharacterDescription(GameCharacter character) {
+        if (character instanceof Knight) return "Brave and honorable, skilled in combat";
+        if (character instanceof Thief) return "Stealthy and cunning, master of shadows";
+        if (character instanceof Wizard) return "Wise and powerful, wielder of ancient magic";
+        return "A skilled adventurer";
+    }
+    
+    private String getCharacterCurrentState(GameCharacter character) {
+        if (character instanceof Knight) return "Ready to defend the party with sword and shield";
+        if (character instanceof Thief) return "Alert and watching for traps or ambushes";
+        if (character instanceof Wizard) return "Mentally preparing spells and analyzing magical auras";
+        return "Prepared for whatever lies ahead";
     }
 }

@@ -174,11 +174,26 @@ public class GameEngine {
         }
         
         if (pathChoice == 1) {
-            // Cave exploration mode
+            // Cave exploration mode - disable background activities
             caveMode = true;
+            gameRunning = false; // Stop background threads from printing
             System.out.println("\n🏔️ Entering turn-based cave exploration mode!");
+            System.out.println("🔇 Background activities paused for focused exploration.");
+            
+            // Disable character auto-actions and resource messages for cave mode
+            for (GameCharacter character : characters) {
+                character.setCaveMode(true);
+            }
+            sharedResources.setCaveMode(true);
+            
             caveExplorer = new CaveExplorer(playerCharacter, aiCharacters, scanner);
             gameWon = caveExplorer.exploreCave();
+            
+            // Re-enable background activities
+            for (GameCharacter character : characters) {
+                character.setCaveMode(false);
+            }
+            sharedResources.setCaveMode(false);
             
             if (gameWon) {
                 System.out.println("\n🎉 === CONGRATULATIONS! YOU HAVE WON THE GAME! ===\n");

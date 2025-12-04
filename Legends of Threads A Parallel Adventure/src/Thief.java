@@ -36,7 +36,7 @@ public class Thief extends GameCharacter {
     
     @Override
     public void act() {
-        if (!isAlive || !isActive) return;
+        if (!isAlive || !isActive || caveMode) return;
         
         // Thief's behavior: sneak, steal, hide, scout
         int action = random.nextInt(4);
@@ -59,7 +59,9 @@ public class Thief extends GameCharacter {
     
     @Override
     public void run() {
-        System.out.println(name + " the Thief slips into the shadows...");
+        if (!caveMode) {
+            System.out.println(name + " the Thief disappears into the shadows!");
+        }
         
         while (isActive && isAlive) {
             try {

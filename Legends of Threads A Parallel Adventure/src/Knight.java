@@ -33,7 +33,7 @@ public class Knight extends GameCharacter {
     
     @Override
     public void act() {
-        if (!isAlive || !isActive) return;
+        if (!isAlive || !isActive || caveMode) return;
         
         // Knight's behavior: patrol, seek enemies, protect others
         int action = random.nextInt(4);
@@ -56,18 +56,25 @@ public class Knight extends GameCharacter {
     
     @Override
     public void run() {
-        System.out.println(name + " the Knight begins their noble quest!");
+        if (!caveMode) {
+            System.out.println(name + " the Knight begins their noble quest!");
+        }
         
         while (isActive && isAlive) {
             try {
-                act();
+                // Skip actions during cave mode to prevent background messages
+                if (!caveMode) {
+                    act();
+                }
                 Thread.sleep(2000); // Knight acts every 2 seconds
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
         }
-        System.out.println(name + " the Knight has ended their watch.");
+        if (!caveMode) {
+            System.out.println(name + " the Knight has ended their watch.");
+        }
     }
     
     private void patrol() {
