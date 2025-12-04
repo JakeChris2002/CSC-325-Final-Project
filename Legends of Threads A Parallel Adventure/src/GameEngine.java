@@ -645,38 +645,35 @@ public class GameEngine {
                           playerCharacter.getX() + ", " + playerCharacter.getY() + ").");
         textDelay();
         
-        // Check for discoveries with detailed descriptions
-        double discoveryChance = 0.4; // Base 40% chance
+        // Enhanced encounter system - multiple types of discoveries
+        double baseChance = 0.7; // Higher chance for encounters
         
         // Character-specific bonuses
         if (playerCharacter instanceof Thief) {
-            discoveryChance += 0.2; // Thieves are better at finding things
+            baseChance += 0.15; // Thieves find more
         } else if (playerCharacter instanceof Wizard) {
-            discoveryChance += 0.1; // Wizards can sense magical items
+            baseChance += 0.1; // Wizards sense magic
+        } else if (playerCharacter instanceof Knight) {
+            baseChance += 0.05; // Knights attract quests
         }
         
-        if (Math.random() < discoveryChance) {
-            System.out.println("\n✨ Your careful search pays off!");
-            textDelay();
-            
-            String[] discoveryTypes = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
-                                     "Sacred Grove", "Abandoned Camp", "Crystal Formation", 
-                                     "Forgotten Shrine", "Secret Cache", "Magical Spring"};
-            String discovery = discoveryTypes[(int)(Math.random() * discoveryTypes.length)];
-            
-            // Rich descriptions for each discovery type
-            describeDiscovery(discovery);
-            
-            // Add item to inventory based on discovery
-            addDiscoveryReward(discovery);
-            
-            gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
+        if (Math.random() < baseChance) {
+            // Determine encounter type
+            double encounterRoll = Math.random();
+            if (encounterRoll < 0.3) {
+                handleCombatEncounter();
+            } else if (encounterRoll < 0.55) {
+                handleNPCEncounter();
+            } else if (encounterRoll < 0.75) {
+                handleQuestEncounter();
+            } else {
+                handleDiscoveryEncounter();
+            }
         } else {
-            System.out.println("\n🌫️ Despite your thorough search, this area reveals no immediate secrets.");
+            System.out.println("\n🌫️ The area seems quiet, but you sense adventure nearby.");
             textDelay();
-            System.out.println("   Sometimes the journey itself is more valuable than the destination.");
+            System.out.println("   Your exploration skills improve from the careful search.");
             textDelay();
-            System.out.println("   You gain experience and knowledge from the exploration nonetheless.");
         }
     }
     
@@ -766,6 +763,258 @@ public class GameEngine {
     }
     
     /**
+     * Handle combat encounters with various enemies
+     */
+    private void handleCombatEncounter() {
+        String[] enemies = {"Goblin Raider", "Shadow Wolf", "Rogue Bandit", "Wild Troll", 
+                          "Dark Sprite", "Corrupted Bear", "Skeleton Warrior", "Ice Wraith"};
+        String enemy = enemies[(int)(Math.random() * enemies.length)];
+        
+        System.out.println("\n⚔️ COMBAT ENCOUNTER!");
+        textDelay();
+        
+        describeCombatEnemy(enemy);
+        
+        // Simple combat resolution
+        int playerPower = playerCharacter.getHealth() + (playerCharacter instanceof Knight ? 30 : 
+                         playerCharacter instanceof Thief ? 20 : 25);
+        int enemyPower = 40 + (int)(Math.random() * 30);
+        
+        System.out.println("\n⚡ Battle commences!");
+        textDelay();
+        
+        if (playerPower > enemyPower) {
+            System.out.println("\n🏆 Victory! " + playerCharacter.getName() + " defeats the " + enemy + "!");
+            textDelay();
+            
+            // Victory rewards
+            String[] rewards = {"Battle Trophy", "Enemy Weapon", "Gold Coins", "Rare Gem", "Magic Potion"};
+            String reward = rewards[(int)(Math.random() * rewards.length)];
+            playerCharacter.addToInventory(reward);
+            System.out.println("   └─ You claim: " + reward);
+            textDelay();
+        } else {
+            System.out.println("\n💥 Hard fought battle! The " + enemy + " retreats, but you're wounded.");
+            textDelay();
+            int damage = 10 + (int)(Math.random() * 15);
+            playerCharacter.takeDamage(damage);
+            System.out.println("   └─ You lose " + damage + " health from the encounter.");
+            textDelay();
+        }
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "combat", "battled " + enemy);
+    }
+    
+    /**
+     * Handle NPC encounters with dialogue and interactions
+     */
+    private void handleNPCEncounter() {
+        String[] npcs = {"Wandering Merchant", "Lost Traveler", "Wise Hermit", "Village Elder", 
+                        "Mysterious Mage", "Injured Knight", "Forest Ranger", "Ancient Oracle"};
+        String npc = npcs[(int)(Math.random() * npcs.length)];
+        
+        System.out.println("\n👤 NPC ENCOUNTER!");
+        textDelay();
+        
+        describeNPCEncounter(npc);
+        
+        // NPC interaction outcomes
+        double interactionRoll = Math.random();
+        if (interactionRoll < 0.4) {
+            // Helpful NPC - gives item or information
+            String[] gifts = {"Healing Herb", "Ancient Map", "Lucky Charm", "Traveler's Ration", "Wisdom Scroll"};
+            String gift = gifts[(int)(Math.random() * gifts.length)];
+            playerCharacter.addToInventory(gift);
+            System.out.println("\n🎁 The " + npc + " offers you a gift: " + gift);
+            textDelay();
+            System.out.println("   \"Take this, brave adventurer. May it serve you well!\"");
+            textDelay();
+        } else if (interactionRoll < 0.7) {
+            // Quest giver
+            System.out.println("\n📜 The " + npc + " has a task for you!");
+            textDelay();
+            generateQuest(npc);
+        } else {
+            // Information/lore
+            System.out.println("\n💬 The " + npc + " shares valuable information:");
+            textDelay();
+            shareNPCLore();
+        }
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "social", "met " + npc);
+    }
+    
+    /**
+     * Handle quest encounters
+     */
+    private void handleQuestEncounter() {
+        String[] questTypes = {"Ancient Mystery", "Lost Artifact", "Rescue Mission", "Monster Hunt", 
+                              "Treasure Map", "Sacred Ritual", "Diplomatic Mission", "Exploration Quest"};
+        String questType = questTypes[(int)(Math.random() * questTypes.length)];
+        
+        System.out.println("\n📋 QUEST DISCOVERED!");
+        textDelay();
+        
+        describeQuestEncounter(questType);
+        
+        // Add quest to inventory as a special item
+        playerCharacter.addToInventory("Quest: " + questType);
+        System.out.println("   └─ Quest added to your journal!");
+        textDelay();
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "quest", "discovered " + questType);
+    }
+    
+    /**
+     * Handle traditional discovery encounters
+     */
+    private void handleDiscoveryEncounter() {
+        System.out.println("\n✨ DISCOVERY!");
+        textDelay();
+        
+        String[] discoveryTypes = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
+                                 "Sacred Grove", "Abandoned Camp", "Crystal Formation", 
+                                 "Forgotten Shrine", "Secret Cache", "Magical Spring", 
+                                 "Underground Cavern", "Floating Island", "Time Rift"};
+        String discovery = discoveryTypes[(int)(Math.random() * discoveryTypes.length)];
+        
+        describeDiscovery(discovery);
+        addDiscoveryReward(discovery);
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
+    }
+    
+    /**
+     * Describe combat enemies with vivid detail
+     */
+    private void describeCombatEnemy(String enemy) {
+        switch (enemy) {
+            case "Goblin Raider" -> {
+                System.out.println("🏹 A snarling goblin emerges from the shadows, wielding crude weapons!");
+                textDelay();
+                System.out.println("   Its yellow eyes gleam with malice as it circles you menacingly.");
+            }
+            case "Shadow Wolf" -> {
+                System.out.println("🐺 A massive wolf materializes from the darkness, its fur crackling with dark energy!");
+                textDelay();
+                System.out.println("   Ethereal mist swirls around its form as it bares supernatural fangs.");
+            }
+            case "Wild Troll" -> {
+                System.out.println("👹 An enormous troll crashes through the undergrowth, club in hand!");
+                textDelay();
+                System.out.println("   Moss and lichens cover its stone-like hide as it roars a challenge.");
+            }
+            default -> {
+                System.out.println("⚔️ A dangerous " + enemy + " blocks your path!");
+                textDelay();
+                System.out.println("   You must defend yourself against this hostile creature.");
+            }
+        }
+        textDelay();
+    }
+    
+    /**
+     * Describe NPC encounters with personality
+     */
+    private void describeNPCEncounter(String npc) {
+        switch (npc) {
+            case "Wandering Merchant" -> {
+                System.out.println("🎒 A well-traveled merchant approaches with a pack full of wares.");
+                textDelay();
+                System.out.println("   \"Greetings, traveler! Perhaps you'd be interested in my goods?\"");
+            }
+            case "Wise Hermit" -> {
+                System.out.println("🧙 An ancient hermit emerges from a hidden grove, eyes twinkling with wisdom.");
+                textDelay();
+                System.out.println("   \"Ah, another seeker of truth walks these paths...\"");
+            }
+            case "Lost Traveler" -> {
+                System.out.println("😰 A confused traveler stumbles toward you, looking distressed.");
+                textDelay();
+                System.out.println("   \"Please, can you help me? I've been wandering for hours!\"");
+            }
+            default -> {
+                System.out.println("👋 A friendly " + npc + " greets you warmly.");
+                textDelay();
+                System.out.println("   They seem eager to share stories of their travels.");
+            }
+        }
+        textDelay();
+    }
+    
+    /**
+     * Generate quest descriptions and add to player's journal
+     */
+    private void generateQuest(String questGiver) {
+        String[] questDescriptions = {
+            "Find the lost amulet of the ancient kings hidden in the crystal caves.",
+            "Rescue a kidnapped scholar from the abandoned tower to the north.",
+            "Collect three rare herbs to cure a mysterious plague affecting nearby villages.",
+            "Investigate strange magical disturbances reported near the old battleground.",
+            "Deliver an important message to the sage living atop the floating mountain.",
+            "Hunt down the legendary beast terrorizing merchant caravans.",
+            "Recover stolen artifacts from a bandit stronghold deep in the forest."
+        };
+        
+        String quest = questDescriptions[(int)(Math.random() * questDescriptions.length)];
+        System.out.println("📖 Quest Details: " + quest);
+        textDelay();
+        System.out.println("   The " + questGiver + " looks at you hopefully, waiting for your answer.");
+        textDelay();
+    }
+    
+    /**
+     * Describe quest encounters found in the world
+     */
+    private void describeQuestEncounter(String questType) {
+        switch (questType) {
+            case "Ancient Mystery" -> {
+                System.out.println("🏛️ You discover ancient stone tablets covered in mysterious runes.");
+                textDelay();
+                System.out.println("   The symbols seem to pulse with inner light, hinting at forgotten secrets.");
+            }
+            case "Monster Hunt" -> {
+                System.out.println("👹 Fresh tracks and claw marks suggest a dangerous beast lurks nearby.");
+                textDelay();
+                System.out.println("   Local villages would surely reward whoever eliminates this threat.");
+            }
+            case "Lost Artifact" -> {
+                System.out.println("💎 You sense powerful magical energies emanating from somewhere close.");
+                textDelay();
+                System.out.println("   An ancient artifact of great value must be hidden in this area.");
+            }
+            default -> {
+                System.out.println("📜 Signs point to an important " + questType + " waiting to be undertaken.");
+                textDelay();
+                System.out.println("   This could be the adventure you've been seeking.");
+            }
+        }
+        textDelay();
+    }
+    
+    /**
+     * Share interesting lore and world information through NPCs
+     */
+    private void shareNPCLore() {
+        String[] loreEntries = {
+            "\"The ancient dragons once ruled these lands, leaving magical ley lines everywhere.\"",
+            "\"Beware the mist that rises at dawn - it's said to show visions of the past.\"",
+            "\"The old castle ruins are haunted by the spirits of fallen knights.\"",
+            "\"Hidden portals connect distant realms, but they're dangerous to use.\"",
+            "\"The crystal formations here amplify magical abilities threefold.\"",
+            "\"Long ago, a great wizard sealed away dark powers beneath this very ground.\"",
+            "\"The trees whisper secrets to those who know how to listen.\"",
+            "\"Stars align differently here, affecting the flow of time itself.\""
+        };
+        
+        String lore = loreEntries[(int)(Math.random() * loreEntries.length)];
+        System.out.println("   " + lore);
+        textDelay();
+        System.out.println("   This knowledge might prove useful in your adventures.");
+        textDelay();
+    }
+    
+    /**
      * Handle trading for player character
      */
     private void handleTrading() {
@@ -801,10 +1050,14 @@ public class GameEngine {
         System.out.println("=".repeat(60));
         textDelay();
         
-        // Get environment details
+        // Get environment details - expanded for richer world
         String[] environments = {"ancient forest clearing", "misty mountain path", "abandoned village square", 
                                "crystal cave entrance", "mystical shrine", "crossroads junction", 
-                               "ruined watchtower", "enchanted grove", "desert oasis"};
+                               "ruined watchtower", "enchanted grove", "desert oasis", "floating sky island",
+                               "underground cavern", "haunted battlefield", "wizard's tower ruins", "dragon's lair entrance",
+                               "moonlit lake shore", "volcanic crater rim", "ice crystal palace", "shadow realm portal",
+                               "golden wheat fields", "ancient library ruins", "merchant caravan camp", "bandit hideout",
+                               "elven tree city", "dwarven mine entrance", "pegasus nesting grounds", "time rift anomaly"};
         String currentEnv = environments[Math.abs((playerCharacter.getX() + playerCharacter.getY()) % environments.length)];
         
         // Rich environmental description based on location
@@ -889,6 +1142,153 @@ public class GameEngine {
                 System.out.println("   pulse with soft blue light. The very air hums with magical energy, and");
                 textDelay();
                 System.out.println("   you feel the presence of ancient powers watching over this sacred place.");
+            }
+            case "crossroads junction" -> {
+                System.out.println("   Four paths converge here, marked by an ancient stone waymarker covered");
+                textDelay();
+                System.out.println("   in weathered symbols. Merchants and travelers often pass through, leaving");
+                textDelay();
+                System.out.println("   traces of their journeys and whispered tales of distant lands.");
+            }
+            case "ruined watchtower" -> {
+                System.out.println("   The skeletal remains of a once-proud tower rise from overgrown rubble.");
+                textDelay();
+                System.out.println("   Broken battlements and shattered windows speak of long-ago battles, while");
+                textDelay();
+                System.out.println("   hidden chambers below may still guard forgotten secrets.");
+            }
+            case "enchanted grove" -> {
+                System.out.println("   Silvery trees with luminescent leaves create a sanctuary of natural magic.");
+                textDelay();
+                System.out.println("   Fairy lights dance between the branches, and the very air shimmers with");
+                textDelay();
+                System.out.println("   enchantment. This place feels alive with ancient woodland spirits.");
+            }
+            case "desert oasis" -> {
+                System.out.println("   A crystal-clear spring bubbles up from the sandy ground, surrounded by");
+                textDelay();
+                System.out.println("   date palms and flowering desert blooms. The contrast of life against");
+                textDelay();
+                System.out.println("   the endless dunes creates a miraculous refuge of peace and sustenance.");
+            }
+            case "floating sky island" -> {
+                System.out.println("   Impossible chunks of earth drift through the clouds around you, connected");
+                textDelay();
+                System.out.println("   by shimmering bridges of crystallized air. Wind spirits dance among the");
+                textDelay();
+                System.out.println("   floating gardens, and the view of the world below is breathtaking.");
+            }
+            case "underground cavern" -> {
+                System.out.println("   Vast stone chambers stretch into darkness, carved by ancient waters.");
+                textDelay();
+                System.out.println("   Stalactites drip endlessly while phosphorescent fungi provide an eerie");
+                textDelay();
+                System.out.println("   blue glow. Strange echoes hint at deeper passages yet unexplored.");
+            }
+            case "haunted battlefield" -> {
+                System.out.println("   Broken weapons and armor lie scattered across scarred earth where a great");
+                textDelay();
+                System.out.println("   battle once raged. Ghostly mists swirl among the remnants, and you sense");
+                textDelay();
+                System.out.println("   the restless spirits of fallen warriors still walking this cursed ground.");
+            }
+            case "wizard's tower ruins" -> {
+                System.out.println("   The collapsed remains of a mighty spire lie twisted with wild magic.");
+                textDelay();
+                System.out.println("   Arcane energies crackle through the rubble, and floating books drift");
+                textDelay();
+                System.out.println("   aimlessly among the debris of a once-great magical library.");
+            }
+            case "dragon's lair entrance" -> {
+                System.out.println("   A massive cave mouth yawns before you, lined with teeth-like stalactites.");
+                textDelay();
+                System.out.println("   The acrid smell of sulfur and old fire permeates the air, while treasure");
+                textDelay();
+                System.out.println("   glints tantalizingly in the depths. This is clearly a dragon's domain.");
+            }
+            case "moonlit lake shore" -> {
+                System.out.println("   Silver moonbeams dance across the mirror-still water, creating paths of");
+                textDelay();
+                System.out.println("   light that seem almost solid enough to walk upon. Night-blooming flowers");
+                textDelay();
+                System.out.println("   release their perfume, and you hear the haunting song of water spirits.");
+            }
+            case "volcanic crater rim" -> {
+                System.out.println("   You stand at the edge of a smoldering caldera, feeling the earth's raw");
+                textDelay();
+                System.out.println("   power beneath your feet. Lava bubbles far below while steam vents hiss");
+                textDelay();
+                System.out.println("   around you. Fire elementals may dance in these primordial depths.");
+            }
+            case "ice crystal palace" -> {
+                System.out.println("   Towering spires of living ice stretch toward the aurora-painted sky.");
+                textDelay();
+                System.out.println("   Every surface sparkles with frost-patterns of impossible beauty, and the");
+                textDelay();
+                System.out.println("   halls echo with the ethereal music of wind through frozen corridors.");
+            }
+            case "shadow realm portal" -> {
+                System.out.println("   A tear in reality itself hovers before you, its edges crackling with dark");
+                textDelay();
+                System.out.println("   energy. Through it, you glimpse a world of eternal twilight where shadow");
+                textDelay();
+                System.out.println("   creatures move like living nightmares. The portal pulses hypnotically.");
+            }
+            case "golden wheat fields" -> {
+                System.out.println("   Endless waves of grain ripple in the warm breeze like a golden sea.");
+                textDelay();
+                System.out.println("   The air is sweet with the promise of harvest, and farmhouses dot the");
+                textDelay();
+                System.out.println("   horizon. This peaceful land speaks of simple joys and honest work.");
+            }
+            case "ancient library ruins" -> {
+                System.out.println("   Collapsed shelves and scattered tomes create a maze of lost knowledge.");
+                textDelay();
+                System.out.println("   Some books still glow with preserved magic, their pages turning on their");
+                textDelay();
+                System.out.println("   own. Wisps of ancient scholars may still haunt these halls of learning.");
+            }
+            case "merchant caravan camp" -> {
+                System.out.println("   Colorful tents and wagon circles create a temporary city of commerce.");
+                textDelay();
+                System.out.println("   The air fills with exotic spices, foreign languages, and the jingle of");
+                textDelay();
+                System.out.println("   coins changing hands. Tales from distant lands flow as freely as wine.");
+            }
+            case "bandit hideout" -> {
+                System.out.println("   Hidden among jagged rocks and twisted trees, this secret refuge reeks");
+                textDelay();
+                System.out.println("   of danger and ill-gotten gains. Stolen goods lie scattered about, and");
+                textDelay();
+                System.out.println("   you sense watchful eyes tracking your every movement from the shadows.");
+            }
+            case "elven tree city" -> {
+                System.out.println("   Graceful bridges and spiral staircases wind around massive living trees.");
+                textDelay();
+                System.out.println("   Elven architecture flows seamlessly with nature, creating halls of living");
+                textDelay();
+                System.out.println("   wood and galleries where art and nature become indistinguishable.");
+            }
+            case "dwarven mine entrance" -> {
+                System.out.println("   Sturdy stone archways frame tunnels that delve deep into the mountain's");
+                textDelay();
+                System.out.println("   heart. The ring of hammers on anvils echoes from within, and cart tracks");
+                textDelay();
+                System.out.println("   lead into depths rich with precious metals and ancient dwarven craft.");
+            }
+            case "pegasus nesting grounds" -> {
+                System.out.println("   High mountain meadows where winged horses make their home among the clouds.");
+                textDelay();
+                System.out.println("   Nests woven from storm-wind and starlight dot the cliff faces, while");
+                textDelay();
+                System.out.println("   magnificent pegasi soar overhead with rainbow manes streaming behind them.");
+            }
+            case "time rift anomaly" -> {
+                System.out.println("   Reality warps and bends around a fracture in time itself. Past, present,");
+                textDelay();
+                System.out.println("   and future blend together in impossible ways - you see glimpses of what");
+                textDelay();
+                System.out.println("   was, is, and might be all occupying the same space simultaneously.");
             }
             default -> {
                 System.out.println("   The landscape stretches before you, filled with mystery and possibility.");
