@@ -1,6 +1,6 @@
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +21,9 @@ public class GameWorld {
     private final List<String> worldEvents = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, Integer> regionStability = new HashMap<>();
     private final Random random = new Random();
+    
+    // === CAVE MODE SUPPORT ===
+    private volatile boolean caveMode = true; // Start silent until explicitly allowed
     
     // === WORLD LOCATIONS ===
     private final String[] ancientSites = {
@@ -82,6 +85,13 @@ public class GameWorld {
     // === NARRATIVE LOGGING SYSTEM ===
     
     /**
+     * Set cave mode to suppress story messages during exploration
+     */
+    public void setCaveMode(boolean caveMode) {
+        this.caveMode = caveMode;
+    }
+    
+    /**
      * Enhanced narrative logging with rich storytelling
      */
     public void logWorldEvent(String title, String description) {
@@ -90,7 +100,9 @@ public class GameWorld {
         String formattedEvent = String.format("[%s] %s\n    %s\n", timestamp, title, description);
         
         worldEvents.add(formattedEvent);
-        System.out.println("🌟 " + formattedEvent);
+        if (!caveMode) {
+            System.out.println("🌟 " + formattedEvent);
+        }
     }
     
     /**

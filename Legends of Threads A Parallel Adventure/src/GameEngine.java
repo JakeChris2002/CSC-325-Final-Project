@@ -185,6 +185,7 @@ public class GameEngine {
                 character.setCaveMode(true);
             }
             sharedResources.setCaveMode(true);
+            gameWorld.setCaveMode(true);
             
             caveExplorer = new CaveExplorer(playerCharacter, aiCharacters, scanner);
             gameWon = caveExplorer.exploreCave();
@@ -194,6 +195,7 @@ public class GameEngine {
                 character.setCaveMode(false);
             }
             sharedResources.setCaveMode(false);
+            gameWorld.setCaveMode(false);
             
             if (gameWon) {
                 System.out.println("\n🎉 === CONGRATULATIONS! YOU HAVE WON THE GAME! ===\n");
@@ -223,6 +225,7 @@ public class GameEngine {
                 character.setCaveMode(false);
             }
             sharedResources.setCaveMode(false);
+            gameWorld.setCaveMode(false);
             
             System.out.println("🚀 ADVENTURE BEGINS! All heroes start their quests...\n");
             
