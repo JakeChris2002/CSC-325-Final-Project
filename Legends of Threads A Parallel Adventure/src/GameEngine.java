@@ -766,43 +766,47 @@ public class GameEngine {
      * Handle combat encounters with various enemies
      */
     private void handleCombatEncounter() {
-        String[] enemies = {"Goblin Raider", "Shadow Wolf", "Rogue Bandit", "Wild Troll", 
-                          "Dark Sprite", "Corrupted Bear", "Skeleton Warrior", "Ice Wraith"};
-        String enemy = enemies[(int)(Math.random() * enemies.length)];
+        String[] enemyNames = {"Goblin Raider", "Shadow Wolf", "Rogue Bandit", "Wild Troll", 
+                              "Dark Sprite", "Corrupted Bear", "Skeleton Warrior", "Ice Wraith"};
+        String enemyName = enemyNames[(int)(Math.random() * enemyNames.length)];
         
         System.out.println("\n⚔️ COMBAT ENCOUNTER!");
         textDelay();
         
-        describeCombatEnemy(enemy);
+        describeCombatEnemy(enemyName);
         
-        // Simple combat resolution
-        int playerPower = playerCharacter.getHealth() + (playerCharacter instanceof Knight ? 30 : 
-                         playerCharacter instanceof Thief ? 20 : 25);
-        int enemyPower = 40 + (int)(Math.random() * 30);
+        // Create enemy with stats based on type
+        CombatEnemy enemy = createEnemy(enemyName);
         
-        System.out.println("\n⚡ Battle commences!");
+        System.out.println("\n⚡ Turn-based battle begins!");
+        textDelay();
+        System.out.println("🎯 " + enemy.name + " - Health: " + enemy.health + "/" + enemy.maxHealth + ", Attack: " + enemy.attack);
         textDelay();
         
-        if (playerPower > enemyPower) {
-            System.out.println("\n🏆 Victory! " + playerCharacter.getName() + " defeats the " + enemy + "!");
-            textDelay();
+        // Turn-based combat loop
+        boolean playerTurn = true;
+        boolean combatActive = true;
+        
+        while (combatActive && playerCharacter.isAlive() && enemy.isAlive()) {
+            if (playerTurn) {
+                combatActive = handlePlayerCombatTurn(enemy);
+            } else {
+                handleEnemyCombatTurn(enemy);
+            }
             
-            // Victory rewards
-            String[] rewards = {"Battle Trophy", "Enemy Weapon", "Gold Coins", "Rare Gem", "Magic Potion"};
-            String reward = rewards[(int)(Math.random() * rewards.length)];
-            playerCharacter.addToInventory(reward);
-            System.out.println("   └─ You claim: " + reward);
-            textDelay();
-        } else {
-            System.out.println("\n💥 Hard fought battle! The " + enemy + " retreats, but you're wounded.");
-            textDelay();
-            int damage = 10 + (int)(Math.random() * 15);
-            playerCharacter.takeDamage(damage);
-            System.out.println("   └─ You lose " + damage + " health from the encounter.");
-            textDelay();
+            // Check for combat end conditions
+            if (!enemy.isAlive()) {
+                handleCombatVictory(enemy);
+                combatActive = false;
+            } else if (!playerCharacter.isAlive()) {
+                handleCombatDefeat(enemy);
+                combatActive = false;
+            }
+            
+            playerTurn = !playerTurn; // Switch turns
         }
         
-        gameWorld.handleCharacterAction(playerCharacter.getName(), "combat", "battled " + enemy);
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "combat", "battled " + enemyName);
     }
     
     /**
@@ -899,10 +903,35 @@ public class GameEngine {
                 textDelay();
                 System.out.println("   Ethereal mist swirls around its form as it bares supernatural fangs.");
             }
+            case "Rogue Bandit" -> {
+                System.out.println("🗡️ A scarred bandit steps from behind a tree, daggers flashing in hand!");
+                textDelay();
+                System.out.println("   Their weathered face bears the cruel smile of someone who lives by violence.");
+            }
             case "Wild Troll" -> {
                 System.out.println("👹 An enormous troll crashes through the undergrowth, club in hand!");
                 textDelay();
                 System.out.println("   Moss and lichens cover its stone-like hide as it roars a challenge.");
+            }
+            case "Dark Sprite" -> {
+                System.out.println("🧚 A malevolent fairy dances in the air, surrounded by crackling dark magic!");
+                textDelay();
+                System.out.println("   Its once-beautiful form is now twisted by shadow, eyes burning with spite.");
+            }
+            case "Corrupted Bear" -> {
+                System.out.println("🐻 A massive bear rears up on its hind legs, foam dripping from its muzzle!");
+                textDelay();
+                System.out.println("   Dark veins pulse beneath its matted fur - this beast has been tainted by evil.");
+            }
+            case "Skeleton Warrior" -> {
+                System.out.println("💀 Bones clatter as an undead warrior shambles forward, sword and shield ready!");
+                textDelay();
+                System.out.println("   Empty sockets burn with unholy fire as it raises its ancient weapons.");
+            }
+            case "Ice Wraith" -> {
+                System.out.println("❄️ A ghostly figure of living frost glides toward you, chilling the air!");
+                textDelay();
+                System.out.println("   Ice crystals form in its wake, and your breath mists in sudden cold.");
             }
             default -> {
                 System.out.println("⚔️ A dangerous " + enemy + " blocks your path!");
@@ -1998,4 +2027,260 @@ public class GameEngine {
     public boolean isGameRunning() {
         return gameRunning;
     }
+    
+    // ===== TURN-BASED COMBAT SYSTEM =====
+    
+    /**
+     * Simple enemy class for turn-based combat
+     */
+    private static class CombatEnemy {
+        String name;
+        int health;
+        int maxHealth;
+        int attack;
+        String[] abilities;
+        
+        CombatEnemy(String name, int health, int attack, String[] abilities) {
+            this.name = name;
+            this.health = health;
+            this.maxHealth = health;
+            this.attack = attack;
+            this.abilities = abilities;
+        }
+        
+        boolean isAlive() {
+            return health > 0;
+        }
+        
+        void takeDamage(int damage) {
+            health = Math.max(0, health - damage);
+        }
+    }
+    
+    /**
+     * Create enemy with stats based on enemy type
+     */
+    private CombatEnemy createEnemy(String enemyName) {
+        return switch (enemyName) {
+            case "Goblin Raider" -> new CombatEnemy("Goblin Raider", 45, 12, 
+                new String[]{"Crude Slash", "Dirty Fighting", "Cowardly Retreat"});
+            case "Shadow Wolf" -> new CombatEnemy("Shadow Wolf", 60, 15, 
+                new String[]{"Shadow Bite", "Phase Strike", "Howl of Terror"});
+            case "Rogue Bandit" -> new CombatEnemy("Rogue Bandit", 55, 13, 
+                new String[]{"Quick Strike", "Thrown Dagger", "Dirty Tricks"});
+            case "Wild Troll" -> new CombatEnemy("Wild Troll", 80, 18, 
+                new String[]{"Club Smash", "Stone Throw", "Regenerate"});
+            case "Dark Sprite" -> new CombatEnemy("Dark Sprite", 35, 10, 
+                new String[]{"Dark Bolt", "Confusion", "Blink"});
+            case "Corrupted Bear" -> new CombatEnemy("Corrupted Bear", 70, 16, 
+                new String[]{"Claw Swipe", "Bear Hug", "Roar"});
+            case "Skeleton Warrior" -> new CombatEnemy("Skeleton Warrior", 50, 14, 
+                new String[]{"Bone Sword", "Shield Bash", "Undead Resilience"});
+            case "Ice Wraith" -> new CombatEnemy("Ice Wraith", 40, 11, 
+                new String[]{"Frost Touch", "Ice Shard", "Chilling Presence"});
+            default -> new CombatEnemy(enemyName, 50, 12, 
+                new String[]{"Attack", "Special Move", "Defend"});
+        };
+    }
+    
+    /**
+     * Handle player's turn in combat
+     */
+    private boolean handlePlayerCombatTurn(CombatEnemy enemy) {
+        System.out.println("\n🗡️ YOUR TURN");
+        textDelay();
+        System.out.println("💗 Your Health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth());
+        System.out.println("👹 " + enemy.name + " Health: " + enemy.health + "/" + enemy.maxHealth);
+        textDelay();
+        
+        System.out.println("\nChoose your combat action:");
+        textDelay();
+        System.out.println("1. ⚔️  Attack with your weapon");
+        textDelay();
+        System.out.println("2. 🛡️  Defend and reduce incoming damage");
+        textDelay();
+        
+        // Character-specific combat abilities
+        if (playerCharacter instanceof Knight) {
+            System.out.println("3. 🏆 Noble Strike (Knight special attack)");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println("3. 🗡️  Sneak Attack (Thief special attack)");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println("3. ✨ Cast Spell (Wizard magic attack)");
+        }
+        textDelay();
+        System.out.println("4. 🏃 Attempt to flee from combat");
+        textDelay();
+        
+        displayingText = true;
+        System.out.print("Choose your action (1-4): ");
+        
+        try {
+            String input = scanner.nextLine();
+            displayingText = false;
+            int choice = Integer.parseInt(input);
+            
+            switch (choice) {
+                case 1 -> {
+                    int damage = calculatePlayerAttackDamage();
+                    System.out.println("\n⚔️ You attack the " + enemy.name + " for " + damage + " damage!");
+                    enemy.takeDamage(damage);
+                    return true;
+                }
+                case 2 -> {
+                    System.out.println("\n🛡️ You raise your guard, ready to defend!");
+                    playerDefending = true;
+                    return true;
+                }
+                case 3 -> {
+                    int damage = calculatePlayerSpecialAttackDamage();
+                    String abilityName = getPlayerSpecialAbilityName();
+                    System.out.println("\n✨ You use " + abilityName + " for " + damage + " damage!");
+                    enemy.takeDamage(damage);
+                    return true;
+                }
+                case 4 -> {
+                    if (Math.random() < 0.6) {
+                        System.out.println("\n🏃 You successfully escape from combat!");
+                        return false; // End combat
+                    } else {
+                        System.out.println("\n❌ You failed to escape! The " + enemy.name + " blocks your path!");
+                        return true;
+                    }
+                }
+                default -> {
+                    System.out.println("Invalid choice! You hesitate and lose your turn.");
+                    return true;
+                }
+            }
+        } catch (NumberFormatException e) {
+            displayingText = false;
+            System.out.println("Invalid input! You hesitate and lose your turn.");
+            return true;
+        }
+    }
+    
+    /**
+     * Handle enemy's turn in combat
+     */
+    private void handleEnemyCombatTurn(CombatEnemy enemy) {
+        System.out.println("\n👹 " + enemy.name.toUpperCase() + "'S TURN");
+        textDelay();
+        
+        // Enemy chooses random ability
+        String ability = enemy.abilities[(int)(Math.random() * enemy.abilities.length)];
+        int damage = enemy.attack + (int)(Math.random() * 8) - 2; // Vary damage
+        
+        // Apply defending bonus if player is defending
+        if (playerDefending) {
+            damage = Math.max(1, damage / 2);
+            playerDefending = false;
+            System.out.println("🛡️ Your defense reduces the incoming damage!");
+            textDelay();
+        }
+        
+        System.out.println("💥 " + enemy.name + " uses " + ability + " for " + damage + " damage!");
+        playerCharacter.takeDamage(damage);
+        textDelay();
+        System.out.println("💗 Your health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth());
+        textDelay();
+    }
+    
+    /**
+     * Handle combat victory
+     */
+    private void handleCombatVictory(CombatEnemy enemy) {
+        System.out.println("\n🏆 VICTORY!");
+        textDelay();
+        System.out.println("⚔️ You have defeated the " + enemy.name + "!");
+        textDelay();
+        
+        // Victory rewards
+        String[] rewards = {"Battle Trophy", "Enemy Weapon", "Gold Coins", "Rare Gem", "Magic Potion"};
+        String reward = rewards[(int)(Math.random() * rewards.length)];
+        playerCharacter.addToInventory(reward);
+        System.out.println("🎁 Victory spoils: " + reward);
+        textDelay();
+        
+        // Small health restoration for victory
+        int healing = 5 + (int)(Math.random() * 10);
+        playerCharacter.heal(healing);
+        System.out.println("💚 The thrill of victory restores your strength!");
+        textDelay();
+    }
+    
+    /**
+     * Handle combat defeat
+     */
+    private void handleCombatDefeat(CombatEnemy enemy) {
+        System.out.println("\n💀 DEFEAT...");
+        textDelay();
+        System.out.println("⚰️ The " + enemy.name + " has overcome you!");
+        textDelay();
+        System.out.println("🌟 But your spirit remains strong - you'll return to fight another day!");
+        textDelay();
+        
+        // Restore some health to continue adventure (heal to minimum safe level)
+        int targetHealth = Math.max(15, playerCharacter.getMaxHealth() / 3);
+        int currentHealth = playerCharacter.getHealth();
+        if (currentHealth < targetHealth) {
+            int healAmount = targetHealth - currentHealth;
+            playerCharacter.heal(healAmount);
+            System.out.println("💚 You recover enough strength to continue your journey!");
+        }
+        textDelay();
+    }
+    
+    /**
+     * Calculate player attack damage
+     */
+    private int calculatePlayerAttackDamage() {
+        int baseDamage = 15 + (int)(Math.random() * 10);
+        
+        // Character-specific bonuses
+        if (playerCharacter instanceof Knight) {
+            baseDamage += 5; // Knights hit harder
+        } else if (playerCharacter instanceof Thief) {
+            baseDamage += 3; // Thieves are precise
+        } else if (playerCharacter instanceof Wizard) {
+            baseDamage += 4; // Wizards use magic-enhanced weapons
+        }
+        
+        return baseDamage;
+    }
+    
+    /**
+     * Calculate player special attack damage
+     */
+    private int calculatePlayerSpecialAttackDamage() {
+        int specialDamage = 20 + (int)(Math.random() * 12);
+        
+        // Character-specific special bonuses
+        if (playerCharacter instanceof Knight) {
+            specialDamage += 8; // Noble Strike is very powerful
+        } else if (playerCharacter instanceof Thief) {
+            specialDamage += 10; // Sneak attacks are devastating
+        } else if (playerCharacter instanceof Wizard) {
+            specialDamage += 6; // Spells are consistent but not overwhelming
+        }
+        
+        return specialDamage;
+    }
+    
+    /**
+     * Get the name of player's special ability
+     */
+    private String getPlayerSpecialAbilityName() {
+        if (playerCharacter instanceof Knight) {
+            return "Noble Strike";
+        } else if (playerCharacter instanceof Thief) {
+            return "Sneak Attack";
+        } else if (playerCharacter instanceof Wizard) {
+            return "Magic Missile";
+        }
+        return "Special Attack";
+    }
+    
+    // Combat state tracking
+    private boolean playerDefending = false;
 }
