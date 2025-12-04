@@ -523,28 +523,155 @@ public class GameEngine {
     }
     
     /**
-     * Handle exploration for player character
+     * Handle exploration with rich, immersive descriptions
      */
     private void handleExploration() {
-        System.out.println("\n" + playerCharacter.getName() + " explores the surrounding area...");
+        System.out.println("\n🔍 " + playerCharacter.getName() + " begins a thorough exploration of the area...");
         textDelay();
         
-        // Move to a new random location
-        playerCharacter.moveRandomly();
-        textDelay();
-        
-        // Check for discoveries
-        if (Math.random() < 0.3) { // 30% chance of finding something
-            String[] discoveries = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
-                                  "Sacred Grove", "Abandoned Camp", "Crystal Formation"};
-            String discovery = discoveries[(int)(Math.random() * discoveries.length)];
-            System.out.println(playerCharacter.getName() + " discovers: " + discovery + "!");
+        // Describe the exploration process based on character type
+        if (playerCharacter instanceof Knight) {
+            System.out.println("   With noble purpose, you methodically search for signs of danger or injustice.");
             textDelay();
+            System.out.println("   Your trained eye scans for anything that might require a knight's attention.");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println("   Moving with silent grace, you investigate every shadow and hidden corner.");
+            textDelay();
+            System.out.println("   Your keen senses alert you to the smallest details others might miss.");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println("   You extend your magical awareness, feeling for arcane energies and mysteries.");
+            textDelay();
+            System.out.println("   Ancient knowledge guides your search through this mystical realm.");
+        }
+        textDelay();
+        
+        // Move to a new random location during exploration
+        int oldX = playerCharacter.getX();
+        int oldY = playerCharacter.getY();
+        playerCharacter.moveRandomly();
+        
+        System.out.println("   Your exploration leads you from (" + oldX + ", " + oldY + ") to (" + 
+                          playerCharacter.getX() + ", " + playerCharacter.getY() + ").");
+        textDelay();
+        
+        // Check for discoveries with detailed descriptions
+        double discoveryChance = 0.4; // Base 40% chance
+        
+        // Character-specific bonuses
+        if (playerCharacter instanceof Thief) {
+            discoveryChance += 0.2; // Thieves are better at finding things
+        } else if (playerCharacter instanceof Wizard) {
+            discoveryChance += 0.1; // Wizards can sense magical items
+        }
+        
+        if (Math.random() < discoveryChance) {
+            System.out.println("\n✨ Your careful search pays off!");
+            textDelay();
+            
+            String[] discoveryTypes = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
+                                     "Sacred Grove", "Abandoned Camp", "Crystal Formation", 
+                                     "Forgotten Shrine", "Secret Cache", "Magical Spring"};
+            String discovery = discoveryTypes[(int)(Math.random() * discoveryTypes.length)];
+            
+            // Rich descriptions for each discovery type
+            describeDiscovery(discovery);
+            
+            // Add item to inventory based on discovery
+            addDiscoveryReward(discovery);
+            
             gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
         } else {
-            System.out.println("The exploration yields nothing of immediate interest.");
+            System.out.println("\n🌫️ Despite your thorough search, this area reveals no immediate secrets.");
             textDelay();
+            System.out.println("   Sometimes the journey itself is more valuable than the destination.");
+            textDelay();
+            System.out.println("   You gain experience and knowledge from the exploration nonetheless.");
         }
+    }
+    
+    /**
+     * Provide rich descriptions for different types of discoveries
+     */
+    private void describeDiscovery(String discovery) {
+        switch (discovery) {
+            case "Ancient Ruins" -> {
+                System.out.println("🏛️  You stumble upon crumbling stone structures, overgrown with vines.");
+                textDelay();
+                System.out.println("   Weathered carvings tell stories of a civilization lost to time.");
+                textDelay();
+                System.out.println("   The air here feels heavy with history and forgotten memories.");
+            }
+            case "Hidden Treasure" -> {
+                System.out.println("💰 Half-buried beneath fallen leaves, a small chest catches your eye!");
+                textDelay();
+                System.out.println("   The lock has long since rusted away, revealing glinting contents within.");
+                textDelay();
+                System.out.println("   Fortune favors the bold - and the observant!");
+            }
+            case "Mysterious Portal" -> {
+                System.out.println("🌀 Reality seems to bend and shimmer in a perfect circle before you.");
+                textDelay();
+                System.out.println("   Strange energies ripple through the air, showing glimpses of other realms.");
+                textDelay();
+                System.out.println("   This gateway holds secrets beyond mortal understanding.");
+            }
+            case "Sacred Grove" -> {
+                System.out.println("🌳 Ancient trees form a perfect circle, their branches intertwining overhead.");
+                textDelay();
+                System.out.println("   Soft light filters through leaves that seem to glow with inner radiance.");
+                textDelay();
+                System.out.println("   This place pulses with natural magic and peaceful energy.");
+            }
+            case "Magical Spring" -> {
+                System.out.println("💧 Crystal-clear water bubbles up from an ornate stone fountain.");
+                textDelay();
+                System.out.println("   The water glows with a faint blue light and feels warm to the touch.");
+                textDelay();
+                System.out.println("   Legends speak of springs like this having miraculous healing properties.");
+            }
+            default -> {
+                System.out.println("🔍 You discover something remarkable: " + discovery + "!");
+                textDelay();
+                System.out.println("   This find fills you with wonder and curiosity about its origins.");
+                textDelay();
+                System.out.println("   Such discoveries make every adventure worthwhile.");
+            }
+        }
+    }
+    
+    /**
+     * Add appropriate rewards based on the type of discovery
+     */
+    private void addDiscoveryReward(String discovery) {
+        switch (discovery) {
+            case "Hidden Treasure" -> {
+                playerCharacter.addToInventory("Ancient Gold Coin");
+                System.out.println("   └─ You acquire: Ancient Gold Coin");
+            }
+            case "Sacred Grove" -> {
+                playerCharacter.addToInventory("Blessed Leaf");
+                System.out.println("   └─ You acquire: Blessed Leaf");
+            }
+            case "Crystal Formation" -> {
+                playerCharacter.addToInventory("Crystal Shard");
+                System.out.println("   └─ You acquire: Crystal Shard");
+            }
+            case "Magical Spring" -> {
+                // Heal the player
+                int healAmount = 20;
+                playerCharacter.heal(healAmount);
+                System.out.println("   └─ The spring's waters restore " + healAmount + " health!");
+            }
+            case "Ancient Ruins" -> {
+                playerCharacter.addToInventory("Ancient Rune Stone");
+                System.out.println("   └─ You acquire: Ancient Rune Stone");
+            }
+            default -> {
+                playerCharacter.addToInventory("Mysterious Artifact");
+                System.out.println("   └─ You acquire: Mysterious Artifact");
+            }
+        }
+        textDelay();
     }
     
     /**
@@ -575,80 +702,293 @@ public class GameEngine {
     }
     
     /**
-     * Describe the current situation to give player context
+     * Describe the current situation with rich detail and context
      */
     private void describeCurrentSituation() {
-        System.out.println("\n=== CURRENT SITUATION ===");
-        System.out.println(playerCharacter.getName() + " stands at position (" + playerCharacter.getX() + ", " + playerCharacter.getY() + ")");
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("                    CURRENT SCENE");
+        System.out.println("=".repeat(60));
+        textDelay();
         
-        // Check for nearby characters
-        boolean foundNearbyCharacter = false;
-        for (GameCharacter other : characters) {
-            if (other != playerCharacter && other.isAlive() && playerCharacter.distanceTo(other) < 5.0) {
-                System.out.println("Nearby: " + other.getName() + " the " + other.getCharacterType() + 
-                                 " (Distance: " + String.format("%.1f", playerCharacter.distanceTo(other)) + ")");
-                foundNearbyCharacter = true;
-            }
-        }
-        
-        if (!foundNearbyCharacter) {
-            System.out.println("You are alone in this area of the realm.");
-        }
-        
-        // Show current environment
+        // Get environment details
         String[] environments = {"ancient forest clearing", "misty mountain path", "abandoned village square", 
                                "crystal cave entrance", "mystical shrine", "crossroads junction", 
                                "ruined watchtower", "enchanted grove", "desert oasis"};
         String currentEnv = environments[Math.abs((playerCharacter.getX() + playerCharacter.getY()) % environments.length)];
-        System.out.println("Environment: You find yourself in a " + currentEnv + ".");
         
-        // Random environmental details
-        if (Math.random() < 0.4) {
-            String[] details = {"Strange magical energy pulses in the air", "You hear distant sounds of adventure",
-                              "Ancient runes glow faintly nearby", "The wind carries whispers of old legends",
-                              "Mysterious shadows dance at the edge of your vision", "You sense hidden treasures in the area"};
-            String detail = details[(int)(Math.random() * details.length)];
-            System.out.println("Notice: " + detail + ".");
+        // Rich environmental description based on location
+        describeEnvironmentInDetail(currentEnv);
+        textDelay();
+        
+        // Character's current state
+        System.out.println("\n🧙 Your Status:");
+        textDelay();
+        System.out.println("   " + playerCharacter.getName() + " the " + playerCharacter.getCharacterType() + " stands ready for action.");
+        textDelay();
+        System.out.println("   Health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth() + " | Items: " + playerCharacter.getInventory().size());
+        textDelay();
+        
+        // Check for nearby characters with detailed descriptions
+        boolean foundNearbyCharacter = false;
+        for (GameCharacter other : characters) {
+            if (other != playerCharacter && other.isAlive() && playerCharacter.distanceTo(other) < 5.0) {
+                if (!foundNearbyCharacter) {
+                    System.out.println("\n👥 Nearby Companions:");
+                    textDelay();
+                    foundNearbyCharacter = true;
+                }
+                describeNearbyCharacter(other);
+                textDelay();
+            }
         }
-        System.out.println("=========================");
+        
+        if (!foundNearbyCharacter) {
+            System.out.println("\n🌟 You stand alone in this mystical realm, the silence broken only by");
+            textDelay();
+            System.out.println("   the whisper of wind and distant echoes of adventure.");
+            textDelay();
+        }
+        
+        // Show available interactions and opportunities
+        describeAvailableOpportunities();
+        
+        System.out.println("=".repeat(60));
     }
     
     /**
-     * Show numbered choice menu to the player
+     * Describe the environment in rich, immersive detail
      */
-    private void showPlayerChoiceMenu() {
-        System.out.println("\n=== CHOOSE YOUR ACTION ===");
-        textDelay();
-        System.out.println("1. Explore the area (search for discoveries)");
-        textDelay();
-        System.out.println("2. Move to a new location");
-        textDelay();
-        System.out.println("3. Interact with nearby characters/objects");
-        textDelay();
-        System.out.println("4. Visit the trading post");
+    private void describeEnvironmentInDetail(String environment) {
+        System.out.println("🌍 Location: " + environment.substring(0, 1).toUpperCase() + environment.substring(1));
         textDelay();
         
-        // Character-specific action (slot 5)
+        // Detailed descriptions based on environment type
+        switch (environment) {
+            case "ancient forest clearing" -> {
+                System.out.println("   Towering oak and pine trees form a natural cathedral around you, their");
+                textDelay();
+                System.out.println("   gnarled branches filtering golden sunlight into dancing patterns on the");
+                textDelay();
+                System.out.println("   moss-covered ground. Ancient stone circles hint at forgotten rituals.");
+            }
+            case "misty mountain path" -> {
+                System.out.println("   A narrow trail winds along the mountainside, shrouded in ethereal mist.");
+                textDelay();
+                System.out.println("   Rocky outcrops jut from the fog, and you hear the distant cry of eagles");
+                textDelay();
+                System.out.println("   soaring through the clouds above. The air is thin and crisp.");
+            }
+            case "abandoned village square" -> {
+                System.out.println("   Crumbling cobblestones stretch before a weathered fountain. Empty windows");
+                textDelay();
+                System.out.println("   of abandoned houses stare like hollow eyes, while ivy reclaims the walls.");
+                textDelay();
+                System.out.println("   A sense of lost stories and forgotten lives permeates the air.");
+            }
+            case "crystal cave entrance" -> {
+                System.out.println("   Glittering formations of amethyst and quartz catch the light, casting");
+                textDelay();
+                System.out.println("   rainbow reflections on the cave walls. The entrance yawns darkly ahead,");
+                textDelay();
+                System.out.println("   promising both wonder and danger in its mysterious depths.");
+            }
+            case "mystical shrine" -> {
+                System.out.println("   An ornate altar of white marble stands surrounded by floating runes that");
+                textDelay();
+                System.out.println("   pulse with soft blue light. The very air hums with magical energy, and");
+                textDelay();
+                System.out.println("   you feel the presence of ancient powers watching over this sacred place.");
+            }
+            default -> {
+                System.out.println("   The landscape stretches before you, filled with mystery and possibility.");
+                textDelay();
+                System.out.println("   Every shadow could hide adventure, every sound might herald discovery.");
+            }
+        }
+    }
+    
+    /**
+     * Describe nearby characters with personality and current activity
+     */
+    private void describeNearbyCharacter(GameCharacter other) {
+        double distance = playerCharacter.distanceTo(other);
+        String proximity = distance < 2.0 ? "stands close by" : distance < 3.5 ? "is nearby" : "can be seen in the distance";
+        
+        System.out.println("   • " + other.getName() + " the " + other.getCharacterType() + " " + proximity + ".");
+        textDelay();
+        
+        // Character-specific descriptions based on their type and current state
+        if (other instanceof Knight) {
+            System.out.println("     Their armor gleams in the light, sword at ready. They scan the horizon");
+            textDelay();
+            System.out.println("     with vigilant eyes, ever watchful for threats or quests to undertake.");
+        } else if (other instanceof Thief) {
+            System.out.println("     Moving with fluid grace, they seem to blend with the shadows. Their keen");
+            textDelay();
+            System.out.println("     eyes dart about, noting every detail and potential opportunity.");
+        } else if (other instanceof Wizard) {
+            System.out.println("     Arcane symbols shimmer faintly around them as they study the magical");
+            textDelay();
+            System.out.println("     currents flowing through this realm. Ancient wisdom gleams in their eyes.");
+        }
+    }
+    
+    /**
+     * Describe available opportunities and what the player can actually do right now
+     */
+    private void describeAvailableOpportunities() {
+        System.out.println("\n✨ Current Opportunities:");
+        textDelay();
+        
+        // Check what's actually available to do
+        boolean hasNearbyCharacters = characters.stream()
+            .anyMatch(c -> c != playerCharacter && c.isAlive() && playerCharacter.distanceTo(c) < 5.0);
+        
+        boolean hasItems = !playerCharacter.getInventory().isEmpty();
+        boolean lowHealth = playerCharacter.getHealth() < playerCharacter.getMaxHealth() * 0.7;
+        
+        // Contextual opportunities
+        if (hasNearbyCharacters) {
+            System.out.println("   🤝 You could approach your companions for conversation or coordination.");
+            textDelay();
+        }
+        
+        System.out.println("   🔍 The area beckons to be explored - secrets may await discovery.");
+        textDelay();
+        
+        if (Math.random() < 0.3) {
+            System.out.println("   💰 A trading post's banner flutters in the distance - commerce awaits.");
+            textDelay();
+        }
+        
+        if (hasItems) {
+            System.out.println("   🎒 Your inventory contains items that might prove useful here.");
+            textDelay();
+        }
+        
+        if (lowHealth) {
+            System.out.println("   💔 Your wounds need attention - seek healing or rest carefully.");
+            textDelay();
+        }
+        
+        // Character-specific opportunities
         if (playerCharacter instanceof Knight) {
-            System.out.println("5. Seek combat or undertake a quest");
+            System.out.println("   ⚔️  Your noble heart senses quests and worthy causes in this realm.");
         } else if (playerCharacter instanceof Thief) {
-            System.out.println("5. Use stealth abilities (hide, scout, steal)");
+            System.out.println("   🦝 Your keen senses detect hidden paths and valuable opportunities.");
         } else if (playerCharacter instanceof Wizard) {
-            System.out.println("5. Use magical abilities (cast, meditate, research)");
+            System.out.println("   🔮 Magical energies swirl around you, ready to be harnessed and studied.");
+        }
+        textDelay();
+    }
+    
+    /**
+     * Show contextual choice menu based on current situation
+     */
+    private void showPlayerChoiceMenu() {
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("          WHAT WOULD YOU LIKE TO DO?");
+        System.out.println("=".repeat(50));
+        textDelay();
+        
+        // Check current situation for contextual options
+        boolean hasNearbyCharacters = characters.stream()
+            .anyMatch(c -> c != playerCharacter && c.isAlive() && playerCharacter.distanceTo(c) < 5.0);
+        boolean hasItems = !playerCharacter.getInventory().isEmpty();
+        boolean lowHealth = playerCharacter.getHealth() < playerCharacter.getMaxHealth() * 0.7;
+        
+        // Contextual exploration option
+        System.out.println("1. 🔍 Search this area thoroughly for hidden secrets");
+        textDelay();
+        System.out.println("   └─ Investigate surroundings, seek treasures or clues");
+        textDelay();
+        
+        // Movement with environmental context
+        System.out.println("2. 🚶 Journey to a new location in the realm");
+        textDelay();
+        System.out.println("   └─ Leave this area and discover new landscapes");
+        textDelay();
+        
+        // Contextual interaction
+        if (hasNearbyCharacters) {
+            System.out.println("3. 👋 Approach and converse with your companions");
+            textDelay();
+            System.out.println("   └─ Coordinate plans, share stories, or seek advice");
+        } else {
+            System.out.println("3. 🌀 Commune with the mystical energies here");
+            textDelay();
+            System.out.println("   └─ Meditate and attune yourself to this place");
         }
         textDelay();
         
-        System.out.println("6. Check your inventory");
+        // Trading with context
+        if (Math.random() < 0.4) {
+            System.out.println("4. 🏪 Seek out merchants and trading opportunities");
+            textDelay();
+            System.out.println("   └─ A traveling trader's banner is visible nearby");
+        } else {
+            System.out.println("4. 🎒 Organize and manage your possessions");
+            textDelay();
+            System.out.println("   └─ Sort inventory and prepare equipment");
+        }
         textDelay();
-        System.out.println("7. View detailed status");
+        
+        // Character-specific contextual action (slot 5)
+        if (playerCharacter instanceof Knight) {
+            System.out.println("5. ⚔️  Seek righteous quests and noble challenges");
+            textDelay();
+            System.out.println("   └─ Your knightly honor calls for heroic deeds");
+        } else if (playerCharacter instanceof Thief) {
+            System.out.println("5. 🗡️  Employ stealth and cunning abilities");
+            textDelay();
+            System.out.println("   └─ Scout ahead, hide, or search for valuables");
+        } else if (playerCharacter instanceof Wizard) {
+            System.out.println("5. ✨ Channel arcane powers and mystical knowledge");
+            textDelay();
+            System.out.println("   └─ Cast spells, research magic, or divine wisdom");
+        }
         textDelay();
-        System.out.println("8. Look around (examine surroundings)");
+        
+        // Inventory with context
+        if (hasItems) {
+            System.out.println("6. 📦 Review your collected treasures and gear");
+            textDelay();
+            System.out.println("   └─ You carry " + playerCharacter.getInventory().size() + " item(s) of interest");
+        } else {
+            System.out.println("6. 📦 Check your empty pack and current condition");
+            textDelay();
+            System.out.println("   └─ Assess your readiness for adventure");
+        }
         textDelay();
-        System.out.println("9. Wait/Skip turn (let AI act)");
+        
+        // Status with health context
+        if (lowHealth) {
+            System.out.println("7. 🩹 Assess your wounds and current condition");
+            textDelay();
+            System.out.println("   └─ Your health needs attention (" + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth() + ")");
+        } else {
+            System.out.println("7. 📊 Review your status and party information");
+            textDelay();
+            System.out.println("   └─ Check detailed statistics and party status");
+        }
         textDelay();
-        System.out.println("10. Quit adventure");
+        
+        System.out.println("8. 👁️  Carefully observe your immediate surroundings");
         textDelay();
-        System.out.println("============================");
+        System.out.println("   └─ Take a moment to notice all environmental details");
+        textDelay();
+        
+        System.out.println("9. ⏸️  Wait and observe (let companions act first)");
+        textDelay();
+        System.out.println("   └─ Sometimes patience reveals new opportunities");
+        textDelay();
+        
+        System.out.println("10. 🚪 End this adventure and return to reality");
+        textDelay();
+        System.out.println("    └─ Your legend will be remembered in the realm");
+        textDelay();
+        
+        System.out.println("=".repeat(50));
     }
     
     /**
