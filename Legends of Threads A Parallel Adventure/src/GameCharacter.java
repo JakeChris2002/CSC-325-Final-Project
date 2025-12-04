@@ -74,6 +74,13 @@ public abstract class GameCharacter implements Runnable {
         return caveMode;
     }
     
+    // Helper method to suppress messages during cave mode
+    protected void printMessage(String message) {
+        if (!caveMode) {
+            System.out.println(message);
+        }
+    }
+    
     public String getPlayerAction() {
         String action = pendingPlayerAction;
         pendingPlayerAction = null;

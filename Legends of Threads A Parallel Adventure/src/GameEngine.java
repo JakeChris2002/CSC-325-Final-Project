@@ -213,9 +213,16 @@ public class GameEngine {
                 System.out.println("\n💀 Your adventure ends here... Better luck next time!");
             }
         } else {
-            // Original gameplay mode
+            // Original gameplay mode - enable background activities
             gameRunning = true;
+            caveMode = false;
             gameStartTime = System.currentTimeMillis();
+            
+            // Enable character auto-actions and resource messages for open world mode
+            for (GameCharacter character : characters) {
+                character.setCaveMode(false);
+            }
+            sharedResources.setCaveMode(false);
             
             System.out.println("🚀 ADVENTURE BEGINS! All heroes start their quests...\n");
             

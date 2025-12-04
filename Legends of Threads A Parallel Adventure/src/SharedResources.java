@@ -31,7 +31,9 @@ public class SharedResources {
     // === RESOURCE GENERATION (using volatile) ===
     private volatile boolean resourceGenerationActive = true;
     private final AtomicInteger resourcesGenerated = new AtomicInteger(0);
-    private volatile boolean caveMode = false; // Suppress messages during cave exploration
+    private volatile boolean caveMode = true; // Start silent until explicitly allowed
+    private Thread resourceThread;
+    private Thread lootThread;
     
     // === TRADING POST (using ConcurrentHashMap) ===
     private final ConcurrentHashMap<String, String> tradingPost = new ConcurrentHashMap<>();
@@ -47,6 +49,38 @@ public class SharedResources {
     
     public void setCaveMode(boolean caveMode) {
         this.caveMode = caveMode;
+        if (caveMode) {
+            // Completely stop resource generation during cave mode
+            resourceGenerationActive = false;
+            
+            // Force interrupt and stop existing threads
+            if (resourceThread != null && resourceThread.isAlive()) {
+                resourceThread.interrupt();
+                try {
+                    resourceThread.join(1000); // Wait up to 1 second for thread to stop
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            if (lootThread != null && lootThread.isAlive()) {
+                lootThread.interrupt();
+                try {
+                    lootThread.join(1000); // Wait up to 1 second for thread to stop
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } else {
+            // Restart resource generation after cave mode
+            resourceGenerationActive = true;
+            // Only restart if threads are not running
+            if (resourceThread == null || !resourceThread.isAlive()) {
+                startResourceGeneration();
+            }
+            if (lootThread == null || !lootThread.isAlive()) {
+                startLootGeneration();
+            }
+        }
     }
     
     // ===============================================
@@ -90,8 +124,10 @@ public class SharedResources {
         treasureLock.writeLock().lock();
         try {
             treasureVault.merge(treasureType, amount, Integer::sum);
-            System.out.println("💎 " + characterName + " deposited " + amount + " " + treasureType + 
+        if (!caveMode) {
+            System.out.println("💰 " + characterName + " deposited " + amount + " " + treasureType + 
                              " to the vault. New total: " + treasureVault.get(treasureType));
+        }
         } finally {
             treasureLock.writeLock().unlock();
         }
@@ -167,7 +203,11 @@ public class SharedResources {
      */
     public String takeLoot(String characterName) throws InterruptedException {
         String loot = lootQueue.take(); // Blocks until item available
-        System.out.println("🎒 " + characterName + " claimed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+        if (!caveMode) {
+            if (!caveMode) {
+                System.out.println("🎒 " + characterName + " claimed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+            }
+        }
         return loot;
     }
     
@@ -177,7 +217,11 @@ public class SharedResources {
     public String tryTakeLoot(String characterName) {
         String loot = lootQueue.poll(); // Non-blocking
         if (loot != null) {
-            System.out.println("🎒 " + characterName + " quickly grabbed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+            if (!caveMode) {
+                if (!caveMode) {
+                    System.out.println("🎒 " + characterName + " quickly grabbed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+                }
+            }
         }
         return loot;
     }
@@ -209,8 +253,10 @@ public class SharedResources {
     public synchronized void addToSharedInventory(String item, String characterName) {
         synchronized (inventoryLock) {
             sharedInventory.add(item);
-            System.out.println("📋 " + characterName + " added '" + item + "' to shared inventory. " +
-                             "Total items: " + sharedInventory.size());
+            if (!caveMode) {
+                System.out.println("📋 " + characterName + " added '" + item + "' to shared inventory. " +
+                                 "Total items: " + sharedInventory.size());
+            }
         }
     }
     
@@ -221,10 +267,14 @@ public class SharedResources {
         synchronized (inventoryLock) {
             boolean removed = sharedInventory.remove(item);
             if (removed) {
-                System.out.println("📋 " + characterName + " took '" + item + "' from shared inventory. " +
-                                 "Remaining items: " + sharedInventory.size());
+                if (!caveMode) {
+                    System.out.println("📋 " + characterName + " took '" + item + "' from shared inventory. " +
+                                     "Remaining items: " + sharedInventory.size());
+                }
             } else {
-                System.out.println("❌ " + characterName + " couldn't find '" + item + "' in shared inventory.");
+                if (!caveMode) {
+                    System.out.println("❌ " + characterName + " couldn't find '" + item + "' in shared inventory.");
+                }
             }
             return removed;
         }
@@ -236,7 +286,9 @@ public class SharedResources {
     public synchronized List<String> viewSharedInventory(String characterName) {
         synchronized (inventoryLock) {
             List<String> copy = new ArrayList<>(sharedInventory);
-            System.out.println("👀 " + characterName + " views shared inventory: " + copy.size() + " items");
+            if (!caveMode) {
+                System.out.println("👀 " + characterName + " views shared inventory: " + copy.size() + " items");
+            }
             return copy;
         }
     }
@@ -258,14 +310,18 @@ public class SharedResources {
     public boolean tradeForItem(String itemName, String characterName) {
         String oldStatus = tradingPost.replace(itemName, "Sold to " + characterName);
         if (oldStatus != null && oldStatus.equals("Available")) {
-            System.out.println("🏪 " + characterName + " successfully traded for " + itemName + "!");
+            if (!caveMode) {
+                System.out.println("🏦 " + characterName + " successfully traded for " + itemName + "!");
+            }
             
             // Restore the item after some time (simulate restocking)
             Thread restockThread = new Thread(() -> {
                 try {
                     Thread.sleep(15000); // 15 seconds
                     tradingPost.put(itemName, "Available");
-                    System.out.println("🏪 " + itemName + " has been restocked at the trading post!");
+                    if (!caveMode) {
+                        System.out.println("🏦 " + itemName + " has been restocked at the trading post!");
+                    }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -274,7 +330,9 @@ public class SharedResources {
             
             return true;
         } else {
-            System.out.println("❌ " + characterName + " failed to trade for " + itemName + " - not available!");
+            if (!caveMode) {
+                System.out.println("❌ " + characterName + " failed to trade for " + itemName + " - not available!");
+            }
             return false;
         }
     }
@@ -294,13 +352,13 @@ public class SharedResources {
     // ===============================================
     
     private void startResourceGeneration() {
-        Thread resourceThread = new Thread(() -> {
-            while (resourceGenerationActive) {
+        this.resourceThread = new Thread(() -> {
+            while (resourceGenerationActive && !Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(8000); // Generate resources every 8 seconds
                     
-                    // Skip resource generation during cave mode
-                    if (caveMode) {
+                    // Skip resource generation during cave mode or if interrupted
+                    if (caveMode || Thread.currentThread().isInterrupted()) {
                         continue;
                     }
                     
@@ -323,23 +381,23 @@ public class SharedResources {
                 }
             }
         }, "ResourceGeneratorThread");
-        resourceThread.setDaemon(true);
-        resourceThread.start();
+        this.resourceThread.setDaemon(true);
+        this.resourceThread.start();
     }
     
     private void startLootGeneration() {
-        Thread lootThread = new Thread(() -> {
+        this.lootThread = new Thread(() -> {
             String[] lootItems = {
                 "Enchanted Sword", "Magic Ring", "Health Potion", "Mana Crystal", 
                 "Ancient Tome", "Dragon Scale", "Phoenix Feather", "Mystic Gem"
             };
             
-            while (resourceGenerationActive) {
+            while (resourceGenerationActive && !Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(5000); // Generate loot every 5 seconds
                     
-                    // Skip loot generation during cave mode
-                    if (caveMode) {
+                    // Skip loot generation during cave mode or if interrupted
+                    if (caveMode || Thread.currentThread().isInterrupted()) {
                         continue;
                     }
                     
@@ -352,8 +410,8 @@ public class SharedResources {
                 }
             }
         }, "LootGeneratorThread");
-        lootThread.setDaemon(true);
-        lootThread.start();
+        this.lootThread.setDaemon(true);
+        this.lootThread.start();
     }
     
     /**

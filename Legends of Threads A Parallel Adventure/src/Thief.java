@@ -31,7 +31,7 @@ public class Thief extends GameCharacter {
         this.guardsEluded = 0;
         addToInventory("Lockpicks");
         addToInventory("Throwing Dagger");
-        System.out.println("🗡️ " + name + " the Thief emerges from the shadows with a new target in mind!");
+        printMessage("🗺️ " + name + " the Thief emerges from the shadows with a new target in mind!");
     }
     
     @Override
@@ -60,7 +60,7 @@ public class Thief extends GameCharacter {
     @Override
     public void run() {
         if (!caveMode) {
-            System.out.println(name + " the Thief disappears into the shadows!");
+            printMessage(name + " the Thief disappears into the shadows!");
         }
         
         while (isActive && isAlive) {
@@ -72,7 +72,7 @@ public class Thief extends GameCharacter {
                 break;
             }
         }
-        System.out.println(name + " the Thief vanishes into the night.");
+        printMessage(name + " the Thief vanishes into the night.");
     }
     
     private void sneak() {
@@ -93,7 +93,7 @@ public class Thief extends GameCharacter {
                 case 2: move(0, -1); break;
                 case 3: move(-1, 0); break;
             }
-            System.out.println(name + " moves swiftly and silently to (" + x + ", " + y + ")");
+            printMessage(name + " moves swiftly and silently to (" + x + ", " + y + ")");
             
             // Chance to find loot while moving quickly
             String loot = sharedResources.tryTakeLoot(name);
@@ -101,7 +101,7 @@ public class Thief extends GameCharacter {
                 addToInventory(loot);
             }
         } else {
-            System.out.println(name + " sneaks carefully to (" + x + ", " + y + ")");
+            printMessage(name + " sneaks carefully to (" + x + ", " + y + ")");
         }
     }
     
@@ -112,7 +112,7 @@ public class Thief extends GameCharacter {
             itemsStolen += 3;
             reputation += 15;
             addToInventory("Priceless Gem");
-            System.out.println("💎 " + name + " pulls off the heist '" + currentHeist + "'! Reputation soars!");
+            printMessage("💎 " + name + " pulls off the heist '" + currentHeist + "'! Reputation soars!");
             
             // Steal from treasure vault
             if (sharedResources.withdrawTreasure("Precious Gems", 5, name)) {
@@ -130,18 +130,18 @@ public class Thief extends GameCharacter {
             itemsStolen++;
             String stolenItem = "Stolen Treasure " + itemsStolen;
             addToInventory(stolenItem);
-            System.out.println("🏺 " + name + " successfully pilfers " + stolenItem + "!");
+            printMessage("🏺 " + name + " successfully pilfers " + stolenItem + "!");
             reputation += 2;
             
         } else if (event <= 4) { // 20% chance - Close call with guards
             handleGuardEncounter();
             
         } else if (event == 5) { // 10% chance - Find secret passage
-            System.out.println("🚪 " + name + " discovers a hidden passage! New opportunities await.");
+            printMessage("🚪 " + name + " discovers a hidden passage! New opportunities await.");
             addToInventory("Secret Map");
             
         } else {
-            System.out.println("👁️ " + name + " scouts for the perfect opportunity for '" + currentHeist + "'");
+            printMessage("👁️ " + name + " scouts for the perfect opportunity for '" + currentHeist + "'");
         }
     }
     
@@ -154,25 +154,25 @@ public class Thief extends GameCharacter {
             "Pilfer the Dragon's Hoard"
         };
         currentHeist = heists[random.nextInt(heists.length)];
-        System.out.println("📋 " + name + " plans the next heist: '" + currentHeist + "'");
+        printMessage("📋 " + name + " plans the next heist: '" + currentHeist + "'");
     }
     
     private void handleGuardEncounter() {
-        System.out.println("🚨 " + name + " is spotted by guards!");
+        printMessage("🚨 " + name + " is spotted by guards!");
         
         Thread chaseThread = new Thread(() -> {
             try {
                 onTheRun = true;
-                System.out.println("🏃 " + name + " flees through the winding alleys...");
+                printMessage("🏃 " + name + " flees through the winding alleys...");
                 Thread.sleep(1500);
                 
                 if (random.nextInt(stealth) > 15) { // Stealth check
-                    System.out.println("✅ " + name + " vanishes into the shadows! Guards lost.");
+                    printMessage("✅ " + name + " vanishes into the shadows! Guards lost.");
                     guardsEluded++;
                     reputation += 3;
                     useSpecialAbility(); // Auto-activate stealth
                 } else {
-                    System.out.println("💥 " + name + " takes a hit while escaping!");
+                    printMessage("💥 " + name + " takes a hit while escaping!");
                     takeDamage(10);
                 }
                 
@@ -189,16 +189,16 @@ public class Thief extends GameCharacter {
     private void hide() {
         isHiding = !isHiding;
         if (isHiding) {
-            System.out.println(name + " melts into the shadows, becoming nearly invisible.");
+            printMessage(name + " melts into the shadows, becoming nearly invisible.");
             useSpecialAbility(); // Activate stealth boost
         } else {
-            System.out.println(name + " emerges from hiding, ready for action.");
+            printMessage(name + " emerges from hiding, ready for action.");
         }
     }
     
     private void scout() {
         String location = analytics.getRandomWorldLocation();
-        System.out.println("👁️ " + name + " scouts the area near " + location + ", gathering information.");
+        printMessage("👁️ " + name + " scouts the area near " + location + ", gathering information.");
         
         // Use streams to check for nearby threats
         List<String> nearbyEnemies = analytics.getAllEnemyTypes().stream()
@@ -208,7 +208,7 @@ public class Thief extends GameCharacter {
         
         if (!nearbyEnemies.isEmpty()) {
             String threats = String.join(" and ", nearbyEnemies);
-            System.out.println("⚠️ " + name + " spots " + threats + " in the area!");
+            printMessage("⚠️ " + name + " spots " + threats + " in the area!");
             analytics.logEvent(name, GameAnalytics.EventType.INTERACTION, 
                 "Scouted threats: " + threats + " near " + location);
         }
@@ -217,16 +217,16 @@ public class Thief extends GameCharacter {
             String intelType = analytics.getRandomTreasureCategory() + " Intelligence";
             addToInventory(intelType);
             analytics.logItemCollection(name, intelType, "Scouting " + location);
-            System.out.println(name + " discovers valuable intelligence about " + intelType + "!");
+            printMessage(name + " discovers valuable intelligence about " + intelType + "!");
         }
     }
     
     @Override
     public void interact(GameCharacter other) {
         if (other instanceof Knight) {
-            System.out.println(name + " tries to avoid " + other.getName() + "'s watchful gaze.");
+            printMessage(name + " tries to avoid " + other.getName() + "'s watchful gaze.");
         } else if (other instanceof Wizard) {
-            System.out.println(name + " shows interest in " + other.getName() + "'s magical trinkets.");
+            printMessage(name + " shows interest in " + other.getName() + "'s magical trinkets.");
         } else {
             System.out.println(name + " nods silently at " + other.getName() + " from the shadows.");
         }

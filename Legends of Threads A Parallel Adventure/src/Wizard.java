@@ -36,7 +36,7 @@ public class Wizard extends GameCharacter {
         addToInventory("Spell Book");
         addToInventory("Magic Staff");
         addToInventory("Crystal Orb");
-        System.out.println("🧙 " + name + " the Wizard begins their quest for ultimate magical knowledge!");
+        printMessage("🧙 " + name + " the Wizard begins their quest for ultimate magical knowledge!");
     }
     
     @Override
@@ -64,7 +64,7 @@ public class Wizard extends GameCharacter {
     
     @Override
     public void run() {
-        System.out.println(name + " the Wizard begins their mystical journey!");
+        printMessage(name + " the Wizard begins their mystical journey!");
         
         while (isActive && isAlive) {
             try {
@@ -75,7 +75,7 @@ public class Wizard extends GameCharacter {
                 break;
             }
         }
-        System.out.println(name + " the Wizard concludes their magical studies.");
+        printMessage(name + " the Wizard concludes their magical studies.");
     }
     
     private void study() {
@@ -87,7 +87,7 @@ public class Wizard extends GameCharacter {
             maxMana += 10;
             mana += 10;
             addToInventory("Forbidden Knowledge Scroll");
-            System.out.println("📚 " + name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
+            printMessage("📚 " + name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
             
             // Contribute knowledge to shared resources
             sharedResources.addToSharedInventory("Ancient Knowledge: " + currentResearch, name);
@@ -99,19 +99,19 @@ public class Wizard extends GameCharacter {
             artifactsDiscovered++;
             String artifact = "Ancient Artifact #" + artifactsDiscovered;
             addToInventory(artifact);
-            System.out.println("🔮 " + name + " uncovers " + artifact + " with mysterious properties!");
+            printMessage("🔮 " + name + " uncovers " + artifact + " with mysterious properties!");
             wisdom += 5;
             
         } else if (event <= 4) { // 20% chance - Help an apprentice
             apprenticesHelped++;
             wisdom += 3;
-            System.out.println("👨‍🎓 " + name + " mentors a young apprentice in the magical arts! (" + apprenticesHelped + " helped)");
+            printMessage("👨‍🎓 " + name + " mentors a young apprentice in the magical arts! (" + apprenticesHelped + " helped)");
             
         } else if (event == 5) { // 10% chance - Magical storm
             handleMagicalStorm();
             
         } else {
-            System.out.println("📖 " + name + " delves deeper into '" + currentResearch + "'");
+            printMessage("📖 " + name + " delves deeper into '" + currentResearch + "'");
             wisdom += 1;
         }
     }
@@ -125,31 +125,31 @@ public class Wizard extends GameCharacter {
             "Creating Sentient Magical Constructs"
         };
         currentResearch = research[random.nextInt(research.length)];
-        System.out.println("🔬 " + name + " begins new research: '" + currentResearch + "'");
+        printMessage("🔬 " + name + " begins new research: '" + currentResearch + "'");
     }
     
     private void handleMagicalStorm() {
-        System.out.println("⚡ " + name + " senses a powerful magical storm approaching!");
+        printMessage("⚡ " + name + " senses a powerful magical storm approaching!");
         
         Thread stormThread = new Thread(() -> {
             try {
                 inMagicalStorm = true;
-                System.out.println("🌪️ " + name + " is caught in a chaotic magical vortex!");
+                printMessage("🌪️ " + name + " is caught in a chaotic magical vortex!");
                 Thread.sleep(2500);
                 
                 if (random.nextInt(wisdom) > 30) { // Wisdom check
-                    System.out.println("✨ " + name + " harnesses the storm's power! Mana greatly increased!");
+                    printMessage("✨ " + name + " harnesses the storm's power! Mana greatly increased!");
                     mana = maxMana;
                     addToInventory("Storm-Charged Crystal");
                     wisdom += 10;
                 } else {
-                    System.out.println("💫 " + name + " is overwhelmed by chaotic energies!");
+                    printMessage("💫 " + name + " is overwhelmed by chaotic energies!");
                     mana = Math.max(mana - 30, 0);
                     takeDamage(8);
                 }
                 
                 Thread.sleep(1500);
-                System.out.println("🌅 The magical storm subsides...");
+                printMessage("🌅 The magical storm subsides...");
                 inMagicalStorm = false;
                 
             } catch (InterruptedException e) {
@@ -164,7 +164,7 @@ public class Wizard extends GameCharacter {
             mana -= 20;
             spellsCast++;
             String spell = generateSpellName();
-            System.out.println(name + " casts " + spell + "! Mana: " + mana + "/" + maxMana);
+            printMessage(name + " casts " + spell + "! Mana: " + mana + "/" + maxMana);
             
             // Log spell casting
             analytics.logEvent(name, GameAnalytics.EventType.SPELL_CAST, 
@@ -172,7 +172,7 @@ public class Wizard extends GameCharacter {
             
             // Consume from global mana pool for powerful spells
             if (sharedResources.consumeMana(15, name)) {
-                System.out.println("💫 " + name + " channels global mana for enhanced spell power!");
+                printMessage("💫 " + name + " channels global mana for enhanced spell power!");
                 analytics.logEvent(name, GameAnalytics.EventType.MANA_CONSUMED, 
                     "Consumed 15 global mana for " + spell);
             }
@@ -182,10 +182,10 @@ public class Wizard extends GameCharacter {
             switch (effect) {
                 case 0:
                     heal(15);
-                    System.out.println("The spell heals " + name + "!");
+                    printMessage("The spell heals " + name + "!");
                     break;
                 case 1:
-                    System.out.println("The spell creates a protective barrier!");
+                    printMessage("The spell creates a protective barrier!");
                     useSpecialAbility();
                     break;
                 case 2:
@@ -193,11 +193,11 @@ public class Wizard extends GameCharacter {
                     int newX = random.nextInt(10) - 5 + x;
                     int newY = random.nextInt(10) - 5 + y;
                     move(newX - x, newY - y);
-                    System.out.println("The spell teleports " + name + " to (" + x + ", " + y + ")!");
+                    printMessage("The spell teleports " + name + " to (" + x + ", " + y + ")!");
                     break;
             }
         } else {
-            System.out.println(name + " is out of mana and cannot cast spells.");
+            printMessage(name + " is out of mana and cannot cast spells.");
             meditate(); // Auto-meditate if out of mana
         }
     }
@@ -205,7 +205,7 @@ public class Wizard extends GameCharacter {
     private void meditate() {
         if (!isMeditating) {
             isMeditating = true;
-            System.out.println(name + " begins deep meditation to restore mana.");
+            printMessage(name + " begins deep meditation to restore mana.");
             
             // Create a meditation thread
             Thread meditationThread = new Thread(() -> {
@@ -213,7 +213,7 @@ public class Wizard extends GameCharacter {
                     Thread.sleep(3000); // 3 seconds of meditation
                     mana = Math.min(mana + 40, maxMana);
                     isMeditating = false;
-                    System.out.println(name + " completes meditation. Mana restored: " + mana + "/" + maxMana);
+                    printMessage(name + " completes meditation. Mana restored: " + mana + "/" + maxMana);
                     
                     // Sometimes share mana with global pool after meditation
                     if (random.nextInt(3) == 0) {
@@ -234,7 +234,7 @@ public class Wizard extends GameCharacter {
             });
             meditationThread.start();
         } else {
-            System.out.println(name + " continues their peaceful meditation...");
+            printMessage(name + " continues their peaceful meditation...");
         }
     }
     
@@ -249,7 +249,7 @@ public class Wizard extends GameCharacter {
         }
         
         String location = analytics.getRandomWorldLocation();
-        System.out.println(name + " explores mystical energies near " + location + " at (" + x + ", " + y + ")");
+        printMessage(name + " explores mystical energies near " + location + " at (" + x + ", " + y + ")");
         
         // Use lambda to filter and find magical elements
         List<String> magicalElements = java.util.Arrays.asList(

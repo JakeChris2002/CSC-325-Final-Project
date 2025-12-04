@@ -28,7 +28,7 @@ public class Knight extends GameCharacter {
         this.villagersSaved = 0;
         addToInventory("Iron Sword");
         addToInventory("Shield");
-        System.out.println("⚔️ " + name + " the Knight swears an oath to protect the innocent!");
+        printMessage("⚔️ " + name + " the Knight swears an oath to protect the innocent!");
     }
     
     @Override
@@ -57,7 +57,7 @@ public class Knight extends GameCharacter {
     @Override
     public void run() {
         if (!caveMode) {
-            System.out.println(name + " the Knight begins their noble quest!");
+            printMessage(name + " the Knight begins their noble quest!");
         }
         
         while (isActive && isAlive) {
@@ -73,7 +73,7 @@ public class Knight extends GameCharacter {
             }
         }
         if (!caveMode) {
-            System.out.println(name + " the Knight has ended their watch.");
+            printMessage(name + " the Knight has ended their watch.");
         }
     }
     
@@ -86,13 +86,13 @@ public class Knight extends GameCharacter {
             case 2: move(0, -1); break; // South
             case 3: move(-1, 0); break; // West
         }
-        System.out.println(name + " patrols the realm with vigilant eyes at (" + x + ", " + y + ")");
+        printMessage(name + " patrols the realm with vigilant eyes at (" + x + ", " + y + ")");
     }
     
     private void seekCombat() {
-        System.out.println(name + " searches for worthy opponents to test their mettle.");
+        printMessage(name + " searches for worthy opponents to test their mettle.");
         if (random.nextInt(4) == 0) { // 25% chance to find combat
-            System.out.println(name + " draws sword, ready for battle!");
+            printMessage(name + " draws sword, ready for battle!");
             useSpecialAbility();
         }
     }
@@ -104,7 +104,7 @@ public class Knight extends GameCharacter {
             questsCompleted++;
             honor += 10;
             addToInventory("Legendary Artifact " + questsCompleted);
-            System.out.println("🏆 " + name + " completes the legendary quest '" + currentQuest + "'! Honor increased!");
+            printMessage("🏆 " + name + " completes the legendary quest '" + currentQuest + "'! Honor increased!");
             
             // Deposit quest reward to treasure vault
             sharedResources.depositTreasure("Gold Coins", 100, name);
@@ -115,7 +115,7 @@ public class Knight extends GameCharacter {
         } else if (event <= 2) { // 20% chance - Save villagers
             villagersSaved++;
             honor += 5;
-            System.out.println("🛡️ " + name + " rescues villagers from danger! (" + villagersSaved + " saved)");
+            printMessage("🛡️ " + name + " rescues villagers from danger! (" + villagersSaved + " saved)");
             
             // Try to grab some loot as reward
             String loot = sharedResources.tryTakeLoot(name);
@@ -127,7 +127,7 @@ public class Knight extends GameCharacter {
             handleRandomChallenge();
             
         } else {
-            System.out.println("⚔️ " + name + " continues the quest: '" + currentQuest + "'");
+            printMessage("⚔️ " + name + " continues the quest: '" + currentQuest + "'");
         }
     }
     
@@ -140,7 +140,7 @@ public class Knight extends GameCharacter {
             "Purify the Cursed Lands"
         };
         currentQuest = quests[random.nextInt(quests.length)];
-        System.out.println("📜 " + name + " receives a new quest: '" + currentQuest + "'");
+        printMessage("📜 " + name + " receives a new quest: '" + currentQuest + "'");
     }
     
     private void handleRandomChallenge() {
@@ -154,13 +154,13 @@ public class Knight extends GameCharacter {
         
         String challenge = challenges[random.nextInt(challenges.length)];
         String enemyType = analytics.getRandomEnemyType();
-        System.out.println("⚡ " + name + " " + challenge + " featuring " + enemyType + "!");
+        printMessage("⚡ " + name + " " + challenge + " featuring " + enemyType + "!");
         
         // Create a challenge resolution thread using lambda
         Thread challengeThread = new Thread(() -> {
             try {
                 inCombat = true;
-                System.out.println("⚔️ " + name + " prepares for battle against " + enemyType + "...");
+                printMessage("⚔️ " + name + " prepares for battle against " + enemyType + "...");
                 Thread.sleep(2000); // Battle duration
                 
                 int damageDealt = 15 + random.nextInt(20);
@@ -171,7 +171,7 @@ public class Knight extends GameCharacter {
                 analytics.logBattle(name, enemyType, victory, damageDealt, damageReceived);
                 
                 if (victory) {
-                    System.out.println("✅ " + name + " emerges victorious against " + enemyType + "!");
+                    printMessage("✅ " + name + " emerges victorious against " + enemyType + "!");
                     honor += 3;
                     heal(10);
                     
@@ -180,7 +180,7 @@ public class Knight extends GameCharacter {
                     addToInventory(loot);
                     analytics.logItemCollection(name, loot, "Battle Victory");
                 } else {
-                    System.out.println("💥 " + name + " takes heavy damage but fights on!");
+                    printMessage("💥 " + name + " takes heavy damage but fights on!");
                     takeDamage(damageReceived);
                 }
                 inCombat = false;
@@ -193,12 +193,12 @@ public class Knight extends GameCharacter {
     
     private void rest() {
         heal(5);
-        System.out.println(name + " takes a moment to rest and recover strength.");
+        printMessage(name + " takes a moment to rest and recover strength.");
         
         // Try to use mana for enhanced healing
         if (sharedResources.consumeMana(20, name)) {
             heal(10); // Extra healing with mana
-            System.out.println("✨ " + name + " uses mana for enhanced healing!");
+            printMessage("✨ " + name + " uses mana for enhanced healing!");
         }
         
         // Check treasure vault occasionally
@@ -210,17 +210,17 @@ public class Knight extends GameCharacter {
     @Override
     public void interact(GameCharacter other) {
         if (other instanceof Thief) {
-            System.out.println(name + " eyes " + other.getName() + " suspiciously, hand on sword hilt.");
+            printMessage(name + " eyes " + other.getName() + " suspiciously, hand on sword hilt.");
         } else if (other instanceof Wizard) {
-            System.out.println(name + " respectfully nods to the wise " + other.getName() + ".");
+            printMessage(name + " respectfully nods to the wise " + other.getName() + ".");
         } else {
-            System.out.println(name + " greets " + other.getName() + " with honor.");
+            printMessage(name + " greets " + other.getName() + " with honor.");
         }
     }
     
     @Override
     public void useSpecialAbility() {
-        System.out.println(name + " raises shield and enters defensive stance! Armor increased temporarily.");
+        printMessage(name + " raises shield and enters defensive stance! Armor increased temporarily.");
         armor += 5;
         
         // Create a thread to reduce armor back after some time
@@ -228,7 +228,7 @@ public class Knight extends GameCharacter {
             try {
                 Thread.sleep(3000); // 3 seconds
                 armor -= 5;
-                System.out.println(name + "'s defensive stance ends.");
+                printMessage(name + "'s defensive stance ends.");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
