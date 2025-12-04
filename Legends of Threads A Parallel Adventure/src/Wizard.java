@@ -36,7 +36,7 @@ public class Wizard extends GameCharacter {
         addToInventory("Spell Book");
         addToInventory("Magic Staff");
         addToInventory("Crystal Orb");
-        printMessage("🧙 " + name + " the Wizard begins their quest for ultimate magical knowledge!");
+        printMessage(name + " the Wizard begins their quest for ultimate magical knowledge!");
     }
     
     @Override
@@ -87,7 +87,7 @@ public class Wizard extends GameCharacter {
             maxMana += 10;
             mana += 10;
             addToInventory("Forbidden Knowledge Scroll");
-            printMessage("📚 " + name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
+            printMessage(name + " achieves breakthrough in '" + currentResearch + "'! Wisdom greatly increased!");
             
             // Contribute knowledge to shared resources
             sharedResources.addToSharedInventory("Ancient Knowledge: " + currentResearch, name);
@@ -99,19 +99,19 @@ public class Wizard extends GameCharacter {
             artifactsDiscovered++;
             String artifact = "Ancient Artifact #" + artifactsDiscovered;
             addToInventory(artifact);
-            printMessage("🔮 " + name + " uncovers " + artifact + " with mysterious properties!");
+            printMessage(name + " uncovers " + artifact + " with mysterious properties!");
             wisdom += 5;
             
         } else if (event <= 4) { // 20% chance - Help an apprentice
             apprenticesHelped++;
             wisdom += 3;
-            printMessage("👨‍🎓 " + name + " mentors a young apprentice in the magical arts! (" + apprenticesHelped + " helped)");
+            printMessage(name + " mentors a young apprentice in the magical arts! (" + apprenticesHelped + " helped)");
             
         } else if (event == 5) { // 10% chance - Magical storm
             handleMagicalStorm();
             
         } else {
-            printMessage("📖 " + name + " delves deeper into '" + currentResearch + "'");
+            printMessage(name + " delves deeper into '" + currentResearch + "'");
             wisdom += 1;
         }
     }
@@ -125,31 +125,31 @@ public class Wizard extends GameCharacter {
             "Creating Sentient Magical Constructs"
         };
         currentResearch = research[random.nextInt(research.length)];
-        printMessage("🔬 " + name + " begins new research: '" + currentResearch + "'");
+        printMessage(name + " begins new research: '" + currentResearch + "'");
     }
     
     private void handleMagicalStorm() {
-        printMessage("⚡ " + name + " senses a powerful magical storm approaching!");
+        printMessage(name + " senses a powerful magical storm approaching!");
         
         Thread stormThread = new Thread(() -> {
             try {
                 inMagicalStorm = true;
-                printMessage("🌪️ " + name + " is caught in a chaotic magical vortex!");
+                printMessage(name + " is caught in a chaotic magical vortex!");
                 Thread.sleep(2500);
                 
                 if (random.nextInt(wisdom) > 30) { // Wisdom check
-                    printMessage("✨ " + name + " harnesses the storm's power! Mana greatly increased!");
+                    printMessage(name + " harnesses the storm's power! Mana greatly increased!");
                     mana = maxMana;
                     addToInventory("Storm-Charged Crystal");
                     wisdom += 10;
                 } else {
-                    printMessage("💫 " + name + " is overwhelmed by chaotic energies!");
+                    printMessage(name + " is overwhelmed by chaotic energies!");
                     mana = Math.max(mana - 30, 0);
                     takeDamage(8);
                 }
                 
                 Thread.sleep(1500);
-                printMessage("🌅 The magical storm subsides...");
+                printMessage("The magical storm subsides...");
                 inMagicalStorm = false;
                 
             } catch (InterruptedException e) {
@@ -172,7 +172,7 @@ public class Wizard extends GameCharacter {
             
             // Consume from global mana pool for powerful spells
             if (sharedResources.consumeMana(15, name)) {
-                printMessage("💫 " + name + " channels global mana for enhanced spell power!");
+                printMessage(name + " channels global mana for enhanced spell power!");
                 analytics.logEvent(name, GameAnalytics.EventType.MANA_CONSUMED, 
                     "Consumed 15 global mana for " + spell);
             }
@@ -263,7 +263,7 @@ public class Wizard extends GameCharacter {
         
         if (discoveredElement.isPresent()) {
             String element = discoveredElement.get();
-            System.out.println("✨ " + name + " discovers a " + element + " at " + location + "!");
+            System.out.println(name + " discovers a " + element + " at " + location + "!");
             analytics.logEvent(name, GameAnalytics.EventType.ENCHANTMENT, 
                 "Discovered " + element + " while exploring " + location);
         }
@@ -321,26 +321,26 @@ public class Wizard extends GameCharacter {
     protected void executePlayerAction(String action) {
         switch (action.toLowerCase()) {
             case "c", "cast" -> {
-                System.out.println("✨ " + name + " (You) prepares to cast a spell!");
+                System.out.println(name + " (You) prepares to cast a spell!");
                 castSpell();
-                System.out.println("✅ Spell casting completed.");
+                System.out.println("Spell casting completed.");
             }
             case "m", "meditate" -> {
-                System.out.println("🧘 " + name + " (You) begins meditation!");
+                System.out.println(name + " (You) begins meditation!");
                 meditate();
-                System.out.println("✅ Meditation completed.");
+                System.out.println("Meditation completed.");
             }
             case "r", "research" -> {
-                System.out.println("📚 " + name + " (You) delves into research!");
+                System.out.println(name + " (You) delves into research!");
                 study();
-                System.out.println("✅ Research completed.");
+                System.out.println("Research completed.");
             }
             case "explore" -> {
-                System.out.println("🔮 " + name + " (You) explores ancient mysteries!");
+                System.out.println(name + " (You) explores ancient mysteries!");
                 explore();
-                System.out.println("✅ Exploration completed.");
+                System.out.println("Exploration completed.");
             }
-            default -> System.out.println("⚠️ Unknown command: " + action + ". Type 'help' for available commands.");
+            default -> System.out.println("Unknown command: " + action + ". Type 'help' for available commands.");
         }
     }
     

@@ -54,14 +54,14 @@ public class CaveExplorer {
     }
     
     public boolean exploreCave() {
-        System.out.println("\n🏔️ === ENTERING THE CRYSTAL CAVERNS ===\n");
+        System.out.println("\n=== ENTERING THE CRYSTAL CAVERNS ===\n");
         System.out.println("As you step through the ancient stone archway, the warm sunlight behind you");
         System.out.println("fades into cool, mysterious shadows. The air carries whispers of forgotten");
         System.out.println("magic and the distant echo of dripping water. Crystalline formations on the");
         System.out.println("walls pulse with an otherworldly blue glow, providing just enough light to");
         System.out.println("see the path ahead.\n");
         
-        System.out.println("👥 Your brave party consists of:");
+        System.out.println("Your brave party consists of:");
         for (GameCharacter character : party) {
             System.out.println("   " + getCharacterIcon(character) + " " + character.getName() + 
                              " the " + character.getCharacterType() + " - " + getCharacterDescription(character));
@@ -83,7 +83,7 @@ public class CaveExplorer {
     
     private void exploreCurrentRoom() {
         System.out.println("\n" + "=".repeat(60));
-        System.out.println("🏛️ " + getRoomTitle(currentRoom));
+        System.out.println(getRoomTitle(currentRoom));
         System.out.println("=".repeat(60));
         
         if (currentRoom == BOSS_ROOM) {
@@ -111,34 +111,34 @@ public class CaveExplorer {
         boolean treasuresDiscovered = false;
         
         while (!roomCompleted) {
-            System.out.println("\n🤔 What would you like to do?");
+            System.out.println("\nWhat would you like to do?");
             List<String> options = new ArrayList<>();
             
             // Always available options
-            options.add("👀 Look around the room carefully");
-            options.add("🔍 Search for hidden dangers");
-            options.add("💎 Search for valuable items");
-            options.add("📋 Check your inventory and party status");
+            options.add("Look around the room carefully");
+            options.add("Search for hidden dangers");
+            options.add("Search for valuable items");
+            options.add("Check your inventory and party status");
             
             // Enemy-related options (only after discovery)
             if (enemy != null && !enemyDefeated && enemyDiscovered) {
-                options.add("⚔️  Approach the " + enemy + " for combat");
-                options.add("🤫 Try to sneak past the " + enemy + " quietly");
-                options.add("🛡️  Prepare defenses before engaging");
+                options.add("  Approach the " + enemy + " for combat");
+                options.add("Try to sneak past the " + enemy + " quietly");
+                options.add("  Prepare defenses before engaging");
             }
             
             // Treasure-related options (only after discovery)
             if (treasures != null && !treasures.isEmpty() && !treasuresLooted && treasuresDiscovered && (enemy == null || enemyDefeated)) {
-                options.add("💰 Collect the discovered treasures");
-                options.add("🎯 Choose specific treasures to take");
+                options.add("Collect the discovered treasures");
+                options.add("Choose specific treasures to take");
             }
             
             // Navigation options
             if ((enemy == null || enemyDefeated)) {
                 if (currentRoom < BOSS_ROOM) {
-                    options.add("➡️  Continue deeper into the caverns");
+                    options.add("Continue deeper into the caverns");
                 } else {
-                    options.add("🚪 Approach the final chamber");
+                    options.add("Approach the final chamber");
                 }
             }
             
@@ -147,7 +147,7 @@ public class CaveExplorer {
                 System.out.println("   " + (i + 1) + ". " + options.get(i));
             }
             
-            System.out.print("\n📝 Choose your action (1-" + options.size() + "): ");
+            System.out.print("\nChoose your action (1-" + options.size() + "): ");
             int choice = getPlayerChoice(1, options.size());
             String selectedAction = options.get(choice - 1);
             
@@ -156,65 +156,65 @@ public class CaveExplorer {
                 describeSurroundings();
             } else if (selectedAction.contains("Search for hidden dangers")) {
                 if (enemy != null && !enemyDiscovered) {
-                    System.out.println("\n⚠️ Alert! You discover a " + enemy + " lurking in the shadows!");
+                    System.out.println("\nAlert! You discover a " + enemy + " lurking in the shadows!");
                     describeEnemy(enemy);
                     enemyDiscovered = true;
                 } else if (enemy == null) {
-                    System.out.println("\n✅ You search carefully but find no immediate threats in this chamber.");
+                    System.out.println("\nYou search carefully but find no immediate threats in this chamber.");
                 } else {
-                    System.out.println("\n👁️ You've already spotted the " + enemy + " in this room.");
+                    System.out.println("\nYou've already spotted the " + enemy + " in this room.");
                 }
             } else if (selectedAction.contains("Search for valuable items")) {
                 if (treasures != null && !treasures.isEmpty() && !treasuresDiscovered) {
-                    System.out.println("\n✨ Excellent! You discover hidden treasures:");
+                    System.out.println("\nExcellent! You discover hidden treasures:");
                     describeTreasureDiscovery(treasures);
                     treasuresDiscovered = true;
                 } else if (treasures == null || treasures.isEmpty()) {
-                    System.out.println("\n🔍 You search thoroughly but find no valuable items in this chamber.");
+                    System.out.println("\nYou search thoroughly but find no valuable items in this chamber.");
                 } else {
-                    System.out.println("\n💰 You've already found all the treasures in this room.");
+                    System.out.println("\nYou've already found all the treasures in this room.");
                 }
             } else if (selectedAction.contains("inventory")) {
                 showPartyStatus();
             } else if (selectedAction.contains("Approach") && selectedAction.contains("combat")) {
-                System.out.println("\n⚔️ You steel yourself for battle and approach the " + enemy + "...");
+                System.out.println("\nYou steel yourself for battle and approach the " + enemy + "...");
                 System.out.println("The creature notices your approach and prepares to fight!");
                 enemyDefeated = handleCombat(enemy);
                 if (!enemyDefeated) {
-                    System.out.println("💀 Your party has been defeated! The adventure ends here...");
+                    System.out.println("Your party has been defeated! The adventure ends here...");
                     return;
                 }
             } else if (selectedAction.contains("sneak")) {
-                System.out.println("\n🤫 You motion to your party to move quietly...");
+                System.out.println("\nYou motion to your party to move quietly...");
                 if (attemptStealth(enemy)) {
-                    System.out.println("✅ Success! You manage to slip past the " + enemy + " undetected!");
+                    System.out.println("Success! You manage to slip past the " + enemy + " undetected!");
                     enemyDefeated = true; // Bypassed, not defeated
                 } else {
-                    System.out.println("❌ The " + enemy + " spots you! Combat is unavoidable!");
+                    System.out.println("The " + enemy + " spots you! Combat is unavoidable!");
                     enemyDefeated = handleCombat(enemy);
                     if (!enemyDefeated) {
-                        System.out.println("💀 Your party has been defeated! The adventure ends here...");
+                        System.out.println("Your party has been defeated! The adventure ends here...");
                         return;
                     }
                 }
             } else if (selectedAction.contains("defenses")) {
-                System.out.println("\n🛡️ You take time to prepare your party's defenses and strategy...");
+                System.out.println("\nYou take time to prepare your party's defenses and strategy...");
                 System.out.println("Your tactical preparation will give you an advantage in the coming fight!");
                 enemyDefeated = handleCombat(enemy, true); // Combat with advantage
                 if (!enemyDefeated) {
-                    System.out.println("💀 Despite your preparations, your party has been defeated!");
+                    System.out.println("Despite your preparations, your party has been defeated!");
                     return;
                 }
             } else if (selectedAction.contains("Collect the discovered")) {
-                System.out.println("\n💰 You begin collecting the treasures you found...");
+                System.out.println("\nYou begin collecting the treasures you found...");
                 handleTreasureCollection(treasures);
                 treasuresLooted = true;
             } else if (selectedAction.contains("Choose specific treasures")) {
-                System.out.println("\n🎯 You carefully consider which treasures to take...");
+                System.out.println("\nYou carefully consider which treasures to take...");
                 handleSelectiveTreasureCollection(treasures);
                 treasuresLooted = true;
             } else if (selectedAction.contains("Continue") || selectedAction.contains("Approach")) {
-                System.out.println("\n🚶 You signal to your party that it's time to move forward...");
+                System.out.println("\nYou signal to your party that it's time to move forward...");
                 roomCompleted = true;
             }
         }
@@ -223,35 +223,35 @@ public class CaveExplorer {
     private String getDetailedRoomDescription(int roomNum) {
         switch (roomNum) {
             case 1:
-                return "🕳️ **The Entrance Chamber**\n" +
+                return "**The Entrance Chamber**\n" +
                        "You find yourself in a vast circular chamber carved from living rock. Stalactites\n" +
                        "hang like ancient teeth from the ceiling, and the floor is covered with smooth\n" +
                        "stones worn by countless years of water flow. To your left and right, narrow\n" +
                        "passages disappear into darkness. Straight ahead, a wider tunnel beckons with\n" +
                        "the promise of deeper mysteries. The air smells of damp earth and old magic.";
             case 2:
-                return "✨ **The Crystal Gallery** \n" +
+                return "**The Crystal Gallery** \n" +
                        "The walls of this elongated chamber are embedded with thousands of tiny crystals\n" +
                        "that catch and reflect your light, creating a dazzling display of colors. The\n" +
                        "floor slopes gently downward, and you can see three distinct paths: one curves\n" +
                        "to the left around a massive crystal formation, another heads straight through\n" +
                        "a natural archway, and a third descends steeply to the right.";
             case 3:
-                return "🗿 **The Hall of Statues**\n" +
+                return "**The Hall of Statues**\n" +
                        "Ancient stone statues line both sides of this grand hallway. Each depicts a\n" +
                        "different warrior or mage from ages past, their faces weathered but still\n" +
                        "proud. Some hold weapons, others clutch spell components. At the far end,\n" +
                        "you can see the hall splits into two directions: left toward what sounds\n" +
                        "like running water, and right toward a chamber that glows with warm light.";
             case 4:
-                return "🔥 **The Forge Chamber**\n" +
+                return "**The Forge Chamber**\n" +
                        "Heat radiates from ancient forge fires that still burn with an otherworldly\n" +
                        "flame. Hammers and anvils sit ready for use, though dust shows they haven't\n" +
                        "been touched in decades. The air shimmers with heat, and you see paths\n" +
                        "leading in three directions: north through a steam-filled passage, east\n" +
                        "toward cooler air, and south back toward familiar territory.";
             case 5:
-                return "🌫️ **The Mist-Shrouded Cavern**\n" +
+                return "**The Mist-Shrouded Cavern**\n" +
                        "A thick, supernatural mist fills this irregular chamber, making it difficult\n" +
                        "to see more than a few feet in any direction. Strange whispers seem to echo\n" +
                        "from the fog, and occasional glimpses of movement suggest you're not alone.\n" +
@@ -259,7 +259,7 @@ public class CaveExplorer {
                        "air, northwest toward a faint blue glow, and southwest toward the sound of\n" +
                        "dripping water.";
             case 6:
-                return "💎 **The Gemstone Vault**\n" +
+                return "**The Gemstone Vault**\n" +
                        "The walls of this chamber are embedded with precious gems of every color -\n" +
                        "rubies, sapphires, emeralds, and diamonds that pulse with inner light.\n" +
                        "The wealth here is staggering, but something feels dangerous about disturbing\n" +
@@ -267,7 +267,7 @@ public class CaveExplorer {
                        "like a great waterfall, south toward familiar ground, east up a steep\n" +
                        "incline, and west through a narrow squeeze between gem-covered walls.";
             case 7:
-                return "🦴 **The Bone Garden**\n" +
+                return "**The Bone Garden**\n" +
                        "This unsettling chamber is filled with the remains of ancient creatures -\n" +
                        "not just bones, but complete fossilized skeletons of beasts you can't\n" +
                        "identify. Some are enormous, others tiny, all arranged as if this were\n" +
@@ -275,7 +275,7 @@ public class CaveExplorer {
                        "toward a chamber filled with strange music, and west toward what might\n" +
                        "be the sound of something very large breathing.";
             case 8:
-                return "📚 **The Ancient Library**\n" +
+                return "**The Ancient Library**\n" +
                        "Towering bookshelves carved directly from the cave walls contain thousands\n" +
                        "of ancient tomes and scrolls. Some books glow softly, others seem to move\n" +
                        "slightly when you're not looking directly at them. A reading area with\n" +
@@ -283,7 +283,7 @@ public class CaveExplorer {
                        "north toward what feels like the heart of the mountain, south toward\n" +
                        "familiar territory, and up a spiral staircase carved into the east wall.";
             case 9:
-                return "🌟 **The Celestial Observatory**\n" +
+                return "**The Celestial Observatory**\n" +
                        "The ceiling of this chamber has been carved away to reveal the night sky,\n" +
                        "though strange constellations shine overhead that you don't recognize.\n" +
                        "Ancient astronomical instruments made of brass and crystal fill the room.\n" +
@@ -291,7 +291,7 @@ public class CaveExplorer {
                        "leads north toward a chamber that hums with power, while other exits\n" +
                        "lead back to safer, more familiar ground.";
             default:
-                return "🏛️ You find yourself in an unremarkable stone chamber with passages\n" +
+                return "You find yourself in an unremarkable stone chamber with passages\n" +
                        "leading in multiple directions.";
         }
     }
@@ -313,42 +313,42 @@ public class CaveExplorer {
     }
     
     private void describeSurroundings() {
-        System.out.println("\n👁️ You take a moment to carefully observe your surroundings...\n");
+        System.out.println("\nYou take a moment to carefully observe your surroundings...\n");
         
         // Describe environmental details without revealing hidden elements
         switch (currentRoom) {
             case 1:
-                System.out.println("🔍 The entrance chamber shows signs of recent passage - footprints in");
+                System.out.println("The entrance chamber shows signs of recent passage - footprints in");
                 System.out.println("   the dust suggest others have been here before you. The air currents");
                 System.out.println("   indicate multiple passages ahead. Some shadows seem deeper than others.");
                 break;
             case 2:
-                System.out.println("🔍 The crystals seem to respond to your presence, glowing slightly");
+                System.out.println("The crystals seem to respond to your presence, glowing slightly");
                 System.out.println("   brighter. You notice some crystals have been recently harvested.");
                 System.out.println("   The play of light creates many hiding spots throughout the chamber.");
                 break;
             case 3:
-                System.out.println("🔍 The statues' eyes seem to follow your movement. Some bear inscriptions");
+                System.out.println("The statues' eyes seem to follow your movement. Some bear inscriptions");
                 System.out.println("   in ancient languages, possibly warnings or blessings.");
                 System.out.println("   The spaces between statues are shrouded in mystery.");
                 break;
             case 4:
-                System.out.println("🔍 The forge fires cast dancing shadows on the walls. Ancient tools");
+                System.out.println("The forge fires cast dancing shadows on the walls. Ancient tools");
                 System.out.println("   lie scattered about, and the heat distorts the air making it hard");
                 System.out.println("   to see clearly into all corners of the chamber.");
                 break;
             case 5:
-                System.out.println("🔍 The supernatural mist swirls around you, limiting visibility.");
+                System.out.println("The supernatural mist swirls around you, limiting visibility.");
                 System.out.println("   Whispers echo from unseen sources, and shapes move just beyond");
                 System.out.println("   the edge of sight. Anything could be hiding in this fog.");
                 break;
             default:
-                System.out.println("🔍 You notice interesting details about the chamber's construction");
+                System.out.println("You notice interesting details about the chamber's construction");
                 System.out.println("   and signs of who or what might have passed through recently.");
                 System.out.println("   Many areas remain unexplored and could hold secrets.");
         }
         
-        System.out.println("\n💡 To discover what this chamber truly holds, you'll need to search more actively.");
+        System.out.println("\nTo discover what this chamber truly holds, you'll need to search more actively.");
         
         System.out.println("\nPress Enter to continue...");
         scanner.nextLine();
@@ -378,7 +378,7 @@ public class CaveExplorer {
     }
     
     private void showPartyStatus() {
-        System.out.println("\n👥 === PARTY STATUS ===\n");
+        System.out.println("\n=== PARTY STATUS ===\n");
         for (GameCharacter character : party) {
             String status = "Healthy";
             if (character.getHealth() < character.getMaxHealth() * 0.3) {
@@ -393,7 +393,7 @@ public class CaveExplorer {
             System.out.println();
         }
         
-        System.out.println("🎒 === YOUR INVENTORY ===");
+        System.out.println(" === YOUR INVENTORY ===");
         if (playerInventory.isEmpty()) {
             System.out.println("   (Empty - " + MAX_INVENTORY + " slots available)");
         } else {
@@ -416,7 +416,7 @@ public class CaveExplorer {
             stealthRoll += 5;
         }
         
-        System.out.println("🎲 Stealth attempt: " + stealthRoll + "/20");
+        System.out.println("Stealth attempt: " + stealthRoll + "/20");
         
         return stealthRoll >= 12; // Base difficulty
     }
@@ -424,14 +424,14 @@ public class CaveExplorer {
     private void describeTreasureDiscovery(List<String> treasures) {
         System.out.println("After searching carefully, you discover:");
         for (String treasure : treasures) {
-            System.out.println("   ✨ " + treasure + " - " + getTreasureDescription(treasure));
+            System.out.println("   " + treasure + " - " + getTreasureDescription(treasure));
         }
     }
     
     private void describeTreasureDetails(List<String> treasures) {
         System.out.println("You examine each treasure carefully:");
         for (String treasure : treasures) {
-            System.out.println("\n📝 " + treasure + ":");
+            System.out.println("\n" + treasure + ":");
             System.out.println("   " + getTreasureDescription(treasure));
             System.out.println("   " + getTreasureUsefulness(treasure));
         }
@@ -464,7 +464,7 @@ public class CaveExplorer {
     
     private void handleSelectiveTreasureCollection(List<String> treasures) {
         for (String treasure : treasures) {
-            System.out.println("\n💰 Would you like to take the " + treasure + "?");
+            System.out.println("\nWould you like to take the " + treasure + "?");
             System.out.println("   (You have " + (MAX_INVENTORY - playerInventory.size()) + " inventory slots remaining)");
             System.out.print("   Take it? (y/n): ");
             
@@ -472,35 +472,35 @@ public class CaveExplorer {
             if (response.startsWith("y")) {
                 if (playerInventory.size() < MAX_INVENTORY) {
                     playerInventory.add(treasure);
-                    System.out.println("✅ " + treasure + " added to your inventory!");
+                    System.out.println(treasure + " added to your inventory!");
                 } else {
-                    System.out.println("❌ Your inventory is full! Drop something first? (y/n): ");
+                    System.out.println("Your inventory is full! Drop something first? (y/n): ");
                     String dropResponse = scanner.nextLine().toLowerCase().trim();
                     if (dropResponse.startsWith("y")) {
                         dropItemFromInventory();
                         if (playerInventory.size() < MAX_INVENTORY) {
                             playerInventory.add(treasure);
-                            System.out.println("✅ " + treasure + " added to your inventory!");
+                            System.out.println(treasure + " added to your inventory!");
                         }
                     } else {
-                        System.out.println("⏭️ Left " + treasure + " behind.");
+                        System.out.println("Left " + treasure + " behind.");
                     }
                 }
             } else {
-                System.out.println("⏭️ You decide to leave the " + treasure + " behind.");
+                System.out.println("You decide to leave the " + treasure + " behind.");
             }
         }
     }
     
     private void offerNavigationChoices() {
-        System.out.println("\n🗺️ === CHOOSE YOUR PATH ===\n");
+        System.out.println("\n=== CHOOSE YOUR PATH ===\n");
         System.out.println("You've completed this chamber. Where would you like to go next?");
         System.out.println();
         System.out.println("1. ⬆️  Continue forward deeper into the caverns");
         System.out.println("2. ⬅️  Explore a side passage to the left");  
-        System.out.println("3. ➡️  Investigate a passage to the right");
-        System.out.println("4. 📋 Check party status before deciding");
-        System.out.println("5. 💭 Think carefully about your options");
+        System.out.println("3. Investigate a passage to the right");
+        System.out.println("4. Check party status before deciding");
+        System.out.println("5. Think carefully about your options");
         
         System.out.print("\nWhat is your choice? (1-5): ");
         int choice = getPlayerChoice(1, 5);
@@ -508,15 +508,15 @@ public class CaveExplorer {
         switch (choice) {
             case 1:
                 currentRoom++;
-                System.out.println("\n🚶 Your party moves deeper into the mysterious caverns...");
+                System.out.println("\nYour party moves deeper into the mysterious caverns...");
                 break;
             case 2:
-                System.out.println("\n🚶 You decide to explore the left passage...");
+                System.out.println("\nYou decide to explore the left passage...");
                 // Could lead to the same next room or special areas
                 currentRoom++;
                 break;
             case 3:
-                System.out.println("\n🚶 You choose the right-hand passage...");
+                System.out.println("\nYou choose the right-hand passage...");
                 currentRoom++;
                 break;
             case 4:
@@ -524,7 +524,7 @@ public class CaveExplorer {
                 offerNavigationChoices(); // Recursive call to choose again
                 return;
             case 5:
-                System.out.println("\n💭 You take a moment to consider your options carefully...");
+                System.out.println("\nYou take a moment to consider your options carefully...");
                 System.out.println("The deeper you go, the more dangerous it becomes, but also");
                 System.out.println("the greater the potential rewards. Your party seems ready to continue.");
                 offerNavigationChoices(); // Recursive call to choose again
@@ -536,7 +536,7 @@ public class CaveExplorer {
     
     // Boss room and combat methods
     private void exploreBossRoom() {
-        System.out.println("🏛️ **THE GUARDIAN'S SANCTUM**\n");
+        System.out.println("**THE GUARDIAN'S SANCTUM**\n");
         System.out.println("You enter a massive circular chamber with a domed ceiling that disappears");
         System.out.println("into darkness above. Ancient pillars carved with mystical symbols support");
         System.out.println("the vast space. At the center, on a raised dais, sits an enormous creature");
@@ -550,7 +550,7 @@ public class CaveExplorer {
     }
     
     private boolean handleBossBattle() {
-        System.out.println("⚔️ === FINAL BATTLE: THE ANCIENT GUARDIAN ===\n");
+        System.out.println(" === FINAL BATTLE: THE ANCIENT GUARDIAN ===\n");
         
         for (int round = 1; round <= 3; round++) {
             System.out.println("--- ROUND " + round + " ---");
@@ -558,16 +558,16 @@ public class CaveExplorer {
             System.out.println();
             
             System.out.println("Choose your strategy for round " + round + ":");
-            System.out.println("1. ⚔️ Coordinated Attack - All party members strike together");
-            System.out.println("2. 🛡️ Defensive Strategy - Protect while looking for weaknesses");
-            System.out.println("3. 🔮 Magic Focus - Use all magical abilities and items");
-            System.out.println("4. 🎯 Tactical Strike - Target specific weak points");
+            System.out.println("1. Coordinated Attack - All party members strike together");
+            System.out.println("2. Defensive Strategy - Protect while looking for weaknesses");
+            System.out.println("3. Magic Focus - Use all magical abilities and items");
+            System.out.println("4. Tactical Strike - Target specific weak points");
             System.out.print("\nEnter your choice (1-4): ");
             
             int strategy = getPlayerChoice(1, 4);
             
             if (executeBossStrategy(strategy, round)) {
-                System.out.println("\n🎉 === VICTORY! ===");
+                System.out.println("\n=== VICTORY! ===");
                 System.out.println("The Ancient Guardian's form begins to dissolve into sparkling light!");
                 System.out.println("'You have proven yourselves worthy,' its voice echoes as it fades.");
                 System.out.println("'Take these treasures as a reward for your courage and teamwork.'");
@@ -575,7 +575,7 @@ public class CaveExplorer {
             }
         }
         
-        System.out.println("\n💀 The Ancient Guardian's power proves overwhelming...");
+        System.out.println("\nThe Ancient Guardian's power proves overwhelming...");
         System.out.println("Your party fought valiantly, but this challenge was too great.");
         return false;
     }
@@ -597,30 +597,30 @@ public class CaveExplorer {
         switch (strategy) {
             case 1: // Coordinated Attack
                 totalRoll += 3 + party.size(); // Bonus for teamwork
-                System.out.println("🎲 Teamwork Roll: " + totalRoll + " (base: " + baseRoll + " + teamwork bonus)");
+                System.out.println("Teamwork Roll: " + totalRoll + " (base: " + baseRoll + " + teamwork bonus)");
                 break;
             case 2: // Defensive Strategy  
                 totalRoll += 2;
-                System.out.println("🎲 Defense Roll: " + totalRoll + " (base: " + baseRoll + " + defense bonus)");
+                System.out.println("Defense Roll: " + totalRoll + " (base: " + baseRoll + " + defense bonus)");
                 break;
             case 3: // Magic Focus
                 totalRoll += 4; // High risk, high reward
-                System.out.println("🎲 Magic Roll: " + totalRoll + " (base: " + baseRoll + " + magic bonus)");
+                System.out.println("Magic Roll: " + totalRoll + " (base: " + baseRoll + " + magic bonus)");
                 break;
             case 4: // Tactical Strike
                 totalRoll += 1 + round; // Gets better each round
-                System.out.println("🎲 Precision Roll: " + totalRoll + " (base: " + baseRoll + " + tactical bonus)");
+                System.out.println("Precision Roll: " + totalRoll + " (base: " + baseRoll + " + tactical bonus)");
                 break;
         }
         
         int difficulty = 15 - round; // Gets easier each round
-        System.out.println("🎯 Needed: " + difficulty + " or higher");
+        System.out.println("Needed: " + difficulty + " or higher");
         
         if (totalRoll >= difficulty) {
-            System.out.println("✅ Your strategy succeeds! The Guardian staggers!");
+            System.out.println("Your strategy succeeds! The Guardian staggers!");
             return round == 3 || totalRoll >= 20; // Win on round 3 or critical success
         } else {
-            System.out.println("❌ The Guardian resists, but shows signs of wear!");
+            System.out.println("The Guardian resists, but shows signs of wear!");
             return false;
         }
     }
@@ -631,7 +631,7 @@ public class CaveExplorer {
     }
     
     private boolean handleCombat(String enemy, boolean prepared) {
-        System.out.println("\n⚔️ === TURN-BASED COMBAT: " + enemy.toUpperCase() + " ===\n");
+        System.out.println("\n === TURN-BASED COMBAT: " + enemy.toUpperCase() + " ===\n");
         
         // Initialize combat stats
         Map<String, Integer> partyHealth = new HashMap<>();
@@ -653,10 +653,10 @@ public class CaveExplorer {
         int enemyArmor = getEnemyArmor(enemy);
         
         if (prepared) {
-            System.out.println("🛡️ Your party is well-prepared for this battle!\n");
+            System.out.println("Your party is well-prepared for this battle!\n");
         }
         
-        System.out.println("📊 === BATTLE STATUS ===");
+        System.out.println(" === BATTLE STATUS ===");
         displayCombatStatus(partyHealth, partyMaxHealth, enemy, enemyHealth, enemyMaxHealth);
         
         Random random = new Random();
@@ -664,7 +664,7 @@ public class CaveExplorer {
         
         // Combat loop
         while (enemyHealth > 0 && !isPartyDefeated(partyHealth)) {
-            System.out.println("\n🔄 === ROUND " + round + " ===");
+            System.out.println("\n === ROUND " + round + " ===");
             
             // Party turns (player first, then AI)
             List<GameCharacter> turnOrder = new ArrayList<>();
@@ -694,7 +694,7 @@ public class CaveExplorer {
             
             // Display status after round
             if (enemyHealth > 0 && !isPartyDefeated(partyHealth)) {
-                System.out.println("\n📊 === END OF ROUND " + round + " ===");
+                System.out.println("\n === END OF ROUND " + round + " ===");
                 displayCombatStatus(partyHealth, partyMaxHealth, enemy, enemyHealth, enemyMaxHealth);
             }
             
@@ -709,12 +709,12 @@ public class CaveExplorer {
         
         // Combat resolution
         if (enemyHealth <= 0) {
-            System.out.println("\n🎉 === VICTORY! ===");
+            System.out.println("\n=== VICTORY! ===");
             System.out.println("You and your party have defeated the " + enemy + "!");
             System.out.println(getVictoryDescription(enemy));
             return true;
         } else {
-            System.out.println("\n💀 === DEFEAT ===");
+            System.out.println("\n=== DEFEAT ===");
             System.out.println("Your party has been overwhelmed by the " + enemy + "...");
             System.out.println("The adventure ends here...");
             return false;
@@ -733,14 +733,14 @@ public class CaveExplorer {
     
     // Utility methods
     private void handleTreasureCollection(List<String> treasures) {
-        System.out.println("\n💰 Treasures found in this room:");
+        System.out.println("\nTreasures found in this room:");
         for (String treasure : treasures) {
-            System.out.println("   ✨ " + treasure);
+            System.out.println("   " + treasure);
         }
         
         System.out.println("\nWould you like to:");
-        System.out.println("1. 📦 Take all treasures (if space allows)");
-        System.out.println("2. 🎯 Choose specific treasures");
+        System.out.println("1. Take all treasures (if space allows)");
+        System.out.println("2. Choose specific treasures");
         System.out.println("3. ⏭️ Leave all treasures behind");
         
         System.out.print("Your choice (1-3): ");
@@ -751,9 +751,9 @@ public class CaveExplorer {
                 for (String treasure : treasures) {
                     if (playerInventory.size() < MAX_INVENTORY) {
                         playerInventory.add(treasure);
-                        System.out.println("✅ Took " + treasure);
+                        System.out.println("Took " + treasure);
                     } else {
-                        System.out.println("❌ No space for " + treasure);
+                        System.out.println("No space for " + treasure);
                     }
                 }
                 break;
@@ -769,7 +769,7 @@ public class CaveExplorer {
     private void dropItemFromInventory() {
         if (playerInventory.isEmpty()) return;
         
-        System.out.println("\n🗑️ Which item would you like to drop?");
+        System.out.println("\nWhich item would you like to drop?");
         for (int i = 0; i < playerInventory.size(); i++) {
             System.out.println((i + 1) + ". " + playerInventory.get(i));
         }
@@ -777,7 +777,7 @@ public class CaveExplorer {
         System.out.print("Drop item (1-" + playerInventory.size() + "): ");
         int choice = getPlayerChoice(1, playerInventory.size());
         String dropped = playerInventory.remove(choice - 1);
-        System.out.println("🗑️ Dropped " + dropped + " from inventory.");
+        System.out.println("Dropped " + dropped + " from inventory.");
     }
     
     private int getPlayerChoice(int min, int max) {
@@ -797,10 +797,10 @@ public class CaveExplorer {
     }
     
     private String getCharacterIcon(GameCharacter character) {
-        if (character instanceof Knight) return "⚔️";
-        if (character instanceof Thief) return "🗡️";  
-        if (character instanceof Wizard) return "🔮";
-        return "👤";
+        if (character instanceof Knight) return "Knight";
+        if (character instanceof Thief) return "T";  
+        if (character instanceof Wizard) return "W";
+        return "K";
     }
     
     private String getCharacterDescription(GameCharacter character) {
@@ -868,16 +868,16 @@ public class CaveExplorer {
     
     private void displayCombatStatus(Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, 
                                    String enemy, int enemyHealth, int enemyMaxHealth) {
-        System.out.println("🏥 === PARTY STATUS ===");
-        System.out.printf("👤 %s: %d/%d HP%n", player.getName(), 
+        System.out.println(" === PARTY STATUS ===");
+        System.out.printf(" %s: %d/%d HP%n", player.getName(), 
                          partyHealth.get(player.getName()), partyMaxHealth.get(player.getName()));
         
         for (GameCharacter character : aiParty) {
-            System.out.printf("🤖 %s: %d/%d HP%n", character.getName(), 
+            System.out.printf(" %s: %d/%d HP%n", character.getName(), 
                              partyHealth.get(character.getName()), partyMaxHealth.get(character.getName()));
         }
         
-        System.out.printf("🐲 %s: %d/%d HP%n", enemy, enemyHealth, enemyMaxHealth);
+        System.out.printf(" %s: %d/%d HP%n", enemy, enemyHealth, enemyMaxHealth);
         System.out.println();
     }
     
@@ -892,14 +892,14 @@ public class CaveExplorer {
     
     private int handlePlayerTurn(GameCharacter character, String enemy, int enemyHealth, 
                                 Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, int enemyArmor, boolean prepared) {
-        System.out.println("\n🎯 " + character.getName() + "'s turn!");
+        System.out.println("\n" + character.getName() + "'s turn!");
         System.out.println("What would you like to do?");
-        System.out.println("1. ⚔️  Attack the " + enemy);
-        System.out.println("2. 🛡️  Defend (reduce damage next turn)");
-        System.out.println("3. 💚 Use Health Potion (if available)");
+        System.out.println("1. Attack the " + enemy);
+        System.out.println("2. Defend (reduce damage next turn)");
+        System.out.println("3. Use Health Potion (if available)");
         
         if (character.getClass().getSimpleName().equals("Wizard")) {
-            System.out.println("4. ✨ Cast Spell (if mana available)");
+            System.out.println("4. Cast Spell (if mana available)");
         }
         
         System.out.print("Choose your action (1-" + (character.getClass().getSimpleName().equals("Wizard") ? "4" : "3") + "): ");
@@ -913,18 +913,18 @@ public class CaveExplorer {
                 int damage = Math.max(1, rawDamage - enemyArmor); // Minimum 1 damage
                 enemyHealth = Math.max(0, enemyHealth - damage);
                 if (enemyArmor > 0 && rawDamage > damage) {
-                    System.out.printf("⚔️ %s attacks for %d damage! (%d absorbed by armor)%n", 
+                    System.out.printf("%s attacks for %d damage! (%d absorbed by armor)%n", 
                                     character.getName(), damage, rawDamage - damage);
                 } else {
-                    System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+                    System.out.printf("%s attacks for %d damage!%n", character.getName(), damage);
                 }
                 if (enemyHealth <= 0) {
-                    System.out.println("💀 The " + enemy + " has been defeated!");
+                    System.out.println("The " + enemy + " has been defeated!");
                 }
                 break;
                 
             case 2: // Defend
-                System.out.println("🛡️ " + character.getName() + " takes a defensive stance!");
+                System.out.println(character.getName() + " takes a defensive stance!");
                 // Defense bonus will be applied during enemy turn
                 break;
                 
@@ -936,10 +936,10 @@ public class CaveExplorer {
                     int newHealth = Math.min(currentHealth + healing, maxHealth);
                     partyHealth.put(character.getName(), newHealth);
                     playerInventory.remove("Health Potion");
-                    System.out.printf("💚 %s uses a Health Potion and recovers %d HP!%n", 
+                    System.out.printf("%s uses a Health Potion and recovers %d HP!%n", 
                                     character.getName(), newHealth - currentHealth);
                 } else {
-                    System.out.println("❌ No Health Potions available!");
+                    System.out.println("No Health Potions available!");
                     return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, prepared); // Retry turn
                 }
                 break;
@@ -951,16 +951,16 @@ public class CaveExplorer {
                     int spellDamage = Math.max(1, rawSpellDamage - (enemyArmor / 2));
                     enemyHealth = Math.max(0, enemyHealth - spellDamage);
                     if (enemyArmor > 0 && rawSpellDamage > spellDamage) {
-                        System.out.printf("✨ %s casts a spell for %d damage! (%d partially resisted)%n", 
+                        System.out.printf("%s casts a spell for %d damage! (%d partially resisted)%n", 
                                         character.getName(), spellDamage, rawSpellDamage - spellDamage);
                     } else {
-                        System.out.printf("✨ %s casts a powerful spell for %d damage!%n", character.getName(), spellDamage);
+                        System.out.printf("%s casts a powerful spell for %d damage!%n", character.getName(), spellDamage);
                     }
                     if (enemyHealth <= 0) {
-                        System.out.println("💀 The " + enemy + " has been defeated by magic!");
+                        System.out.println("The " + enemy + " has been defeated by magic!");
                     }
                 } else {
-                    System.out.println("❌ Only wizards can cast spells!");
+                    System.out.println("Only wizards can cast spells!");
                     return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, enemyArmor, prepared); // Retry turn
                 }
                 break;
@@ -971,7 +971,7 @@ public class CaveExplorer {
     
     private int handleAITurn(GameCharacter character, String enemy, int enemyHealth, 
                            Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, int enemyArmor, Random random) {
-        System.out.println("\n🤖 " + character.getName() + "'s turn!");
+        System.out.println("\n" + character.getName() + "'s turn!");
         
         // Simple AI logic based on character type
         String characterType = character.getClass().getSimpleName();
@@ -980,32 +980,32 @@ public class CaveExplorer {
         if (characterType.equals("Knight")) {
             // Knights prefer attacking but will defend if low on health
             if (partyHealth.get(character.getName()) < partyMaxHealth.get(character.getName()) / 3 && action < 30) {
-                System.out.println("🛡️ " + character.getName() + " raises their shield defensively!");
+                System.out.println(character.getName() + " raises their shield defensively!");
                 return enemyHealth;
             } else {
                 int damage = 12 + random.nextInt(9); // 12-20 damage
                 enemyHealth = Math.max(0, enemyHealth - damage);
-                System.out.printf("⚔️ %s attacks with their sword for %d damage!%n", character.getName(), damage);
+                System.out.printf("%s attacks with their sword for %d damage!%n", character.getName(), damage);
             }
         } else if (characterType.equals("Thief")) {
             // Thieves go for quick strikes
             int damage = 10 + random.nextInt(11); // 10-20 damage
             enemyHealth = Math.max(0, enemyHealth - damage);
-            System.out.printf("🗡️ %s strikes swiftly for %d damage!%n", character.getName(), damage);
+            System.out.printf("%s strikes swiftly for %d damage!%n", character.getName(), damage);
         } else if (characterType.equals("Wizard")) {
             // Wizards cast spells
             int damage = 15 + random.nextInt(16); // 15-30 damage
             enemyHealth = Math.max(0, enemyHealth - damage);
-            System.out.printf("✨ %s casts a magic missile for %d damage!%n", character.getName(), damage);
+            System.out.printf("%s casts a magic missile for %d damage!%n", character.getName(), damage);
         } else {
             // Generic attack
             int damage = 8 + random.nextInt(8); // 8-15 damage
             enemyHealth = Math.max(0, enemyHealth - damage);
-            System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+            System.out.printf("%s attacks for %d damage!%n", character.getName(), damage);
         }
         
         if (enemyHealth <= 0) {
-            System.out.println("💀 The " + enemy + " has been defeated!");
+            System.out.println("The " + enemy + " has been defeated!");
         }
         
         return enemyHealth;
@@ -1013,7 +1013,7 @@ public class CaveExplorer {
     
     private void handleEnemyTurn(String enemy, int enemyAttack, Map<String, Integer> partyHealth, 
                                 Map<String, Integer> partyMaxHealth, Random random) {
-        System.out.println("\n👹 " + enemy + "'s turn!");
+        System.out.println("\n" + enemy + "'s turn!");
         
         // Choose target (prefer player, but can target others)
         List<String> aliveMembers = new ArrayList<>();
@@ -1042,10 +1042,10 @@ public class CaveExplorer {
         int newHealth = Math.max(0, currentHealth - damage);
         partyHealth.put(target, newHealth);
         
-        System.out.printf("💥 %s attacks %s for %d damage!%n", enemy, target, damage);
+        System.out.printf("%s attacks %s for %d damage!%n", enemy, target, damage);
         
         if (newHealth <= 0) {
-            System.out.printf("💀 %s has been knocked unconscious!%n", target);
+            System.out.printf("%s has been knocked unconscious!%n", target);
         }
     }
     
@@ -1061,7 +1061,7 @@ public class CaveExplorer {
                 baseDamage = 8 + random.nextInt(9); // 8-16 damage (variable, can crit)
                 if (random.nextInt(100) < 25) { // 25% critical hit chance
                     baseDamage = (int)(baseDamage * 1.5);
-                    System.out.println("💥 Critical hit!");
+                    System.out.println("Critical hit!");
                 }
                 break;
             case "Wizard":

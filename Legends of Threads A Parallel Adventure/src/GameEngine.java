@@ -52,7 +52,7 @@ public class GameEngine {
      */
     public void initializeGame() {
         System.out.println("===============================================");
-        System.out.println("🏰 WELCOME TO LEGENDS OF THREADS 🏰");
+        System.out.println("WELCOME TO LEGENDS OF THREADS");
         System.out.println("    A Parallel Adventure Awaits!");
         System.out.println("===============================================\n");
         
@@ -71,7 +71,7 @@ public class GameEngine {
         thief.setGameEngine(this);
         wizard.setGameEngine(this);
         
-        System.out.println("📋 HEROES ASSEMBLED:");
+        System.out.println("HEROES ASSEMBLED:");
         characters.forEach(character -> {
             System.out.println("   " + character.toString());
         });
@@ -85,10 +85,10 @@ public class GameEngine {
      * Let the player choose which character to control
      */
     private void selectPlayerCharacter() {
-        System.out.println("\n🎮 CHOOSE YOUR HERO TO CONTROL:");
-        System.out.println("1. ⚔️  Sir Galahad (Knight) - Noble warrior with high defense and honor");
-        System.out.println("2. 🗡️  Shadowstep (Thief) - Stealthy rogue with agility and cunning");
-        System.out.println("3. 🔮 Arcanum (Wizard) - Powerful mage with magic and wisdom");
+        System.out.println("\nCHOOSE YOUR HERO TO CONTROL:");
+        System.out.println("1. Sir Galahad (Knight) - Noble warrior with high defense and honor");
+        System.out.println("2. Shadowstep (Thief) - Stealthy rogue with agility and cunning");
+        System.out.println("3. Arcanum (Wizard) - Powerful mage with magic and wisdom");
         System.out.print("\nEnter your choice (1-3): ");
         
         int choice = -1;
@@ -106,7 +106,7 @@ public class GameEngine {
         playerCharacter = characters.get(choice - 1);
         playerCharacter.setPlayerControlled(true);
         
-        System.out.println("\n✨ You have chosen to control " + playerCharacter.getName() + " the " + playerCharacter.getCharacterType() + "!");
+        System.out.println("\nYou have chosen to control " + playerCharacter.getName() + " the " + playerCharacter.getCharacterType() + "!");
         System.out.println("The other heroes will fight alongside you as AI party members.\n");
         
         // Prepare AI characters list (all except player character)
@@ -125,7 +125,7 @@ public class GameEngine {
      * Display the available player controls
      */
     private void displayPlayerControls() {
-        System.out.println("🎮 PLAYER CONTROLS:");
+        System.out.println("PLAYER CONTROLS:");
         if (playerCharacter instanceof Knight) {
             System.out.println("  [A]ttack - Engage in combat");
             System.out.println("  [P]atrol - Move and guard area");
@@ -153,12 +153,12 @@ public class GameEngine {
      */
     public void startAdventure() {
         // Ask if player wants to explore the cave
-        System.out.println("\n🏔️ === ADVENTURE CHOICE ===\n");
+        System.out.println("\n=== ADVENTURE CHOICE ===\n");
         System.out.println("You and your party stand before the entrance to the mysterious Crystal Caverns.");
         System.out.println("Legend speaks of ancient treasures and a powerful guardian within...");
         System.out.println();
-        System.out.println("1. 🕳️  Enter the Crystal Caverns (Turn-based dungeon crawler)");
-        System.out.println("2. 🌍  Continue the open world adventure (Original gameplay)");
+        System.out.println("1. Enter the Crystal Caverns (Turn-based dungeon crawler)");
+        System.out.println("2. Continue the open world adventure (Original gameplay)");
         System.out.print("\nChoose your path (1-2): ");
         
         int pathChoice = -1;
@@ -177,8 +177,8 @@ public class GameEngine {
             // Cave exploration mode - disable background activities
             caveMode = true;
             gameRunning = false; // Stop background threads from printing
-            System.out.println("\n🏔️ Entering turn-based cave exploration mode!");
-            System.out.println("🔇 Background activities paused for focused exploration.");
+            System.out.println("\nEntering turn-based cave exploration mode!");
+            System.out.println("Background activities paused for focused exploration.");
             
             // Disable character auto-actions and resource messages for cave mode
             for (GameCharacter character : characters) {
@@ -198,10 +198,10 @@ public class GameEngine {
             gameWorld.setCaveMode(false);
             
             if (gameWon) {
-                System.out.println("\n🎉 === CONGRATULATIONS! YOU HAVE WON THE GAME! ===\n");
+                System.out.println("\n=== CONGRATULATIONS! YOU HAVE WON THE GAME! ===\n");
                 System.out.println("You have conquered the Crystal Caverns and defeated the Ancient Guardian!");
                 System.out.println("Your legend will be told for generations to come!");
-                System.out.println("\n🔑 Press ESC or type 'exit' to end the game.");
+                System.out.println("\nPress ESC or type 'exit' to end the game.");
                 
                 // Wait for exit input
                 String exitInput;
@@ -210,9 +210,9 @@ public class GameEngine {
                     exitInput = scanner.nextLine().toLowerCase().trim();
                 } while (!exitInput.equals("exit") && !exitInput.equals("esc"));
                 
-                System.out.println("\n👑 Thank you for playing Legends of Threads: Crystal Caverns Adventure!");
+                System.out.println("\nThank you for playing Legends of Threads: Crystal Caverns Adventure!");
             } else {
-                System.out.println("\n💀 Your adventure ends here... Better luck next time!");
+                System.out.println("\nYour adventure ends here... Better luck next time!");
             }
         } else {
             // Original gameplay mode - enable background activities
@@ -227,17 +227,17 @@ public class GameEngine {
             sharedResources.setCaveMode(false);
             gameWorld.setCaveMode(false);
             
-            System.out.println("🚀 ADVENTURE BEGINS! All heroes start their quests...\n");
+            System.out.println("ADVENTURE BEGINS! All heroes start their quests...\n");
             
             // Create and start threads for each character
             for (GameCharacter character : characters) {
                 Thread characterThread = new Thread(character, character.getName() + "Thread");
                 characterThreads.add(characterThread);
                 characterThread.start();
-                System.out.println("🧵 Started thread for " + character.getName() + " the " + character.getCharacterType());
+                System.out.println("Started thread for " + character.getName() + " the " + character.getCharacterType());
             }
             
-            System.out.println("\n✨ All threads are running! Turn-based adventure begins...\n");
+            System.out.println("\nAll threads are running! Turn-based adventure begins...\n");
             
             // Start the game monitoring thread
             monitorThread = new Thread(this::monitorGame, "GameMonitorThread");
@@ -276,7 +276,7 @@ public class GameEngine {
                 // Check if all characters are defeated
                 boolean anyAlive = characters.stream().anyMatch(GameCharacter::isAlive);
                 if (!anyAlive) {
-                    System.out.println("\n💀 All heroes have fallen! The adventure ends in tragedy...");
+                    System.out.println("\nAll heroes have fallen! The adventure ends in tragedy...");
                     gameRunning = false;
                     break;
                 }
@@ -296,7 +296,7 @@ public class GameEngine {
         try {
             long elapsedTime = (System.currentTimeMillis() - gameStartTime) / 1000;
             System.out.println("\n" + "=".repeat(50));
-            System.out.println("📊 ADVENTURE STATUS - Round " + gameRounds + " (Time: " + elapsedTime + "s)");
+            System.out.println("ADVENTURE STATUS - Round " + gameRounds + " (Time: " + elapsedTime + "s)");
             System.out.println("=".repeat(50));
             
             for (GameCharacter character : characters) {
@@ -329,13 +329,13 @@ public class GameEngine {
     private void displayCharacterStats() {
         for (GameCharacter character : characters) {
             if (character instanceof Knight knight) {
-                System.out.println("   🛡️ " + knight.getName() + " - Armor: " + knight.getArmor() + 
+                System.out.println("   " + knight.getName() + " - Armor: " + knight.getArmor() + 
                                  ", Quests: " + knight.getQuestsCompleted());
             } else if (character instanceof Thief thief) {
-                System.out.println("   🗡️ " + thief.getName() + " - Stealth: " + thief.getStealth() + 
+                System.out.println("   " + thief.getName() + " - Stealth: " + thief.getStealth() + 
                                  ", Items Stolen: " + thief.getItemsStolen());
             } else if (character instanceof Wizard wizard) {
-                System.out.println("   🔮 " + wizard.getName() + " - Mana: " + wizard.getMana() + "/" + 
+                System.out.println("   " + wizard.getName() + " - Mana: " + wizard.getMana() + "/" + 
                                  wizard.getMaxMana() + ", Spells Cast: " + wizard.getSpellsCast());
             }
         }
@@ -346,8 +346,8 @@ public class GameEngine {
      */
     private void startPlayerTurn() {
         playerTurn = true;
-        System.out.println("\n🎯 === YOUR TURN ===");
-        System.out.println("💭 All AI characters are paused. What will " + playerCharacter.getName() + " do?");
+        System.out.println("\n=== YOUR TURN ===");
+        System.out.println("All AI characters are paused. What will " + playerCharacter.getName() + " do?");
     }
     
     public boolean isPlayerTurn() {
@@ -359,8 +359,8 @@ public class GameEngine {
      */
     public void endPlayerTurn() {
         playerTurn = false;
-        System.out.println("\n⚡ === AI TURN ===");
-        System.out.println("🤖 AI characters are now acting...\n");
+        System.out.println("\n=== AI TURN ===");
+        System.out.println("AI characters are now acting...\n");
         
         // Let AI characters act for a few seconds
         try {
@@ -379,8 +379,8 @@ public class GameEngine {
      */
     private void startPlayerControlThread() {
         Thread playerThread = new Thread(() -> {
-            System.out.println("\n🎮 You now control " + playerCharacter.getName() + "! This is a turn-based adventure.");
-            System.out.println("💡 AI characters will pause during your turn, then take their turns.\n");
+            System.out.println("\nYou now control " + playerCharacter.getName() + "! This is a turn-based adventure.");
+            System.out.println("AI characters will pause during your turn, then take their turns.\n");
             
             while (gameRunning) {
                 try {
@@ -390,13 +390,13 @@ public class GameEngine {
                         String input = scanner.nextLine().trim().toLowerCase();
                         
                         if (input.isEmpty()) {
-                            System.out.println("💭 " + playerCharacter.getName() + " waits for your decision...");
+                            System.out.println(playerCharacter.getName() + " waits for your decision...");
                             continue;
                         }
                         
                         switch (input) {
                             case "quit", "exit" -> {
-                                System.out.println("\n🏃 Ending adventure...");
+                                System.out.println("\nEnding adventure...");
                                 gameRunning = false;
                                 return;
                             }
@@ -409,7 +409,7 @@ public class GameEngine {
                             default -> {
                                 // Send action to player character
                                 if (playerCharacter != null) {
-                                    System.out.println("📝 " + playerCharacter.getName() + " executes: " + input);
+                                    System.out.println(playerCharacter.getName() + " executes: " + input);
                                     playerCharacter.setPlayerAction(input);
                                 }
                             }
@@ -433,7 +433,7 @@ public class GameEngine {
      * Handle user input during the game (legacy method - now replaced by player control)
      */
     private void handleUserInteraction() {
-        System.out.println("💬 GAME COMMANDS:");
+        System.out.println("GAME COMMANDS:");
         System.out.println("   'status' - Show current game status");
         System.out.println("   'resources' - Show detailed shared resource status");
         System.out.println("   'analytics' - Show comprehensive game analytics");
@@ -467,7 +467,7 @@ public class GameEngine {
                     resumeAllCharacters();
                     break;
                 case "quit":
-                    System.out.println("🛑 User requested to end the adventure...");
+                    System.out.println("User requested to end the adventure...");
                     gameRunning = false; // This will trigger cleanup in waitForAdventureCompletion
                     return;
                 case "":
@@ -479,7 +479,7 @@ public class GameEngine {
                         String characterName = input.substring(6).trim();
                         displayCharacterAnalytics(characterName);
                     } else {
-                        System.out.println("❓ Unknown command. Type 'quit' to end the adventure.");
+                        System.out.println("Unknown command. Type 'quit' to end the adventure.");
                     }
             }
         }
@@ -489,7 +489,7 @@ public class GameEngine {
      * Force interactions between characters
      */
     private void forceCharacterInteractions() {
-        System.out.println("\n🤝 FORCING CHARACTER INTERACTIONS...\n");
+        System.out.println("\nFORCING CHARACTER INTERACTIONS...\n");
         
         for (int i = 0; i < characters.size(); i++) {
             for (int j = i + 1; j < characters.size(); j++) {
@@ -568,7 +568,7 @@ public class GameEngine {
      * End the adventure and clean up all threads
      */
     public void endAdventure() {
-        System.out.println("\n🏁 ENDING THE ADVENTURE...");
+        System.out.println("\nENDING THE ADVENTURE...");
         
         gameRunning = false;
         
@@ -585,11 +585,11 @@ public class GameEngine {
                 System.out.println("   Waiting for " + thread.getName() + " to finish...");
                 thread.join(3000); // Wait up to 3 seconds for each thread
                 if (thread.isAlive()) {
-                    System.out.println("   ⚠️ " + thread.getName() + " did not finish gracefully, interrupting...");
+                    System.out.println("   " + thread.getName() + " did not finish gracefully, interrupting...");
                     thread.interrupt();
                     thread.join(1000); // Give it 1 more second after interrupt
                 } else {
-                    System.out.println("   ✅ " + thread.getName() + " completed successfully.");
+                    System.out.println("   " + thread.getName() + " completed successfully.");
                 }
             } catch (InterruptedException e) {
                 System.out.println("   ❌ Interrupted while waiting for " + thread.getName());
