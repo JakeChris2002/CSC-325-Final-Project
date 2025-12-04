@@ -837,7 +837,7 @@ public class GameEngine {
             // Quest giver
             System.out.println("\n📜 The " + npc + " has a task for you!");
             textDelay();
-            generateQuest(npc);
+            offerQuestFromNPC(npc);
         } else {
             // Information/lore
             System.out.println("\n💬 The " + npc + " shares valuable information:");
@@ -849,24 +849,56 @@ public class GameEngine {
     }
     
     /**
-     * Handle quest encounters
+     * Handle quest encounters - offer quests to the player
      */
     private void handleQuestEncounter() {
-        String[] questTypes = {"Ancient Mystery", "Lost Artifact", "Rescue Mission", "Monster Hunt", 
-                              "Treasure Map", "Sacred Ritual", "Diplomatic Mission", "Exploration Quest"};
-        String questType = questTypes[(int)(Math.random() * questTypes.length)];
+        // Create a random quest
+        Quest availableQuest = generateRandomQuest();
         
-        System.out.println("\n📋 QUEST DISCOVERED!");
+        System.out.println("\n📋 QUEST OPPORTUNITY!");
+        textDelay();
+        System.out.println("🧙 A mysterious figure approaches with urgent news...");
         textDelay();
         
-        describeQuestEncounter(questType);
-        
-        // Add quest to inventory as a special item
-        playerCharacter.addToInventory("Quest: " + questType);
-        System.out.println("   └─ Quest added to your journal!");
+        // Present the quest
+        System.out.println("\n✨ Quest Available: " + availableQuest.title);
+        textDelay();
+        System.out.println("📖 " + availableQuest.description);
+        textDelay();
+        System.out.println("🎯 Objective: " + availableQuest.objective);
+        textDelay();
+        System.out.println("🏆 Reward: " + availableQuest.reward);
         textDelay();
         
-        gameWorld.handleCharacterAction(playerCharacter.getName(), "quest", "discovered " + questType);
+        // Ask if player wants to accept
+        System.out.println("\nDo you accept this quest?");
+        textDelay();
+        System.out.println("1. ✅ Yes, I accept this quest!");
+        textDelay();
+        System.out.println("2. ❌ No, perhaps another time.");
+        textDelay();
+        
+        displayingText = true;
+        System.out.print("Your choice (1-2): ");
+        
+        try {
+            String input = scanner.nextLine();
+            displayingText = false;
+            int choice = Integer.parseInt(input);
+            
+            if (choice == 1) {
+                acceptQuest(availableQuest);
+            } else {
+                System.out.println("\n👋 The figure nods understandingly and disappears into the mist.");
+                textDelay();
+                System.out.println("   Perhaps this quest will find another hero...");
+                textDelay();
+            }
+        } catch (NumberFormatException e) {
+            displayingText = false;
+            System.out.println("\n❓ Your hesitation is taken as a refusal.");
+            textDelay();
+        }
     }
     
     /**
@@ -886,6 +918,7 @@ public class GameEngine {
         addDiscoveryReward(discovery);
         
         gameWorld.handleCharacterAction(playerCharacter.getName(), "discover", "found " + discovery);
+        updateQuestProgress("discovery", "found " + discovery);
     }
     
     /**
@@ -972,24 +1005,63 @@ public class GameEngine {
     }
     
     /**
-     * Generate quest descriptions and add to player's journal
+     * Generate a random quest with specific objectives and rewards
      */
-    private void generateQuest(String questGiver) {
-        String[] questDescriptions = {
-            "Find the lost amulet of the ancient kings hidden in the crystal caves.",
-            "Rescue a kidnapped scholar from the abandoned tower to the north.",
-            "Collect three rare herbs to cure a mysterious plague affecting nearby villages.",
-            "Investigate strange magical disturbances reported near the old battleground.",
-            "Deliver an important message to the sage living atop the floating mountain.",
-            "Hunt down the legendary beast terrorizing merchant caravans.",
-            "Recover stolen artifacts from a bandit stronghold deep in the forest."
+    private Quest generateRandomQuest() {
+        String[] questTitles = {
+            "The Lost Crown of Eldara", "Goblin Threat", "The Missing Caravan", 
+            "Ancient Relic Recovery", "The Corrupted Grove", "Dragon's Hoard",
+            "The Phantom Knight", "Magical Herb Gathering", "The Stolen Tome",
+            "Village Rescue Mission", "The Crystal of Power", "Bandit Stronghold"
         };
         
-        String quest = questDescriptions[(int)(Math.random() * questDescriptions.length)];
-        System.out.println("📖 Quest Details: " + quest);
-        textDelay();
-        System.out.println("   The " + questGiver + " looks at you hopefully, waiting for your answer.");
-        textDelay();
+        String[] descriptions = {
+            "The royal crown has been stolen and must be recovered before the coronation.",
+            "A band of goblins is terrorizing local merchants and must be dealt with.",
+            "A merchant caravan has vanished en route. Find survivors or discover their fate.",
+            "An ancient magical artifact has been discovered. Retrieve it safely.",
+            "Dark magic is corrupting a sacred grove. Cleanse the taint from the land.",
+            "A dragon's treasure hoard has been located. Brave the danger for great rewards.",
+            "An undead knight haunts the old battlefield. Put the spirit to rest.",
+            "Gather rare healing herbs to save a village from a mysterious plague.",
+            "A book of powerful spells has been stolen by bandits. Retrieve it.",
+            "Monsters are attacking a defenseless village. Drive them off.",
+            "A magical crystal is causing reality distortions. Contain its power.",
+            "Bandits have established a stronghold. Clear them out and claim their treasure."
+        };
+        
+        String[] objectives = {
+            "Defeat 3 enemies in combat and find the Crown item",
+            "Win 2 combat encounters against goblin-type enemies",
+            "Explore 5 different locations and find Caravan Remains",
+            "Discover the Ancient Relic through exploration",
+            "Visit the enchanted grove location and cleanse the corruption",
+            "Survive combat with a powerful enemy and claim Dragon's Treasure",
+            "Win a combat encounter in a haunted battlefield location",
+            "Collect 3 Healing Herb items through exploration",
+            "Defeat bandits and recover the Stolen Spellbook",
+            "Protect the village by winning 3 combat encounters",
+            "Find and stabilize the Unstable Crystal",
+            "Clear the bandit camp by winning 4 combat encounters"
+        };
+        
+        String[] rewards = {
+            "Royal Crown + 200 Gold + Max Health Increase",
+            "Goblin Slayer Badge + Combat Bonus",
+            "Merchant's Thanks + Rare Trading Goods",
+            "Ancient Artifact + Magical Powers",
+            "Nature's Blessing + Healing Bonus",
+            "Dragon's Treasure + Legendary Items",
+            "Knight's Honor + Undead Protection",
+            "Village Gratitude + Healing Supplies",
+            "Spellbook Knowledge + Magic Bonus",
+            "Hero's Medal + Village Protection",
+            "Crystal Shard + Reality Manipulation",
+            "Bandit's Hoard + Outlaw's Respect"
+        };
+        
+        int index = (int)(Math.random() * questTitles.length);
+        return new Quest(questTitles[index], descriptions[index], objectives[index], rewards[index]);
     }
     
     /**
@@ -1019,6 +1091,62 @@ public class GameEngine {
             }
         }
         textDelay();
+    }
+    
+    /**
+     * Offer a quest from an NPC
+     */
+    private void offerQuestFromNPC(String npc) {
+        Quest npcQuest = generateRandomQuest();
+        
+        System.out.println("🧙 The " + npc + " speaks urgently:");
+        textDelay();
+        System.out.println("\"I have need of a brave adventurer like yourself!\"");
+        textDelay();
+        
+        // Present the quest
+        System.out.println("\n✨ Quest Offered: " + npcQuest.title);
+        textDelay();
+        System.out.println("📖 " + npcQuest.description);
+        textDelay();
+        System.out.println("🎯 Task: " + npcQuest.objective);
+        textDelay();
+        System.out.println("🏆 Reward: " + npcQuest.reward);
+        textDelay();
+        
+        // Ask if player wants to accept
+        System.out.println("\nWill you help?");
+        textDelay();
+        System.out.println("1. ✅ Yes, I'll take on this quest!");
+        textDelay();
+        System.out.println("2. ❌ No, I must decline.");
+        textDelay();
+        
+        displayingText = true;
+        System.out.print("Your response (1-2): ");
+        
+        try {
+            String input = scanner.nextLine();
+            displayingText = false;
+            int choice = Integer.parseInt(input);
+            
+            if (choice == 1) {
+                acceptQuest(npcQuest);
+                System.out.println("\n😊 The " + npc + " smiles gratefully.");
+                textDelay();
+                System.out.println("   \"Thank you, brave soul. May fortune favor your quest!\"");
+                textDelay();
+            } else {
+                System.out.println("\n😔 The " + npc + " looks disappointed but understanding.");
+                textDelay();
+                System.out.println("   \"I understand. Perhaps another time...\"");
+                textDelay();
+            }
+        } catch (NumberFormatException e) {
+            displayingText = false;
+            System.out.println("\n❓ Your silence is taken as a polite refusal.");
+            textDelay();
+        }
     }
     
     /**
@@ -1526,6 +1654,18 @@ public class GameEngine {
             }
         }
         System.out.println("Health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth());
+        
+        // Also show active quests
+        System.out.println("\n📋 ACTIVE QUESTS:");
+        if (activeQuests.isEmpty()) {
+            System.out.println("   No active quests. Look for quest opportunities in the world!");
+        } else {
+            for (Quest quest : activeQuests) {
+                String status = quest.isCompleted() ? "✅ COMPLETE" : "🔄 " + quest.getProgressText();
+                System.out.println("   • " + quest.title + " - " + status);
+            }
+        }
+        
         System.out.println("===========================\n");
     }
     
@@ -1582,11 +1722,13 @@ public class GameEngine {
                 case 1 -> {
                     System.out.println(playerCharacter.getName() + " explores the surrounding area...");
                     handleExploration();
+                    updateQuestProgress("exploration", "explored area");
                     endPlayerTurn();
                 }
                 case 2 -> {
                     System.out.println(playerCharacter.getName() + " decides to travel somewhere new...");
                     handleMovement();
+                    updateQuestProgress("exploration", "traveled to new location");
                     endPlayerTurn();
                 }
                 case 3 -> {
@@ -2207,6 +2349,9 @@ public class GameEngine {
         playerCharacter.heal(healing);
         System.out.println("💚 The thrill of victory restores your strength!");
         textDelay();
+        
+        // Update quest progress for combat victories
+        updateQuestProgress("combat", "defeated " + enemy.name);
     }
     
     /**
@@ -2283,4 +2428,172 @@ public class GameEngine {
     
     // Combat state tracking
     private boolean playerDefending = false;
+    
+    // ===== QUEST SYSTEM =====
+    
+    // Active quests tracking
+    private List<Quest> activeQuests = new ArrayList<>();
+    
+    /**
+     * Quest class to represent player quests with objectives and tracking
+     */
+    private static class Quest {
+        String title;
+        String description;
+        String objective;
+        String reward;
+        boolean completed;
+        int progress; // Tracks quest progress (combat wins, items found, etc.)
+        int targetProgress; // How much progress needed to complete
+        
+        Quest(String title, String description, String objective, String reward) {
+            this.title = title;
+            this.description = description;
+            this.objective = objective;
+            this.reward = reward;
+            this.completed = false;
+            this.progress = 0;
+            this.targetProgress = extractTargetFromObjective(objective);
+        }
+        
+        // Extract target number from objective string (e.g., "Defeat 3 enemies" -> 3)
+        private int extractTargetFromObjective(String obj) {
+            String[] words = obj.split(" ");
+            for (String word : words) {
+                try {
+                    int num = Integer.parseInt(word);
+                    return num;
+                } catch (NumberFormatException e) {
+                    // Continue looking
+                }
+            }
+            return 1; // Default target
+        }
+        
+        void addProgress(int amount) {
+            progress += amount;
+            if (progress >= targetProgress) {
+                completed = true;
+            }
+        }
+        
+        boolean isCompleted() {
+            return completed;
+        }
+        
+        String getProgressText() {
+            return "(" + progress + "/" + targetProgress + ")";
+        }
+    }
+    
+    /**
+     * Accept a quest and add it to active quests
+     */
+    private void acceptQuest(Quest quest) {
+        activeQuests.add(quest);
+        System.out.println("\n✅ Quest Accepted: " + quest.title);
+        textDelay();
+        System.out.println("📝 The quest has been added to your journal.");
+        textDelay();
+        System.out.println("🎯 Remember: " + quest.objective);
+        textDelay();
+        
+        // Add quest marker to inventory
+        playerCharacter.addToInventory("[QUEST] " + quest.title);
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "quest", "accepted " + quest.title);
+    }
+    
+    /**
+     * Update quest progress based on player actions
+     */
+    private void updateQuestProgress(String actionType, String details) {
+        for (Quest quest : activeQuests) {
+            if (quest.isCompleted()) continue;
+            
+            // Check if this action progresses any active quest
+            if (actionType.equals("combat") && quest.objective.toLowerCase().contains("defeat")) {
+                quest.addProgress(1);
+                System.out.println("\n📋 Quest Progress: " + quest.title + " " + quest.getProgressText());
+                textDelay();
+                
+                if (quest.isCompleted()) {
+                    completeQuest(quest);
+                }
+            } else if (actionType.equals("exploration") && quest.objective.toLowerCase().contains("explore")) {
+                quest.addProgress(1);
+                System.out.println("\n📋 Quest Progress: " + quest.title + " " + quest.getProgressText());
+                textDelay();
+                
+                if (quest.isCompleted()) {
+                    completeQuest(quest);
+                }
+            } else if (actionType.equals("discovery") && quest.objective.toLowerCase().contains("find")) {
+                quest.addProgress(1);
+                System.out.println("\n📋 Quest Progress: " + quest.title + " " + quest.getProgressText());
+                textDelay();
+                
+                if (quest.isCompleted()) {
+                    completeQuest(quest);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Complete a quest and give rewards
+     */
+    private void completeQuest(Quest quest) {
+        System.out.println("\n🏆 QUEST COMPLETED!");
+        textDelay();
+        System.out.println("✨ " + quest.title + " - FINISHED!");
+        textDelay();
+        System.out.println("🎁 Reward: " + quest.reward);
+        textDelay();
+        
+        // Give quest rewards
+        String[] rewardItems = quest.reward.split(" \\+ ");
+        for (String reward : rewardItems) {
+            if (!reward.toLowerCase().contains("gold") && !reward.toLowerCase().contains("bonus") && 
+                !reward.toLowerCase().contains("increase") && !reward.toLowerCase().contains("protection")) {
+                playerCharacter.addToInventory(reward.trim());
+            }
+        }
+        
+        // Heal player for quest completion
+        playerCharacter.heal(15);
+        System.out.println("💚 Your sense of accomplishment restores 15 health!");
+        textDelay();
+        
+        // Remove quest marker from inventory
+        playerCharacter.getInventory().removeIf(item -> item.equals("[QUEST] " + quest.title));
+        
+        gameWorld.handleCharacterAction(playerCharacter.getName(), "quest_complete", "completed " + quest.title);
+    }
+    
+    /**
+     * Show active quests to the player
+     */
+    private void showActiveQuests() {
+        if (activeQuests.isEmpty()) {
+            System.out.println("\n📋 Quest Journal: Empty");
+            textDelay();
+            System.out.println("   No active quests. Explore the world to find new adventures!");
+            textDelay();
+            return;
+        }
+        
+        System.out.println("\n📋 ACTIVE QUESTS:");
+        textDelay();
+        
+        for (Quest quest : activeQuests) {
+            String status = quest.isCompleted() ? "✅ READY TO COMPLETE" : "🔄 IN PROGRESS";
+            System.out.println("\n" + status + ": " + quest.title);
+            textDelay();
+            System.out.println("   🎯 " + quest.objective + " " + quest.getProgressText());
+            textDelay();
+            System.out.println("   🏆 Reward: " + quest.reward);
+            textDelay();
+        }
+    }
 }
