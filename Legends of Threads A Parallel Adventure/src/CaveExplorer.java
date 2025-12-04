@@ -7,6 +7,7 @@ import java.util.*;
 public class CaveExplorer {
     private GameCharacter player;
     private List<GameCharacter> party;
+    private List<GameCharacter> aiParty;
     private Scanner scanner;
     private List<String> playerInventory;
     private static final int MAX_INVENTORY = 5;
@@ -19,6 +20,7 @@ public class CaveExplorer {
     
     public CaveExplorer(GameCharacter player, List<GameCharacter> aiParty, Scanner scanner) {
         this.player = player;
+        this.aiParty = new ArrayList<>(aiParty);
         this.party = new ArrayList<>();
         this.party.add(player);
         this.party.addAll(aiParty);
@@ -629,26 +631,91 @@ public class CaveExplorer {
     }
     
     private boolean handleCombat(String enemy, boolean prepared) {
-        System.out.println("\n⚔️ === COMBAT: " + enemy.toUpperCase() + " ===\n");
+        System.out.println("\n⚔️ === TURN-BASED COMBAT: " + enemy.toUpperCase() + " ===\n");
         
-        Random random = new Random();
-        int playerRoll = random.nextInt(20) + 1 + party.size();
-        int enemyRoll = random.nextInt(20) + 1;
+        // Initialize combat stats
+        Map<String, Integer> partyHealth = new HashMap<>();
+        Map<String, Integer> partyMaxHealth = new HashMap<>();
         
-        if (prepared) {
-            playerRoll += 3;
-            System.out.println("🛡️ Your preparation gives you an advantage!");
+        // Store original health for all party members
+        partyHealth.put(player.getName(), player.getHealth());
+        partyMaxHealth.put(player.getName(), player.getMaxHealth());
+        
+        for (GameCharacter character : aiParty) {
+            partyHealth.put(character.getName(), character.getHealth());
+            partyMaxHealth.put(character.getName(), character.getMaxHealth());
         }
         
-        System.out.println("🎲 Your party's attack: " + playerRoll);
-        System.out.println("🎲 " + enemy + "'s defense: " + enemyRoll);
+        // Enemy stats
+        int enemyHealth = getEnemyMaxHealth(enemy);
+        int enemyMaxHealth = enemyHealth;
+        int enemyAttack = getEnemyAttack(enemy);
         
-        if (playerRoll >= enemyRoll) {
-            System.out.println("\n🎉 Victory! You defeat the " + enemy + "!");
+        if (prepared) {
+            System.out.println("🛡️ Your party is well-prepared for this battle!\n");
+        }
+        
+        System.out.println("📊 === BATTLE STATUS ===");
+        displayCombatStatus(partyHealth, partyMaxHealth, enemy, enemyHealth, enemyMaxHealth);
+        
+        Random random = new Random();
+        int round = 1;
+        
+        // Combat loop
+        while (enemyHealth > 0 && !isPartyDefeated(partyHealth)) {
+            System.out.println("\n🔄 === ROUND " + round + " ===");
+            
+            // Party turns (player first, then AI)
+            List<GameCharacter> turnOrder = new ArrayList<>();
+            turnOrder.add(player);
+            turnOrder.addAll(aiParty);
+            
+            for (GameCharacter character : turnOrder) {
+                if (partyHealth.get(character.getName()) > 0 && enemyHealth > 0) {
+                    if (character == player) {
+                        // Player's turn
+                        enemyHealth = handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared);
+                    } else {
+                        // AI character's turn
+                        enemyHealth = handleAITurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, random);
+                    }
+                    
+                    if (enemyHealth <= 0) {
+                        break;
+                    }
+                }
+            }
+            
+            // Enemy turn
+            if (enemyHealth > 0 && !isPartyDefeated(partyHealth)) {
+                handleEnemyTurn(enemy, enemyAttack, partyHealth, partyMaxHealth, random);
+            }
+            
+            // Display status after round
+            if (enemyHealth > 0 && !isPartyDefeated(partyHealth)) {
+                System.out.println("\n📊 === END OF ROUND " + round + " ===");
+                displayCombatStatus(partyHealth, partyMaxHealth, enemy, enemyHealth, enemyMaxHealth);
+            }
+            
+            round++;
+            
+            // Safety check to prevent infinite combat
+            if (round > 20) {
+                System.out.println("\n⏰ The battle rages on too long! Both sides retreat to recover...");
+                return false;
+            }
+        }
+        
+        // Combat resolution
+        if (enemyHealth <= 0) {
+            System.out.println("\n🎉 === VICTORY! ===");
+            System.out.println("You and your party have defeated the " + enemy + "!");
             System.out.println(getVictoryDescription(enemy));
             return true;
         } else {
-            System.out.println("\n💔 Defeat! The " + enemy + " proves too powerful...");
+            System.out.println("\n💀 === DEFEAT ===");
+            System.out.println("Your party has been overwhelmed by the " + enemy + "...");
+            System.out.println("The adventure ends here...");
             return false;
         }
     }
@@ -747,5 +814,235 @@ public class CaveExplorer {
         if (character instanceof Thief) return "Alert and watching for traps or ambushes";
         if (character instanceof Wizard) return "Mentally preparing spells and analyzing magical auras";
         return "Prepared for whatever lies ahead";
+    }
+    
+    // ===============================================
+    // TURN-BASED COMBAT SYSTEM METHODS
+    // ===============================================
+    
+    private int getEnemyMaxHealth(String enemy) {
+        switch (enemy) {
+            case "Cave Rat": return 25;
+            case "Goblin Scout": return 35;
+            case "Stone Gargoyle": return 45;
+            case "Fire Salamander": return 40;
+            case "Shadow Wraith": return 35;
+            case "Crystal Golem": return 60;
+            case "Cave Troll": return 70;
+            case "Dark Wizard": return 50;
+            case "Dragon Whelp": return 80;
+            default: return 30;
+        }
+    }
+    
+    private int getEnemyAttack(String enemy) {
+        switch (enemy) {
+            case "Cave Rat": return 8;
+            case "Goblin Scout": return 12;
+            case "Stone Gargoyle": return 15;
+            case "Fire Salamander": return 14;
+            case "Shadow Wraith": return 13;
+            case "Crystal Golem": return 18;
+            case "Cave Troll": return 20;
+            case "Dark Wizard": return 16;
+            case "Dragon Whelp": return 22;
+            default: return 10;
+        }
+    }
+    
+    private void displayCombatStatus(Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, 
+                                   String enemy, int enemyHealth, int enemyMaxHealth) {
+        System.out.println("🏥 === PARTY STATUS ===");
+        System.out.printf("👤 %s: %d/%d HP%n", player.getName(), 
+                         partyHealth.get(player.getName()), partyMaxHealth.get(player.getName()));
+        
+        for (GameCharacter character : aiParty) {
+            System.out.printf("🤖 %s: %d/%d HP%n", character.getName(), 
+                             partyHealth.get(character.getName()), partyMaxHealth.get(character.getName()));
+        }
+        
+        System.out.printf("🐲 %s: %d/%d HP%n", enemy, enemyHealth, enemyMaxHealth);
+        System.out.println();
+    }
+    
+    private boolean isPartyDefeated(Map<String, Integer> partyHealth) {
+        for (Integer health : partyHealth.values()) {
+            if (health > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    private int handlePlayerTurn(GameCharacter character, String enemy, int enemyHealth, 
+                                Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, boolean prepared) {
+        System.out.println("\n🎯 " + character.getName() + "'s turn!");
+        System.out.println("What would you like to do?");
+        System.out.println("1. ⚔️  Attack the " + enemy);
+        System.out.println("2. 🛡️  Defend (reduce damage next turn)");
+        System.out.println("3. 💚 Use Health Potion (if available)");
+        
+        if (character.getClass().getSimpleName().equals("Wizard")) {
+            System.out.println("4. ✨ Cast Spell (if mana available)");
+        }
+        
+        System.out.print("Choose your action (1-" + (character.getClass().getSimpleName().equals("Wizard") ? "4" : "3") + "): ");
+        int choice = getPlayerChoice(1, character.getClass().getSimpleName().equals("Wizard") ? 4 : 3);
+        
+        Random random = new Random();
+        
+        switch (choice) {
+            case 1: // Attack
+                int damage = calculateAttackDamage(character, prepared, random);
+                enemyHealth = Math.max(0, enemyHealth - damage);
+                System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+                if (enemyHealth <= 0) {
+                    System.out.println("💀 The " + enemy + " has been defeated!");
+                }
+                break;
+                
+            case 2: // Defend
+                System.out.println("🛡️ " + character.getName() + " takes a defensive stance!");
+                // Defense bonus will be applied during enemy turn
+                break;
+                
+            case 3: // Heal
+                if (playerInventory.contains("Health Potion")) {
+                    int healing = 25 + random.nextInt(16); // 25-40 healing
+                    int currentHealth = partyHealth.get(character.getName());
+                    int maxHealth = partyMaxHealth.get(character.getName());
+                    int newHealth = Math.min(currentHealth + healing, maxHealth);
+                    partyHealth.put(character.getName(), newHealth);
+                    playerInventory.remove("Health Potion");
+                    System.out.printf("💚 %s uses a Health Potion and recovers %d HP!%n", 
+                                    character.getName(), newHealth - currentHealth);
+                } else {
+                    System.out.println("❌ No Health Potions available!");
+                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared); // Retry turn
+                }
+                break;
+                
+            case 4: // Cast Spell (Wizard only)
+                if (character.getClass().getSimpleName().equals("Wizard")) {
+                    int spellDamage = 20 + random.nextInt(21); // 20-40 damage
+                    enemyHealth = Math.max(0, enemyHealth - spellDamage);
+                    System.out.printf("✨ %s casts a powerful spell for %d damage!%n", character.getName(), spellDamage);
+                    if (enemyHealth <= 0) {
+                        System.out.println("💀 The " + enemy + " has been defeated by magic!");
+                    }
+                } else {
+                    System.out.println("❌ Only wizards can cast spells!");
+                    return handlePlayerTurn(character, enemy, enemyHealth, partyHealth, partyMaxHealth, prepared); // Retry turn
+                }
+                break;
+        }
+        
+        return enemyHealth;
+    }
+    
+    private int handleAITurn(GameCharacter character, String enemy, int enemyHealth, 
+                           Map<String, Integer> partyHealth, Map<String, Integer> partyMaxHealth, Random random) {
+        System.out.println("\n🤖 " + character.getName() + "'s turn!");
+        
+        // Simple AI logic based on character type
+        String characterType = character.getClass().getSimpleName();
+        int action = random.nextInt(100);
+        
+        if (characterType.equals("Knight")) {
+            // Knights prefer attacking but will defend if low on health
+            if (partyHealth.get(character.getName()) < partyMaxHealth.get(character.getName()) / 3 && action < 30) {
+                System.out.println("🛡️ " + character.getName() + " raises their shield defensively!");
+                return enemyHealth;
+            } else {
+                int damage = 12 + random.nextInt(9); // 12-20 damage
+                enemyHealth = Math.max(0, enemyHealth - damage);
+                System.out.printf("⚔️ %s attacks with their sword for %d damage!%n", character.getName(), damage);
+            }
+        } else if (characterType.equals("Thief")) {
+            // Thieves go for quick strikes
+            int damage = 10 + random.nextInt(11); // 10-20 damage
+            enemyHealth = Math.max(0, enemyHealth - damage);
+            System.out.printf("🗡️ %s strikes swiftly for %d damage!%n", character.getName(), damage);
+        } else if (characterType.equals("Wizard")) {
+            // Wizards cast spells
+            int damage = 15 + random.nextInt(16); // 15-30 damage
+            enemyHealth = Math.max(0, enemyHealth - damage);
+            System.out.printf("✨ %s casts a magic missile for %d damage!%n", character.getName(), damage);
+        } else {
+            // Generic attack
+            int damage = 8 + random.nextInt(8); // 8-15 damage
+            enemyHealth = Math.max(0, enemyHealth - damage);
+            System.out.printf("⚔️ %s attacks for %d damage!%n", character.getName(), damage);
+        }
+        
+        if (enemyHealth <= 0) {
+            System.out.println("💀 The " + enemy + " has been defeated!");
+        }
+        
+        return enemyHealth;
+    }
+    
+    private void handleEnemyTurn(String enemy, int enemyAttack, Map<String, Integer> partyHealth, 
+                                Map<String, Integer> partyMaxHealth, Random random) {
+        System.out.println("\n👹 " + enemy + "'s turn!");
+        
+        // Choose target (prefer player, but can target others)
+        List<String> aliveMembers = new ArrayList<>();
+        for (String name : partyHealth.keySet()) {
+            if (partyHealth.get(name) > 0) {
+                aliveMembers.add(name);
+            }
+        }
+        
+        if (aliveMembers.isEmpty()) {
+            return; // No valid targets
+        }
+        
+        // 60% chance to target player, 40% chance to target random party member
+        String target;
+        if (random.nextInt(100) < 60 && partyHealth.get(player.getName()) > 0) {
+            target = player.getName();
+        } else {
+            target = aliveMembers.get(random.nextInt(aliveMembers.size()));
+        }
+        
+        int damage = enemyAttack + random.nextInt(6) - 2; // Attack ± 2
+        damage = Math.max(1, damage); // Minimum 1 damage
+        
+        int currentHealth = partyHealth.get(target);
+        int newHealth = Math.max(0, currentHealth - damage);
+        partyHealth.put(target, newHealth);
+        
+        System.out.printf("💥 %s attacks %s for %d damage!%n", enemy, target, damage);
+        
+        if (newHealth <= 0) {
+            System.out.printf("💀 %s has been knocked unconscious!%n", target);
+        }
+    }
+    
+    private int calculateAttackDamage(GameCharacter character, boolean prepared, Random random) {
+        String characterType = character.getClass().getSimpleName();
+        int baseDamage;
+        
+        switch (characterType) {
+            case "Knight":
+                baseDamage = 15 + random.nextInt(11); // 15-25 damage
+                break;
+            case "Thief":
+                baseDamage = 12 + random.nextInt(9); // 12-20 damage
+                break;
+            case "Wizard":
+                baseDamage = 10 + random.nextInt(11); // 10-20 damage
+                break;
+            default:
+                baseDamage = 10 + random.nextInt(6); // 10-15 damage
+                break;
+        }
+        
+        if (prepared) {
+            baseDamage += 5; // Preparation bonus
+        }
+        
+        return baseDamage;
     }
 }
