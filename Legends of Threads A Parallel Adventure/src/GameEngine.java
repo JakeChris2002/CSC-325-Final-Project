@@ -641,8 +641,7 @@ public class GameEngine {
         int oldY = playerCharacter.getY();
         playerCharacter.moveRandomly();
         
-        System.out.println("   Your exploration leads you from (" + oldX + ", " + oldY + ") to (" + 
-                          playerCharacter.getX() + ", " + playerCharacter.getY() + ").");
+        describeMovement(oldX, oldY, playerCharacter.getX(), playerCharacter.getY(), "exploration");
         textDelay();
         
         // Enhanced encounter system - multiple types of discoveries
@@ -676,8 +675,7 @@ public class GameEngine {
                 textDelay();
                 String[] minorFinds = {"Old Coins", "Useful Herbs", "Shiny Pebble", "Worn Map Fragment", "Lucky Token"};
                 String find = minorFinds[(int)(Math.random() * minorFinds.length)];
-                playerCharacter.addToInventory(find);
-                System.out.println("   └─ You discover: " + find);
+                addItemWithDescription(find);
                 textDelay();
             } else {
                 System.out.println("\n🌫️ The area seems quiet, but you sense adventure nearby.");
@@ -778,16 +776,13 @@ public class GameEngine {
     private void addDiscoveryReward(String discovery) {
         switch (discovery) {
             case "Hidden Treasure" -> {
-                playerCharacter.addToInventory("Ancient Gold Coin");
-                System.out.println("   └─ You acquire: Ancient Gold Coin");
+                addItemWithDescription("Ancient Gold Coin");
             }
             case "Sacred Grove" -> {
-                playerCharacter.addToInventory("Blessed Leaf");
-                System.out.println("   └─ You acquire: Blessed Leaf");
+                addItemWithDescription("Blessed Leaf");
             }
             case "Crystal Formation" -> {
-                playerCharacter.addToInventory("Crystal Shard");
-                System.out.println("   └─ You acquire: Crystal Shard");
+                addItemWithDescription("Crystal Shard");
             }
             case "Magical Spring" -> {
                 // Heal the player
@@ -796,12 +791,10 @@ public class GameEngine {
                 System.out.println("   └─ The spring's waters restore " + healAmount + " health!");
             }
             case "Ancient Ruins" -> {
-                playerCharacter.addToInventory("Ancient Rune Stone");
-                System.out.println("   └─ You acquire: Ancient Rune Stone");
+                addItemWithDescription("Ancient Rune Stone");
             }
             default -> {
-                playerCharacter.addToInventory("Mysterious Artifact");
-                System.out.println("   └─ You acquire: Mysterious Artifact");
+                addItemWithDescription("Mysterious Artifact");
             }
         }
         textDelay();
@@ -874,11 +867,11 @@ public class GameEngine {
             String[] gifts = {"Healing Herb", "Ancient Map", "Lucky Charm", "Traveler's Ration", "Wisdom Scroll",
                              "Magic Potion", "Silver Coins", "Enchanted Trinket", "Rare Ingredient"};
             String gift = gifts[(int)(Math.random() * gifts.length)];
-            playerCharacter.addToInventory(gift);
             System.out.println("\n🎁 The " + npc + " offers you a gift: " + gift);
             textDelay();
             System.out.println("   \"Take this, brave adventurer. May it serve you well!\"");
             textDelay();
+            addItemWithDescription(gift);
         } else if (interactionRoll < 0.55) {
             // Quest giver
             System.out.println("\n📜 The " + npc + " has a task for you!");
@@ -903,9 +896,9 @@ public class GameEngine {
             if (Math.random() < 0.3) {
                 String[] immediateFinds = {"Old Map Fragment", "Treasure Hunter's Note", "Cryptic Riddle", "Ancient Key"};
                 String find = immediateFinds[(int)(Math.random() * immediateFinds.length)];
-                playerCharacter.addToInventory(find);
-                System.out.println("   \"And here, take this - it might help in your search: " + find + "\"");
+                System.out.println("   \"And here, take this - it might help in your search:\"");
                 textDelay();
+                addItemWithDescription(find);
             }
         } else {
             // Information/lore
@@ -1724,6 +1717,11 @@ public class GameEngine {
         }
         System.out.println("Health: " + playerCharacter.getHealth() + "/" + playerCharacter.getMaxHealth());
         
+        // Show magic meter for Wizards
+        if (playerCharacter instanceof Wizard wizard) {
+            System.out.println("Magic: " + wizard.getMana() + "/" + wizard.getMaxMana() + " ✨");
+        }
+        
         // Also show active quests
         System.out.println("\n📋 ACTIVE QUESTS:");
         if (activeQuests.isEmpty()) {
@@ -1744,8 +1742,12 @@ public class GameEngine {
     private void handleMovement() {
         System.out.println("\n" + playerCharacter.getName() + " decides to travel to a new location...");
         
-        // Move the character
+        // Move the character with enhanced description
+        int oldX = playerCharacter.getX();
+        int oldY = playerCharacter.getY();
         playerCharacter.moveRandomly();
+        
+        describeMovement(oldX, oldY, playerCharacter.getX(), playerCharacter.getY(), "travel");
         
         // Describe the new location
         String[] locations = {"a hidden valley", "an ancient crossroads", "a mystical clearing", 
@@ -1771,8 +1773,7 @@ public class GameEngine {
                 // Add treasure items
                 String[] items = {"Gold Coins", "Precious Gems", "Ancient Artifact", "Mysterious Crystal", "Valuable Trinket"};
                 String item = items[(int)(Math.random() * items.length)];
-                playerCharacter.addToInventory(item);
-                System.out.println("   └─ You claim: " + item);
+                addItemWithDescription(item);
                 textDelay();
                 updateQuestProgress("discovery", "found " + treasure);
                 
@@ -1805,9 +1806,9 @@ public class GameEngine {
                 } else {
                     String[] gifts = {"Travel Rations", "Road Map", "Healing Potion", "Lucky Token", "Traveler's Cloak"};
                     String gift = gifts[(int)(Math.random() * gifts.length)];
-                    playerCharacter.addToInventory(gift);
-                    System.out.println("   └─ They share with you: " + gift);
+                    System.out.println("   └─ They generously share something with you:");
                     textDelay();
+                    addItemWithDescription(gift);
                 }
             }
             gameWorld.handleCharacterAction(playerCharacter.getName(), "travel_encounter", "encountered something while traveling");
@@ -1880,6 +1881,15 @@ public class GameEngine {
                 }
                 case 9 -> {
                     System.out.println(playerCharacter.getName() + " waits and observes the world...");
+                    
+                    // Special benefit for wizards - meditation restores mana
+                    if (playerCharacter instanceof Wizard wizard) {
+                        int manaRestore = 8 + (int)(Math.random() * 7); // 8-14 mana
+                        wizard.restoreMana(manaRestore);
+                        System.out.println("🧘 Your meditation and observation of magical energies restores your power.");
+                        textDelay();
+                    }
+                    
                     endPlayerTurn();
                 }
                 case 10 -> {
@@ -2393,9 +2403,22 @@ public class GameEngine {
                     return true;
                 }
                 case 3 -> {
+                    // Check if wizard has enough mana for special ability
+                    if (playerCharacter instanceof Wizard wizard) {
+                        int manaCost = 25;
+                        if (!wizard.hasEnoughMana(manaCost)) {
+                            System.out.println("\n⚡ You don't have enough magical energy! (Need " + manaCost + ", have " + wizard.getMana() + ")");
+                            System.out.println("   Your magic meter needs to recharge before casting powerful spells.");
+                            return true; // Turn used but no action taken
+                        }
+                        wizard.consumeMana(manaCost);
+                        System.out.println("\n✨ You channel your magical energy into a devastating spell!");
+                        textDelay();
+                    }
+                    
                     int damage = calculatePlayerSpecialAttackDamage();
                     String abilityName = getPlayerSpecialAbilityName();
-                    System.out.println("\n✨ You use " + abilityName + " for " + damage + " damage!");
+                    System.out.println("✨ You unleash " + abilityName + " for " + damage + " damage!");
                     enemy.takeDamage(damage);
                     return true;
                 }
@@ -2458,15 +2481,23 @@ public class GameEngine {
         // Victory rewards
         String[] rewards = {"Battle Trophy", "Enemy Weapon", "Gold Coins", "Rare Gem", "Magic Potion"};
         String reward = rewards[(int)(Math.random() * rewards.length)];
-        playerCharacter.addToInventory(reward);
-        System.out.println("🎁 Victory spoils: " + reward);
+        System.out.println("🎁 Victory spoils await!");
         textDelay();
+        addItemWithDescription(reward);
         
         // Small health restoration for victory
         int healing = 5 + (int)(Math.random() * 10);
         playerCharacter.heal(healing);
         System.out.println("💚 The thrill of victory restores your strength!");
         textDelay();
+        
+        // Magic restoration for wizards
+        if (playerCharacter instanceof Wizard wizard) {
+            int manaRestore = 10 + (int)(Math.random() * 15);
+            wizard.restoreMana(manaRestore);
+            System.out.println("✨ Victorious energy replenishes your magical reserves!");
+            textDelay();
+        }
         
         // Update quest progress for combat victories
         updateQuestProgress("combat", "defeated " + enemy.name);
@@ -2546,6 +2577,168 @@ public class GameEngine {
     
     // Combat state tracking
     private boolean playerDefending = false;
+    
+    // ===== ITEM AND MOVEMENT DESCRIPTION SYSTEM =====
+    
+    /**
+     * Add item to inventory with rich description of what it does
+     */
+    private void addItemWithDescription(String item) {
+        playerCharacter.addToInventory(item);
+        System.out.println("   📦 You acquire: " + item);
+        textDelay();
+        
+        // Provide description of what the item does
+        String description = getItemDescription(item);
+        if (!description.isEmpty()) {
+            System.out.println("   ✨ " + description);
+            textDelay();
+        }
+        
+        // Special effects for wizards with magical items
+        if (playerCharacter instanceof Wizard wizard) {
+            int manaRestore = getMagicItemManaRestore(item);
+            if (manaRestore > 0) {
+                wizard.restoreMana(manaRestore);
+                System.out.println("   ✨ The magical item resonates with your arcane knowledge!");
+                textDelay();
+            }
+        }
+    }
+    
+    /**
+     * Get mana restoration amount for magical items (wizards only)
+     */
+    private int getMagicItemManaRestore(String item) {
+        return switch (item.toLowerCase()) {
+            case "magic potion" -> 15;
+            case "crystal shard", "magic crystals" -> 8;
+            case "ancient rune stone" -> 12;
+            case "mysterious crystal" -> 10;
+            case "enchanted trinket" -> 5;
+            case "mysterious artifact", "ancient artifact" -> 7;
+            case "wisdom scroll" -> 3;
+            default -> 0;
+        };
+    }
+    
+    /**
+     * Get detailed description of what an item does
+     */
+    private String getItemDescription(String item) {
+        return switch (item.toLowerCase()) {
+            // Healing and consumable items
+            case "healing herb", "healing potion" -> "Restores health when used in dire situations.";
+            case "magic potion" -> "Contains mysterious energies that restore magical power and enhance abilities.";
+            case "travel rations", "traveler's ration" -> "Nutritious food that sustains you during long journeys.";
+            
+            // Valuable items and currency
+            case "gold coins", "ancient gold coin", "silver coins", "silver ingots" -> "Valuable currency accepted by merchants throughout the realm.";
+            case "precious gems", "rare gem" -> "Sparkling jewels worth a small fortune to collectors.";
+            case "ancient jewelry" -> "Ornate accessories from a bygone era, highly prized by antiquarians.";
+            
+            // Magical items
+            case "crystal shard", "magic crystals" -> "Pulsing with arcane energy, useful for magical rituals.";
+            case "ancient rune stone" -> "Carved with powerful symbols that enhance magical abilities.";
+            case "lucky charm", "lucky token" -> "Brings good fortune and improves your chances of success.";
+            case "enchanted trinket" -> "A small magical item that provides subtle but useful benefits.";
+            case "mysterious crystal" -> "Glows with inner light and seems to respond to your thoughts.";
+            
+            // Information and tools
+            case "ancient map", "road map", "old map fragment" -> "Reveals hidden paths and secret locations in the world.";
+            case "wisdom scroll" -> "Contains ancient knowledge that expands your understanding.";
+            case "cryptic riddle" -> "A puzzle that may lead to greater treasures when solved.";
+            case "ancient key" -> "Opens locked doors and chests throughout your adventures.";
+            case "treasure hunter's note" -> "Contains clues about hidden caches and valuable finds.";
+            
+            // Combat and equipment
+            case "enemy weapon", "ornate weapons" -> "Well-crafted arms that give you an edge in battle.";
+            case "battle trophy" -> "A symbol of your prowess that intimidates enemies.";
+            case "traveler's cloak" -> "Provides protection from the elements during your journeys.";
+            
+            // Special artifacts
+            case "mysterious artifact", "rare artifacts", "ancient artifact" -> "An item of unknown power that scholars would pay handsomely to study.";
+            case "blessed leaf" -> "Touched by natural magic, it brings peace and wards off dark forces.";
+            case "valuable art" -> "Beautiful creations that demonstrate the skill of master artisans.";
+            case "valuable trinket" -> "A small but precious item that catches the eye of discerning buyers.";
+            
+            // Quest and special items
+            case "royal crown" -> "The crown of ancient kings, symbolizing rightful authority and power.";
+            case "dragon's treasure" -> "Hoarded wealth from a dragon's lair, immensely valuable and magical.";
+            case "stolen spellbook" -> "Contains powerful magical formulas coveted by wizards everywhere.";
+            
+            // Common finds
+            case "old coins", "shiny pebble" -> "Small treasures that accumulate into something meaningful over time.";
+            case "useful herbs" -> "Natural remedies that can be brewed into helpful concoctions.";
+            case "worn map fragment" -> "A piece of a larger map that hints at greater discoveries.";
+            
+            default -> ""; // No description for unknown items
+        };
+    }
+    
+    /**
+     * Provide rich descriptions of character movement
+     */
+    private void describeMovement(int oldX, int oldY, int newX, int newY, String context) {
+        int deltaX = newX - oldX;
+        int deltaY = newY - oldY;
+        
+        // Determine primary direction
+        String direction;
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            direction = deltaX > 0 ? "eastward" : "westward";
+        } else {
+            direction = deltaY > 0 ? "northward" : "southward";
+        }
+        
+        // Character-specific movement descriptions
+        if (playerCharacter instanceof Knight) {
+            describeKnightMovement(direction, context, oldX, oldY, newX, newY);
+        } else if (playerCharacter instanceof Thief) {
+            describeThiefMovement(direction, context, oldX, oldY, newX, newY);
+        } else if (playerCharacter instanceof Wizard) {
+            describeWizardMovement(direction, context, oldX, oldY, newX, newY);
+        }
+    }
+    
+    private void describeKnightMovement(String direction, String context, int oldX, int oldY, int newX, int newY) {
+        switch (context) {
+            case "exploration" -> {
+                System.out.println("   With noble purpose, you stride " + direction + " from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   Your armor gleams as you search for those in need of a knight's protection.");
+            }
+            case "travel" -> {
+                System.out.println(playerCharacter.getName() + " marches " + direction + " with determined steps, from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   The path ahead calls to your sense of duty and honor.");
+            }
+        }
+    }
+    
+    private void describeThiefMovement(String direction, String context, int oldX, int oldY, int newX, int newY) {
+        switch (context) {
+            case "exploration" -> {
+                System.out.println("   You slip silently " + direction + " from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   Every shadow offers concealment as you scout for opportunities.");
+            }
+            case "travel" -> {
+                System.out.println(playerCharacter.getName() + " moves " + direction + " like a ghost, from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   Your keen eyes scan for both danger and hidden treasures.");
+            }
+        }
+    }
+    
+    private void describeWizardMovement(String direction, String context, int oldX, int oldY, int newX, int newY) {
+        switch (context) {
+            case "exploration" -> {
+                System.out.println("   Guided by arcane intuition, you drift " + direction + " from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   Magical energies seem to flow around you, revealing hidden mysteries.");
+            }
+            case "travel" -> {
+                System.out.println(playerCharacter.getName() + " glides " + direction + " with mystical grace, from (" + oldX + ", " + oldY + ") to (" + newX + ", " + newY + ").");
+                System.out.println("   The ley lines of power guide your steps toward ancient knowledge.");
+            }
+        }
+    }
     
     // ===== QUEST SYSTEM =====
     
@@ -2674,7 +2867,7 @@ public class GameEngine {
         for (String reward : rewardItems) {
             if (!reward.toLowerCase().contains("gold") && !reward.toLowerCase().contains("bonus") && 
                 !reward.toLowerCase().contains("increase") && !reward.toLowerCase().contains("protection")) {
-                playerCharacter.addToInventory(reward.trim());
+                addItemWithDescription(reward.trim());
             }
         }
         

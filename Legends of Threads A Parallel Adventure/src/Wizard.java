@@ -160,11 +160,12 @@ public class Wizard extends GameCharacter {
     }
     
     private void castSpell() {
-        if (mana >= 20) {
-            mana -= 20;
+        int spellCost = 20;
+        if (mana >= spellCost) {
+            consumeMana(spellCost);
             spellsCast++;
             String spell = generateSpellName();
-            printMessage(name + " casts " + spell + "! Mana: " + mana + "/" + maxMana);
+            printMessage(name + " channels arcane energies and casts " + spell + "!");
             
             // Log spell casting
             analytics.logEvent(name, GameAnalytics.EventType.SPELL_CAST, 
@@ -285,6 +286,25 @@ public class Wizard extends GameCharacter {
         return prefix + " " + suffix;
     }
     
+    /**
+     * Consume mana for spell casting with detailed feedback
+     */
+    public void consumeMana(int cost) {
+        mana = Math.max(0, mana - cost);
+        printMessage(name + "'s magic energy depletes. Mana: " + mana + "/" + maxMana);
+    }
+    
+    /**
+     * Restore mana with feedback when amount is significant
+     */
+    public void restoreMana(int amount) {
+        int oldMana = mana;
+        mana = Math.min(maxMana, mana + amount);
+        if (mana > oldMana) {
+            printMessage(name + "'s magical energy is restored! Mana: " + mana + "/" + maxMana);
+        }
+    }
+    
     @Override
     public void interact(GameCharacter other) {
         if (other instanceof Knight) {
@@ -355,6 +375,7 @@ public class Wizard extends GameCharacter {
     
     public int getMana() { return mana; }
     public int getMaxMana() { return maxMana; }
+    public boolean hasEnoughMana(int cost) { return mana >= cost; }
     public int getIntelligence() { return intelligence; }
     public int getSpellsCast() { return spellsCast; }
     public boolean isMeditating() { return isMeditating; }
