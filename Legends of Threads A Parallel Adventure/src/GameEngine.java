@@ -726,6 +726,48 @@ public class GameEngine {
                 textDelay();
                 System.out.println("   Legends speak of springs like this having miraculous healing properties.");
             }
+            case "Scorched Village" -> {
+                System.out.println("🔥 Blackened foundations mark where a village once stood proudly.");
+                textDelay();
+                System.out.println("   Dark flames still flicker among the ruins - Malachar's signature magic.");
+                textDelay();
+                System.out.println("   A weathered sign reads: 'Millbrook - Population 347' - all gone now.");
+            }
+            case "Corrupted Temple" -> {
+                System.out.println("⛪ A once-holy temple now bears dark symbols carved into its walls.");
+                textDelay();
+                System.out.println("   The altar is stained black, and shadow-wraiths drift through the nave.");
+                textDelay();
+                System.out.println("   This was where the high priests made their last stand against Malachar.");
+            }
+            case "Broken Royal Statue" -> {
+                System.out.println("👑 A massive statue lies shattered - King Aldric III, the last true ruler.");
+                textDelay();
+                System.out.println("   Dark magic has twisted the bronze, and the crown lies cracked at your feet.");
+                textDelay();
+                System.out.println("   Fresh flowers lay at the base - someone still remembers the old kingdom.");
+            }
+            case "Shadow-touched Grove" -> {
+                System.out.println("🌲 Trees twist unnaturally, their leaves black as midnight.");
+                textDelay();
+                System.out.println("   The ground is cold and lifeless, infected by Malachar's shadow magic.");
+                textDelay();
+                System.out.println("   You sense this was once a place of natural beauty, now forever changed.");
+            }
+            case "Malachar's Monument" -> {
+                System.out.println("🗿 A towering obsidian spire pierces the sky, radiating malevolent energy.");
+                textDelay();
+                System.out.println("   Strange runes pulse with purple light, and the air itself feels heavy here.");
+                textDelay();
+                System.out.println("   This marks territory claimed by the Dark Wizard - a warning to all.");
+            }
+            case "Cursed Battlefield" -> {
+                System.out.println("⚔️ Ancient weapons jut from cursed earth where heroes made their last stand.");
+                textDelay();
+                System.out.println("   Ghostly voices whisper warnings about the Dark Wizard's growing power.");
+                textDelay();
+                System.out.println("   The very ground remembers the day freedom died in this realm.");
+            }
             default -> {
                 System.out.println("🔍 You discover something remarkable: " + discovery + "!");
                 textDelay();
@@ -852,7 +894,8 @@ public class GameEngine {
      */
     private void handleNPCEncounter() {
         String[] npcs = {"Wandering Merchant", "Lost Traveler", "Wise Hermit", "Village Elder", 
-                        "Mysterious Mage", "Injured Knight", "Forest Ranger", "Ancient Oracle"};
+                        "Mysterious Mage", "Injured Knight", "Forest Ranger", "Ancient Oracle",
+                        "Refugee Farmer", "Exiled Noble", "Underground Rebel", "Former Royal Guard"};
         String npc = npcs[(int)(Math.random() * npcs.length)];
         
         System.out.println("\n👤 NPC ENCOUNTER!");
@@ -973,7 +1016,9 @@ public class GameEngine {
         String[] discoveryTypes = {"Ancient Ruins", "Hidden Treasure", "Mysterious Portal", 
                                  "Sacred Grove", "Abandoned Camp", "Crystal Formation", 
                                  "Forgotten Shrine", "Secret Cache", "Magical Spring", 
-                                 "Underground Cavern", "Floating Island", "Time Rift"};
+                                 "Underground Cavern", "Floating Island", "Time Rift",
+                                 "Scorched Village", "Corrupted Temple", "Broken Royal Statue", 
+                                 "Shadow-touched Grove", "Malachar's Monument", "Cursed Battlefield"};
         String discovery = discoveryTypes[(int)(Math.random() * discoveryTypes.length)];
         
         describeDiscovery(discovery);
@@ -1038,29 +1083,54 @@ public class GameEngine {
     }
     
     /**
-     * Describe NPC encounters with personality
+     * Describe NPC encounters with story-rich personalities
      */
     private void describeNPCEncounter(String npc) {
         switch (npc) {
             case "Wandering Merchant" -> {
-                System.out.println("🎒 A well-traveled merchant approaches with a pack full of wares.");
+                System.out.println("🎒 A nervous merchant approaches, constantly glancing over his shoulder.");
                 textDelay();
-                System.out.println("   \"Greetings, traveler! Perhaps you'd be interested in my goods?\"");
+                System.out.println("   \"Times are dangerous, friend... but I still have goods to trade.\"");
             }
             case "Wise Hermit" -> {
-                System.out.println("🧙 An ancient hermit emerges from a hidden grove, eyes twinkling with wisdom.");
+                System.out.println("🧙 An ancient hermit emerges from shadows, his eyes heavy with sorrow.");
                 textDelay();
-                System.out.println("   \"Ah, another seeker of truth walks these paths...\"");
+                System.out.println("   \"Few dare travel these cursed lands anymore...\"");
             }
             case "Lost Traveler" -> {
-                System.out.println("😰 A confused traveler stumbles toward you, looking distressed.");
+                System.out.println("😰 A frightened traveler stumbles toward you, clothes torn and dirty.");
                 textDelay();
-                System.out.println("   \"Please, can you help me? I've been wandering for hours!\"");
+                System.out.println("   \"The roads aren't safe! I've been fleeing for days!\"");
+            }
+            case "Village Elder" -> {
+                System.out.println("👴 An elderly figure approaches with a walking stick, face etched with worry.");
+                textDelay();
+                System.out.println("   \"Our village... it's not what it once was, stranger.\"");
+            }
+            case "Refugee Farmer" -> {
+                System.out.println("👨‍🌾 A weathered farmer sits by the roadside with meager possessions.");
+                textDelay();
+                System.out.println("   \"Lost everything to his dark magic... nowhere left to go.\"");
+            }
+            case "Exiled Noble" -> {
+                System.out.println("👑 A once-proud noble in tattered finery looks up with haunted eyes.");
+                textDelay();
+                System.out.println("   \"My family's lands... taken by that accursed wizard.\"");
+            }
+            case "Underground Rebel" -> {
+                System.out.println("🥷 A hooded figure emerges from concealment, hand on weapon.");
+                textDelay();
+                System.out.println("   \"You're not one of his spies, are you? These lands need heroes.\"");
+            }
+            case "Former Royal Guard" -> {
+                System.out.println("⚔️ A battle-scarred warrior in broken armor regards you with tired eyes.");
+                textDelay();
+                System.out.println("   \"I served the crown once... before the dark times began.\"");
             }
             default -> {
-                System.out.println("👋 A friendly " + npc + " greets you warmly.");
+                System.out.println("👋 A weary " + npc + " approaches cautiously.");
                 textDelay();
-                System.out.println("   They seem eager to share stories of their travels.");
+                System.out.println("   They seem to carry the weight of dark times upon their shoulders.");
             }
         }
         textDelay();
@@ -1071,25 +1141,25 @@ public class GameEngine {
      */
     private Quest generateRandomQuest() {
         String[] questTitles = {
-            "The Lost Crown of Eldara", "Goblin Threat", "The Missing Caravan", 
-            "Ancient Relic Recovery", "The Corrupted Grove", "Dragon's Hoard",
-            "The Phantom Knight", "Magical Herb Gathering", "The Stolen Tome",
-            "Village Rescue Mission", "The Crystal of Power", "Bandit Stronghold"
+            "The Lost Crown of Eldara", "Shadow Cult Investigation", "The Missing Caravan", 
+            "Ancient Relic Recovery", "The Corrupted Grove", "Resistance Supply Run",
+            "The Phantom Knight", "Magical Herb Gathering", "Malachar's Stolen Tome",
+            "Village Rescue Mission", "The Crystal of Power", "Dark Tower Reconnaissance"
         };
         
         String[] descriptions = {
-            "The royal crown has been stolen and must be recovered before the coronation.",
-            "A band of goblins is terrorizing local merchants and must be dealt with.",
-            "A merchant caravan has vanished en route. Find survivors or discover their fate.",
-            "An ancient magical artifact has been discovered. Retrieve it safely.",
-            "Dark magic is corrupting a sacred grove. Cleanse the taint from the land.",
-            "A dragon's treasure hoard has been located. Brave the danger for great rewards.",
-            "An undead knight haunts the old battlefield. Put the spirit to rest.",
-            "Gather rare healing herbs to save a village from a mysterious plague.",
-            "A book of powerful spells has been stolen by bandits. Retrieve it.",
-            "Monsters are attacking a defenseless village. Drive them off.",
-            "A magical crystal is causing reality distortions. Contain its power.",
-            "Bandits have established a stronghold. Clear them out and claim their treasure."
+            "The royal crown was hidden when Malachar conquered the kingdom. Find it to inspire hope.",
+            "Shadow cultists serving Malachar are gathering in the old ruins. Stop their ritual.",
+            "A merchant caravan carrying refugees has vanished. Find survivors or their fate.",
+            "An ancient artifact that could resist Malachar's power has been discovered.",
+            "Malachar's dark magic is corrupting a sacred grove. Cleanse the taint from the land.",
+            "The resistance needs supplies smuggled to the last free settlements.",
+            "A knight's spirit, killed defending against Malachar, haunts the old battlefield.",
+            "Gather rare herbs to cure those afflicted by Malachar's plague magic.",
+            "Malachar's agents stole a powerful spellbook from the royal library. Retrieve it.",
+            "Shadow creatures are attacking a village that refused to bow to Malachar.",
+            "One of the Five Crystals of Power has been found. Secure it before Malachar does.",
+            "Scout Malachar's Dark Tower for weaknesses, but don't get too close."
         };
         
         String[] objectives = {
@@ -1212,18 +1282,22 @@ public class GameEngine {
     }
     
     /**
-     * Share interesting lore and world information through NPCs
+     * Share story fragments about the Dark Wizard Malachar through NPCs
      */
     private void shareNPCLore() {
         String[] loreEntries = {
-            "\"The ancient dragons once ruled these lands, leaving magical ley lines everywhere.\"",
-            "\"Beware the mist that rises at dawn - it's said to show visions of the past.\"",
-            "\"The old castle ruins are haunted by the spirits of fallen knights.\"",
-            "\"Hidden portals connect distant realms, but they're dangerous to use.\"",
-            "\"The crystal formations here amplify magical abilities threefold.\"",
-            "\"Long ago, a great wizard sealed away dark powers beneath this very ground.\"",
-            "\"The trees whisper secrets to those who know how to listen.\"",
-            "\"Stars align differently here, affecting the flow of time itself.\""
+            "\"Malachar the Dark wasn't always evil... they say he was once the kingdom's greatest protector.\"",
+            "\"The Shadow Spire - his tower - appeared overnight, twisting reality around it.\"",
+            "\"Our king and his army marched against the wizard... none returned.\"",
+            "\"The old capital burns with eternal black flames. No one can enter anymore.\"",
+            "\"He seeks the Five Crystals of Power... already has three, they say.\"",
+            "\"My grandmother remembers when the skies were blue, not this sickly green.\"",
+            "\"The wizard's servants prowl at night - creatures of shadow and bone.\"",
+            "\"There's a prophecy... about a hero who will challenge Malachar's rule.\"",
+            "\"The last free city is Havenhold, but even there, people whisper in fear.\"",
+            "\"They say he was driven mad by forbidden knowledge from the Void Realm.\"",
+            "\"His magic corrupts the very land - crops wither, animals flee.\"",
+            "\"The old gods have abandoned us since Malachar broke the Sacred Seals.\""
         };
         
         String lore = loreEntries[(int)(Math.random() * loreEntries.length)];
@@ -1405,18 +1479,18 @@ public class GameEngine {
                 System.out.println("   blue glow. Strange echoes hint at deeper passages yet unexplored.");
             }
             case "haunted battlefield" -> {
-                System.out.println("   Broken weapons and armor lie scattered across scarred earth where a great");
+                System.out.println("   Broken weapons and royal banners lie scattered where the last army made");
                 textDelay();
-                System.out.println("   battle once raged. Ghostly mists swirl among the remnants, and you sense");
+                System.out.println("   their stand against Malachar. Ghostly mists swirl among the remnants,");
                 textDelay();
-                System.out.println("   the restless spirits of fallen warriors still walking this cursed ground.");
+                System.out.println("   and you sense the spirits of fallen heroes still fighting an endless war.");
             }
             case "wizard's tower ruins" -> {
-                System.out.println("   The collapsed remains of a mighty spire lie twisted with wild magic.");
+                System.out.println("   The collapsed tower of Archmage Valdris, who once challenged Malachar.");
                 textDelay();
-                System.out.println("   Arcane energies crackle through the rubble, and floating books drift");
+                System.out.println("   Dark magic still crackles through the rubble, and corrupted tomes drift");
                 textDelay();
-                System.out.println("   aimlessly among the debris of a once-great magical library.");
+                System.out.println("   aimlessly - a warning of what happens to those who oppose the Dark Wizard.");
             }
             case "dragon's lair entrance" -> {
                 System.out.println("   A massive cave mouth yawns before you, lined with teeth-like stalactites.");
