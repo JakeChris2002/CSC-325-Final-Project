@@ -1,10 +1,97 @@
-# Realm of Shadows: A Multithreaded Fantasy Adventure
+# Legends of Threads: A Parallel Adventure
 
-## Project Summary
+**Student Name:** [Your Name Here]  
+**Course:** CSC325-FA25
 
-Realm of Shadows is a text-based fantasy adventure game that demonstrates advanced Object-Oriented Programming concepts through an immersive, concurrent gameplay experience. Players witness multiple heroes—a valiant Knight, a cunning Rogue, and a powerful Wizard—simultaneously exploring a dangerous dungeon realm, each operating independently in their own thread while interacting with shared game world resources.
+## Game Title and Story Summary
 
-This capstone project showcases the integration of abstraction, inheritance, polymorphism, multithreading, parallel programming, and functional programming paradigms within a cohesive game design.
+**Legends of Threads: A Parallel Adventure** is a multithreaded medieval fantasy game where players control one of three unique character classes in a world dominated by the dark wizard Malachar. The game features parallel execution of multiple characters, each running in their own thread while sharing resources and interacting with a dynamic world.
+
+### The Story
+The realm was once peaceful under King Aldric III until Malachar the Dark, formerly the kingdom's greatest protector, fell to corruption after discovering forbidden knowledge from the Void Realm. Now his shadow magic spreads across the land, corrupting villages, temples, and natural groves. Players can choose to be:
+
+- **Knight**: A noble warrior seeking to protect the innocent and restore honor to the realm
+- **Thief**: A stealthy character navigating the underground resistance against Malachar's tyranny  
+- **Wizard**: A scholar of magic working to understand and counter Malachar's dark powers
+
+The game combines turn-based strategy with real-time AI party member actions, quest systems, environmental storytelling, and rich character development as players work toward liberating the realm from Malachar's dark reign.
+
+## Instructions for Running the Program
+
+### Prerequisites
+- Java SE Development Kit (JDK) 11 or higher
+- Command line terminal (PowerShell on Windows, Terminal on macOS/Linux)
+
+### Compilation
+1. Navigate to the project directory:
+   ```bash
+   cd "Legends of Threads A Parallel Adventure"
+   ```
+
+2. Compile the Java source files:
+   ```bash
+   javac -d bin -cp lib/* src/*.java
+   ```
+
+### Running the Game
+1. Run the main application:
+   ```bash
+   java -cp bin App
+   ```
+
+2. Follow the on-screen prompts to:
+   - Choose your character class (Knight, Thief, or Wizard)
+   - Enter your character name
+   - Begin your adventure!
+
+### Game Controls
+- **Movement**: Use directional commands (north, south, east, west) or (n, s, e, w)
+- **Actions**: Character-specific actions like `attack`, `cast` (Wizard), `steal` (Thief), `patrol` (Knight)
+- **Exploration**: `explore` to discover new locations and items
+- **Interaction**: `interact` to talk with NPCs and learn the story
+- **Inventory**: `inventory` to view collected items
+- **Cave Adventure**: `cave` to enter the crystal cavern exploration mode
+- **Help**: `help` for available commands
+- **Quit**: `quit` to end the game
+
+## Brief Explanation of Thread Synchronization Approach
+
+### Thread Architecture
+The game employs a sophisticated multithreading architecture with several levels of synchronization:
+
+### 1. **Character Threads**
+- Each game character (Knight, Thief, Wizard) extends the `GameCharacter` abstract class and implements `Runnable`
+- Characters execute in separate threads managed by the `GameEngine`
+- **Player-controlled character**: Waits for input during their turn, pauses AI execution
+- **AI party members**: Continue autonomous actions when not in player's turn
+
+### 2. **Shared Resource Management**
+The `SharedResources` class demonstrates multiple concurrency mechanisms:
+- **ReentrantReadWriteLock**: For treasure vault operations (multiple readers, exclusive writers)
+- **AtomicInteger**: For global mana pool and statistics (lock-free atomic operations)
+- **BlockingQueue**: For loot distribution using producer-consumer pattern
+- **ConcurrentHashMap**: For thread-safe trading post operations
+- **Synchronized methods**: For shared inventory access with intrinsic locks
+
+### 3. **Thread Coordination**
+- **GameEngine**: Central coordinator that starts all character threads and manages game state
+- **Monitor Thread**: Background health monitoring of the game system
+- **Turn-based Control**: Uses `join()` with timeouts to ensure proper thread synchronization
+- **Graceful Shutdown**: Implements proper thread cleanup with interrupt handling
+
+### 4. **Race Condition Prevention**
+- **Individual locks**: Each character has a `ReentrantLock` for thread-safe state modifications
+- **Atomic operations**: Statistics tracking uses atomic integers to prevent race conditions
+- **Synchronized collections**: Thread-safe data structures throughout the application
+- **Volatile flags**: For safe inter-thread communication of state changes
+
+### 5. **Thread Safety Patterns**
+- **Producer-Consumer**: Background threads generate resources, character threads consume them
+- **Reader-Writer**: Multiple characters can read treasure vault, but only one can modify it
+- **Lock-free algorithms**: Using `AtomicInteger` for high-frequency counter operations
+- **Defensive copying**: Returning copies of shared collections to prevent external modification
+
+This architecture ensures thread safety while maintaining responsive gameplay and preventing deadlocks or race conditions in the complex multi-character environment.
 
 ## Key Features
 

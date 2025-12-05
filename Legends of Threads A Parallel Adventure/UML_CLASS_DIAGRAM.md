@@ -1,33 +1,42 @@
-# UML Class Diagram - Realm of Shadows
+# UML Class Diagram - Legends of Threads: A Parallel Adventure
 
 ## PlantUML Code
 
-
 ```plantuml
-@startuml RealmOfShadows
+@startuml LegendsOfThreads
 
 ' Interfaces
 interface Runnable {
     +run(): void
 }
 
-interface GameEntity {
-    +update(): void
-    +getId(): String
-}
-
 ' Abstract Classes
-abstract class Character implements Runnable, GameEntity {
+abstract class GameCharacter implements Runnable {
     #String name
     #int health
     #int maxHealth
-    #int attackPower
-    #int defense
-    #int level
-    #Location currentLocation
-    #Inventory inventory
+    #int x, y
     #boolean isAlive
-    #Thread characterThread
+    #boolean isActive
+    #List<String> inventory
+    #SharedResources sharedResources
+    #GameAnalytics analytics
+    #ReentrantLock characterLock
+    #boolean isPlayerControlled
+    #volatile String pendingPlayerAction
+    #boolean caveMode
+    #GameEngine gameEngine
+    
+    +GameCharacter(String, int, int, int, SharedResources, GameAnalytics)
+    {abstract} +act(): void
+    {abstract} +interact(GameCharacter): void
+    {abstract} +useSpecialAbility(): void
+    {abstract} +getCharacterType(): String
+    +run(): void
+    +move(int, int): void
+    +takeDamage(int): void
+    +heal(int): void
+    +setPlayerControlled(boolean): void
     
     +Character(name: String, health: int, attack: int, defense: int)
     +attack(target: Enemy): void
@@ -82,13 +91,143 @@ class Rogue extends Character {
     +pickLock(chest: TreasureChest): boolean
 }
 
-class Wizard extends Character {
-    -int mana
-    -int maxMana
-    -List<Spell> spells
+' Core Engine Classes
+class GameEngine {
+    -List<GameCharacter> characters
+    -List<Thread> characterThreads
+    -SharedResources sharedResources
+    -GameAnalytics analytics
+    -GameWorld gameWorld
+    -Scanner scanner
+    -boolean gameRunning
+    -boolean playerTurn
+    -GameCharacter playerCharacter
+    -Thread monitorThread
+    -List<Quest> activeQuests
     
-    +Wizard(name: String)
-    +specialAbility(): void
+    +GameEngine()
+    +startAdventure(): void
+    +createCharacter(int, String): GameCharacter
+    +handlePlayerTurn(): void
+    +endPlayerTurn(): void
+    +handleWorldInteraction(): void
+    +generateRandomEncounter(): void
+    +shutdownGame(): void
+}
+
+class SharedResources {
+    -ReentrantReadWriteLock treasureLock
+    -ConcurrentHashMap<String, Integer> treasureVault
+    -AtomicInteger globalManaPool
+    -BlockingQueue<String> lootQueue
+    -List<String> sharedInventory
+    -Object inventoryLock
+    -volatile boolean resourceGenerationActive
+    -ConcurrentHashMap<String, String> tradingPost
+    
+    +SharedResources()
+    +withdrawTreasure(String, int, String): boolean
+    +depositTreasure(String, int, String): void
+    +consumeGlobalMana(int, String): boolean
+    +restoreGlobalMana(int, String): void
+    +tryTakeLoot(String): String
+    +addToSharedInventory(String, String): void
+    +setCaveMode(boolean): void
+}
+
+class GameAnalytics {
+    -ConcurrentLinkedQueue<GameEvent> eventLog
+    -List<BattleRecord> battleHistory
+    -Map<String, List<String>> characterInventories
+    -Function<GameEvent, String> eventFormatter
+    -Predicate<GameEvent> isBattleEvent
+    -Consumer<String> eventLogger
+    
+    +GameAnalytics()
+    +logEvent(String, EventType, String): void
+    +logBattle(String, String, boolean, int, int): void
+    +logItemCollection(String, String, String): void
+    +getCharacterStats(String): CharacterStats
+    +generateDetailedReport(): void
+}
+
+class GameWorld {
+    -Map<String, Location> locations
+    -List<GameCharacter> characters
+    -Random random
+    
+    +GameWorld()
+    +addCharacter(GameCharacter): void
+    +handleCharacterAction(String, String, String): void
+    +getLocationDescription(int, int): String
+    +isLocationSafe(int, int): boolean
+}
+
+class CaveExplorer {
+    -GameCharacter character
+    -SharedResources sharedResources
+    -Scanner scanner
+    -Random random
+    -boolean explorationActive
+    
+    +CaveExplorer(GameCharacter, SharedResources)
+    +startExploration(): void
+    +exploreRoom(): void
+    +handleCombat(): void
+    +collectCrystal(): void
+}
+
+' Utility Classes
+class Quest {
+    -String title
+    -String description
+    -boolean completed
+    -boolean accepted
+    -int goldReward
+    -List<String> itemRewards
+    
+    +Quest(String, String, int, List<String>)
+    +accept(): void
+    +complete(): void
+    +isAccepted(): boolean
+    +isCompleted(): boolean
+}
+
+class GameEvent {
+    -String characterName
+    -EventType type
+    -String description
+    -LocalDateTime timestamp
+    -Map<String, Object> metadata
+    
+    +GameEvent(String, EventType, String)
+    +withMetadata(String, Object): GameEvent
+}
+
+class BattleRecord {
+    -String characterName
+    -String enemyType
+    -boolean victory
+    -int damageDealt
+    -int damageReceived
+    -LocalDateTime battleTime
+    
+    +BattleRecord(String, String, boolean, int, int)
+}
+
+' Relationships
+GameEngine --> GameCharacter : manages
+GameEngine --> SharedResources : coordinates
+GameEngine --> GameAnalytics : logs to
+GameEngine --> GameWorld : controls
+GameCharacter --> SharedResources : accesses
+GameCharacter --> GameAnalytics : reports to
+Knight --> GameCharacter : extends
+Thief --> GameCharacter : extends
+Wizard --> GameCharacter : extends
+CaveExplorer --> GameCharacter : uses
+GameAnalytics --> GameEvent : creates
+GameAnalytics --> BattleRecord : stores
     +castSpell(spell: Spell, target: Enemy): void
     +restoreMana(): void
     +areaOfEffect(targets: List<Enemy>): void
