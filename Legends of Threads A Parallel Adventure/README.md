@@ -1,18 +1,18 @@
 # Legends of Threads: A Parallel Adventure
 
-**Student Name:** Jake Blankenship  
+Jake Blankenship  
 **Course:** CSC325-FA25
 
 ## Game Title and Story Summary
 
-**Legends of Threads: A Parallel Adventure** is a multithreaded medieval fantasy game where players control one of three unique character classes in a world dominated by the dark wizard Malachar. The game features parallel execution of multiple characters, each running in their own thread while sharing resources and interacting with a dynamic world.
+Legends of Threads: A Parallel Adventure is a multithreaded medieval fantasy game where players control one of three unique character classes in a world dominated by the dark wizard Malachar. The game features parallel execution of multiple characters, each running in their own thread while sharing resources and interacting with a dynamic world.
 
 ### The Story
 The realm was once peaceful under King Aldric III until Malachar the Dark, formerly the kingdom's greatest protector, fell to corruption after discovering forbidden knowledge from the Void Realm. Now his shadow magic spreads across the land, corrupting villages, temples, and natural groves. Players can choose to be:
 
-- **Knight**: A noble warrior seeking to protect the innocent and restore honor to the realm
-- **Thief**: A stealthy character navigating the underground resistance against Malachar's tyranny  
-- **Wizard**: A scholar of magic working to understand and counter Malachar's dark powers
+- Knight: A noble warrior seeking to protect the innocent and restore honor to the realm
+- Thief: A stealthy character navigating the underground resistance against Malachar's tyranny  
+- Wizard: A scholar of magic working to understand and counter Malachar's dark powers
 
 The game combines turn-based strategy with real-time AI party member actions, quest systems, environmental storytelling, and rich character development as players work toward liberating the realm from Malachar's dark reign.
 

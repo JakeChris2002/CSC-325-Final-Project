@@ -13,7 +13,7 @@ public class App {
             // Add shutdown hook for graceful cleanup
             final GameEngine finalGameEngine = gameEngine;
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("\n🛑 Shutdown signal received - cleaning up threads...");
+                System.out.println("\n Shutdown signal received - cleaning up threads...");
                 finalGameEngine.shutdown();
             }, "ShutdownHook"));
             
@@ -23,10 +23,10 @@ public class App {
             // Start the parallel adventure
             gameEngine.startAdventure();
             
-            System.out.println("🎯 Main thread completed - all adventures synchronized and closed properly.");
+            System.out.println(" Main thread completed - all adventures synchronized and closed properly.");
             
         } catch (Exception e) {
-            System.err.println("❌ An error occurred during the adventure: " + e.getMessage());
+            System.err.println(" An error occurred during the adventure: " + e.getMessage());
             e.printStackTrace();
             
             // Ensure cleanup even if there's an error
@@ -34,7 +34,7 @@ public class App {
                 gameEngine.shutdown();
             }
         } finally {
-            System.out.println("🔚 Application terminating - all threads joined successfully.");
+            System.out.println(" Application terminating - all threads joined successfully.");
         }
     }
 }

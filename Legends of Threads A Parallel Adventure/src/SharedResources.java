@@ -104,11 +104,11 @@ public class SharedResources {
             Integer currentAmount = treasureVault.get(treasureType);
             if (currentAmount != null && currentAmount >= amount) {
                 treasureVault.put(treasureType, currentAmount - amount);
-                System.out.println("💰 " + characterName + " withdrew " + amount + " " + treasureType + 
+                System.out.println(" " + characterName + " withdrew " + amount + " " + treasureType + 
                                  " from the vault. Remaining: " + treasureVault.get(treasureType));
                 return true;
             } else {
-                System.out.println("❌ " + characterName + " failed to withdraw " + amount + " " + treasureType + 
+                System.out.println(" " + characterName + " failed to withdraw " + amount + " " + treasureType + 
                                  " - insufficient funds!");
                 return false;
             }
@@ -125,7 +125,7 @@ public class SharedResources {
         try {
             treasureVault.merge(treasureType, amount, Integer::sum);
         if (!caveMode) {
-            System.out.println("💰 " + characterName + " deposited " + amount + " " + treasureType + 
+            System.out.println(" " + characterName + " deposited " + amount + " " + treasureType + 
                              " to the vault. New total: " + treasureVault.get(treasureType));
         }
         } finally {
@@ -139,7 +139,7 @@ public class SharedResources {
     public String viewTreasureVault(String characterName) {
         treasureLock.readLock().lock();
         try {
-            StringBuilder sb = new StringBuilder("🏦 " + characterName + " checks the treasure vault:\n");
+            StringBuilder sb = new StringBuilder(" " + characterName + " checks the treasure vault:\n");
             treasureVault.entrySet().stream()
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
                 .forEach(entry -> sb.append("   ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n"));
@@ -163,7 +163,7 @@ public class SharedResources {
         while (currentMana >= amount) {
             if (globalManaPool.compareAndSet(currentMana, currentMana - amount)) {
                 totalManaConsumed.addAndGet(amount);
-                System.out.println("✨ " + characterName + " consumed " + amount + " mana. " +
+                System.out.println(" " + characterName + " consumed " + amount + " mana. " +
                                  "Global pool: " + globalManaPool.get() + ", Total consumed: " + totalManaConsumed.get());
                 return true;
             }
@@ -171,7 +171,7 @@ public class SharedResources {
         }
         
         if (!caveMode) {
-            System.out.println("❌ " + characterName + " failed to consume " + amount + " mana - insufficient mana!");
+            System.out.println(" " + characterName + " failed to consume " + amount + " mana - insufficient mana!");
         }
         return false;
     }
@@ -182,7 +182,7 @@ public class SharedResources {
     public void restoreMana(int amount, String characterName) {
         int newTotal = globalManaPool.addAndGet(amount);
         if (!caveMode) {
-            System.out.println("🌟 " + characterName + " restored " + amount + " mana to the global pool. New total: " + newTotal);
+            System.out.println(" " + characterName + " restored " + amount + " mana to the global pool. New total: " + newTotal);
         }
     }
     
@@ -205,7 +205,7 @@ public class SharedResources {
         String loot = lootQueue.take(); // Blocks until item available
         if (!caveMode) {
             if (!caveMode) {
-                System.out.println("🎒 " + characterName + " claimed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+                System.out.println(" " + characterName + " claimed: " + loot + " (Queue size: " + lootQueue.size() + ")");
             }
         }
         return loot;
@@ -219,7 +219,7 @@ public class SharedResources {
         if (loot != null) {
             if (!caveMode) {
                 if (!caveMode) {
-                    System.out.println("🎒 " + characterName + " quickly grabbed: " + loot + " (Queue size: " + lootQueue.size() + ")");
+                    System.out.println(" " + characterName + " quickly grabbed: " + loot + " (Queue size: " + lootQueue.size() + ")");
                 }
             }
         }
@@ -233,7 +233,7 @@ public class SharedResources {
         boolean added = lootQueue.offer(loot);
         if (added) {
             if (!caveMode) {
-                System.out.println("📦 New loot appeared: " + loot + " (Queue size: " + lootQueue.size() + ")");
+                System.out.println(" New loot appeared: " + loot + " (Queue size: " + lootQueue.size() + ")");
             }
         }
         return added;
@@ -254,7 +254,7 @@ public class SharedResources {
         synchronized (inventoryLock) {
             sharedInventory.add(item);
             if (!caveMode) {
-                System.out.println("📋 " + characterName + " added '" + item + "' to shared inventory. " +
+                System.out.println(" " + characterName + " added '" + item + "' to shared inventory. " +
                                  "Total items: " + sharedInventory.size());
             }
         }
@@ -268,12 +268,12 @@ public class SharedResources {
             boolean removed = sharedInventory.remove(item);
             if (removed) {
                 if (!caveMode) {
-                    System.out.println("📋 " + characterName + " took '" + item + "' from shared inventory. " +
+                    System.out.println(" " + characterName + " took '" + item + "' from shared inventory. " +
                                      "Remaining items: " + sharedInventory.size());
                 }
             } else {
                 if (!caveMode) {
-                    System.out.println("❌ " + characterName + " couldn't find '" + item + "' in shared inventory.");
+                    System.out.println(" " + characterName + " couldn't find '" + item + "' in shared inventory.");
                 }
             }
             return removed;
@@ -287,7 +287,7 @@ public class SharedResources {
         synchronized (inventoryLock) {
             List<String> copy = new ArrayList<>(sharedInventory);
             if (!caveMode) {
-                System.out.println("👀 " + characterName + " views shared inventory: " + copy.size() + " items");
+                System.out.println(" " + characterName + " views shared inventory: " + copy.size() + " items");
             }
             return copy;
         }
@@ -311,7 +311,7 @@ public class SharedResources {
         String oldStatus = tradingPost.replace(itemName, "Sold to " + characterName);
         if (oldStatus != null && oldStatus.equals("Available")) {
             if (!caveMode) {
-                System.out.println("🏦 " + characterName + " successfully traded for " + itemName + "!");
+                System.out.println(" " + characterName + " successfully traded for " + itemName + "!");
             }
             
             // Restore the item after some time (simulate restocking)
@@ -320,7 +320,7 @@ public class SharedResources {
                     Thread.sleep(15000); // 15 seconds
                     tradingPost.put(itemName, "Available");
                     if (!caveMode) {
-                        System.out.println("🏦 " + itemName + " has been restocked at the trading post!");
+                        System.out.println(" " + itemName + " has been restocked at the trading post!");
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -331,7 +331,7 @@ public class SharedResources {
             return true;
         } else {
             if (!caveMode) {
-                System.out.println("❌ " + characterName + " failed to trade for " + itemName + " - not available!");
+                System.out.println(" " + characterName + " failed to trade for " + itemName + " - not available!");
             }
             return false;
         }
@@ -341,7 +341,7 @@ public class SharedResources {
      * View trading post status
      */
     public String viewTradingPost(String characterName) {
-        StringBuilder sb = new StringBuilder("🏪 " + characterName + " checks the trading post:\n");
+        StringBuilder sb = new StringBuilder(" " + characterName + " checks the trading post:\n");
         tradingPost.entrySet().forEach(entry -> 
             sb.append("   ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n"));
         return sb.toString();
