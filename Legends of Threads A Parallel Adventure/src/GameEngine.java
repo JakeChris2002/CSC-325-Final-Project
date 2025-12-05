@@ -447,6 +447,14 @@ public class GameEngine {
      */
     public void endPlayerTurn() {
         playerTurn = false;
+        
+        // Add a clear separation and show location choice before AI turn
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("                 TURN COMPLETE!");
+        System.out.println("=".repeat(60));
+        
+        showLocationChoice();
+        
         System.out.println("\n=== AI TURN ===");
         System.out.println("AI characters are now acting...\n");
         
@@ -474,6 +482,179 @@ public class GameEngine {
         
         if (gameRunning) {
             startPlayerTurn();
+        }
+    }
+    
+    /**
+     * Show location choices to player at end of turn
+     */
+    private void showLocationChoice() {
+        System.out.println("\n" + "🗺️".repeat(20));
+        System.out.println("         CHOOSE YOUR NEXT DESTINATION");
+        System.out.println("🗺️".repeat(20));
+        System.out.println("Where would you like to venture next?\n");
+        
+        // Standard locations
+        String[] locations = {
+            "Ancient Ruins - Explore crumbling stone structures",
+            "Mystical Forest - Venture into enchanted woodlands", 
+            "Haunted Battlefield - Search the cursed battleground",
+            "Crystal Caves - Delve into glowing crystal formations",
+            "Abandoned Village - Investigate the empty settlement"
+        };
+        
+        // Check for quest-related locations
+        String questLocation = getQuestLocation();
+        
+        int optionCount = 1;
+        for (String location : locations) {
+            System.out.println(optionCount + ". " + location);
+            optionCount++;
+        }
+        
+        // Add quest location if available
+        if (questLocation != null) {
+            System.out.println(optionCount + ". " + questLocation + " ⭐ [QUEST OBJECTIVE]");
+            optionCount++;
+        }
+        
+        System.out.println(optionCount + ". Stay in current area - Continue exploring here");
+        
+        System.out.print("\nEnter your choice (1-" + optionCount + "): ");
+        try {
+            displayingText = true;
+            String input = scanner.nextLine().trim();
+            int choice = Integer.parseInt(input);
+            
+            if (choice >= 1 && choice <= optionCount) {
+                handleLocationChoice(choice, questLocation != null, locations.length);
+            } else {
+                System.out.println("Invalid choice. Staying in current area.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Staying in current area.");
+        } finally {
+            displayingText = false;
+        }
+    }
+    
+    /**
+     * Get quest-related location if player has accepted quests
+     */
+    private String getQuestLocation() {
+        for (Quest quest : activeQuests) {
+            if (quest.isAccepted() && !quest.isCompleted()) {
+                // Return location based on quest title
+                String title = quest.getTitle();
+                if (title.contains("Crown")) {
+                    return "Royal Catacombs - Search for the Lost Crown of Eldara";
+                } else if (title.contains("Shadow Cult")) {
+                    return "Ancient Ritual Site - Investigate shadow cult activities";
+                } else if (title.contains("Caravan")) {
+                    return "Trade Route Crossroads - Search for the missing caravan";
+                } else if (title.contains("Relic") || title.contains("Artifact")) {
+                    return "Forgotten Temple - Recover the ancient artifact";
+                } else if (title.contains("Grove")) {
+                    return "Corrupted Sacred Grove - Cleanse the tainted land";
+                } else if (title.contains("Supply")) {
+                    return "Hidden Resistance Camp - Deliver supplies to the rebels";
+                } else if (title.contains("Knight") || title.contains("Phantom")) {
+                    return "Spectral Battlefield - Confront the phantom knight";
+                } else if (title.contains("Herb")) {
+                    return "Poison Marsh - Gather rare healing herbs";
+                } else if (title.contains("Tome")) {
+                    return "Bandit Hideout - Retrieve Malachar's stolen tome";
+                } else if (title.contains("Village")) {
+                    return "Besieged Village - Rescue villagers from shadow creatures";
+                } else if (title.contains("Crystal")) {
+                    return "Crystal Sanctuary - Secure the Crystal of Power";
+                } else if (title.contains("Tower") || title.contains("Reconnaissance")) {
+                    return "Shadow Tower Outskirts - Scout Malachar's dark fortress";
+                }
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Handle player's location choice
+     */
+    private void handleLocationChoice(int choice, boolean hasQuestLocation, int standardLocationCount) {
+        String chosenLocation;
+        boolean isQuestLocation = false;
+        
+        if (choice <= standardLocationCount) {
+            // Standard location chosen
+            String[] locationNames = {"Ancient Ruins", "Mystical Forest", "Haunted Battlefield", "Crystal Caves", "Abandoned Village"};
+            chosenLocation = locationNames[choice - 1];
+        } else if (hasQuestLocation && choice == standardLocationCount + 1) {
+            // Quest location chosen
+            chosenLocation = "Quest Location";
+            isQuestLocation = true;
+        } else {
+            // Stay in current area
+            chosenLocation = "Current Area";
+        }
+        
+        // Move player to new location
+        if (!chosenLocation.equals("Current Area")) {
+            System.out.println("\n🚶 " + playerCharacter.getName() + " travels to " + chosenLocation + "...");
+            textDelay();
+            
+            if (isQuestLocation) {
+                System.out.println("⭐ You arrive at a location crucial to your quest!");
+                // Trigger quest-related encounter
+                handleQuestLocationEncounter();
+            } else {
+                System.out.println("🗺️ You arrive at " + chosenLocation + " and begin exploring.");
+                // Trigger location-specific encounter
+                handleLocationEncounter(chosenLocation);
+            }
+        } else {
+            System.out.println("\n🏃 " + playerCharacter.getName() + " continues exploring the current area...");
+        }
+        
+        textDelay();
+    }
+    
+    /**
+     * Handle encounters at quest locations
+     */
+    private void handleQuestLocationEncounter() {
+        System.out.println("🔍 This location is directly related to your active quest...");
+        textDelay();
+        
+        // Generate quest progress or special quest encounter
+        handleQuestEncounter();
+    }
+    
+    /**
+     * Handle encounters at chosen locations
+     */
+    private void handleLocationEncounter(String location) {
+        switch (location) {
+            case "Ancient Ruins":
+                System.out.println("🏛️ The ancient stones whisper secrets of a forgotten civilization...");
+                handleDiscoveryEncounter();
+                break;
+            case "Mystical Forest":
+                System.out.println("🌲 Enchanted trees rustle with magical energy...");
+                handleNPCEncounter();
+                break;
+            case "Haunted Battlefield":
+                System.out.println("⚔️ Ghostly apparitions of fallen warriors drift across the scarred ground...");
+                handleCombatEncounter();
+                break;
+            case "Crystal Caves":
+                System.out.println("💎 Crystalline formations pulse with mysterious power...");
+                handleDiscoveryEncounter();
+                break;
+            case "Abandoned Village":
+                System.out.println("🏘️ Empty houses stand as silent monuments to Malachar's tyranny...");
+                handleNPCEncounter();
+                break;
+            default:
+                handleNPCEncounter(); // Default to NPC encounter
         }
     }
     
@@ -2868,6 +3049,14 @@ public class GameEngine {
         
         String getProgressText() {
             return "(" + progress + "/" + targetProgress + ")";
+        }
+        
+        boolean isAccepted() {
+            return true; // All quests in activeQuests are considered accepted
+        }
+        
+        String getTitle() {
+            return title;
         }
     }
     
