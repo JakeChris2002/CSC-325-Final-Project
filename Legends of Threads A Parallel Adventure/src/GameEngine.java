@@ -658,22 +658,33 @@ public class GameEngine {
         }
         
         if (Math.random() < baseChance) {
-            // Determine encounter type
+            // Determine encounter type with balanced distribution
             double encounterRoll = Math.random();
-            if (encounterRoll < 0.3) {
-                handleCombatEncounter();
-            } else if (encounterRoll < 0.55) {
-                handleNPCEncounter();
-            } else if (encounterRoll < 0.75) {
-                handleQuestEncounter();
+            if (encounterRoll < 0.25) {
+                handleCombatEncounter(); // 25% combat
+            } else if (encounterRoll < 0.45) {
+                handleDiscoveryEncounter(); // 20% treasure/discovery
+            } else if (encounterRoll < 0.70) {
+                handleNPCEncounter(); // 25% NPCs (includes gifts and quests)
             } else {
-                handleDiscoveryEncounter();
+                handleQuestEncounter(); // 30% dedicated quest opportunities
             }
         } else {
-            System.out.println("\n🌫️ The area seems quiet, but you sense adventure nearby.");
-            textDelay();
-            System.out.println("   Your exploration skills improve from the careful search.");
-            textDelay();
+            // Even when no major encounter, sometimes find small treasures
+            if (Math.random() < 0.4) {
+                System.out.println("\n🔍 Your thorough search pays off!");
+                textDelay();
+                String[] minorFinds = {"Old Coins", "Useful Herbs", "Shiny Pebble", "Worn Map Fragment", "Lucky Token"};
+                String find = minorFinds[(int)(Math.random() * minorFinds.length)];
+                playerCharacter.addToInventory(find);
+                System.out.println("   └─ You discover: " + find);
+                textDelay();
+            } else {
+                System.out.println("\n🌫️ The area seems quiet, but you sense adventure nearby.");
+                textDelay();
+                System.out.println("   Your exploration skills improve from the careful search.");
+                textDelay();
+            }
         }
     }
     
@@ -725,6 +736,40 @@ public class GameEngine {
                 System.out.println("   Such discoveries make every adventure worthwhile.");
             }
         }
+    }
+    
+    /**
+     * Describe treasure discoveries with rich detail
+     */
+    private void describeTreasureDiscovery(String treasure) {
+        switch (treasure) {
+            case "Buried Treasure Chest" -> {
+                System.out.println("💰 Your keen eyes spot disturbed earth beneath an old oak tree.");
+                textDelay();
+                System.out.println("   Digging carefully, you uncover a weathered chest filled with riches!");
+            }
+            case "Ancient Coin Hoard" -> {
+                System.out.println("🪙 Scattered among the ruins, ancient coins glint in the sunlight.");
+                textDelay();
+                System.out.println("   These currency pieces from a lost empire are worth a fortune!");
+            }
+            case "Dragon's Scattered Hoard" -> {
+                System.out.println("🐉 Precious items lie abandoned, possibly from a dragon's lair.");
+                textDelay();
+                System.out.println("   The beast may have fled, but its treasure remains for the taking!");
+            }
+            case "Wizard's Secret Collection" -> {
+                System.out.println("✨ Hidden magical implements and enchanted items await discovery.");
+                textDelay();
+                System.out.println("   A wizard's private collection, abandoned but still valuable!");
+            }
+            default -> {
+                System.out.println("🏆 You've discovered a valuable cache of treasures!");
+                textDelay();
+                System.out.println("   Fortune smiles upon the bold and the persistent!");
+            }
+        }
+        textDelay();
     }
     
     /**
@@ -822,22 +867,46 @@ public class GameEngine {
         
         describeNPCEncounter(npc);
         
-        // NPC interaction outcomes
+        // NPC interaction outcomes - balanced between gifts, quests, treasure hints, and lore
         double interactionRoll = Math.random();
-        if (interactionRoll < 0.4) {
-            // Helpful NPC - gives item or information
-            String[] gifts = {"Healing Herb", "Ancient Map", "Lucky Charm", "Traveler's Ration", "Wisdom Scroll"};
+        if (interactionRoll < 0.3) {
+            // Helpful NPC - gives useful items
+            String[] gifts = {"Healing Herb", "Ancient Map", "Lucky Charm", "Traveler's Ration", "Wisdom Scroll",
+                             "Magic Potion", "Silver Coins", "Enchanted Trinket", "Rare Ingredient"};
             String gift = gifts[(int)(Math.random() * gifts.length)];
             playerCharacter.addToInventory(gift);
             System.out.println("\n🎁 The " + npc + " offers you a gift: " + gift);
             textDelay();
             System.out.println("   \"Take this, brave adventurer. May it serve you well!\"");
             textDelay();
-        } else if (interactionRoll < 0.7) {
+        } else if (interactionRoll < 0.55) {
             // Quest giver
             System.out.println("\n📜 The " + npc + " has a task for you!");
             textDelay();
             offerQuestFromNPC(npc);
+        } else if (interactionRoll < 0.75) {
+            // Treasure hint/direction
+            String[] treasureHints = {
+                "\"I've heard rumors of a hidden treasure vault beneath the ancient ruins.\"",
+                "\"The old watchtower holds secrets - check the foundations for hidden chambers.\"",
+                "\"Beware the dragon's lair, but know that great treasures lie within.\"",
+                "\"The crystal formations hide more than beauty - search carefully.\"",
+                "\"In the haunted battlefield, fallen warriors left behind valuable gear.\""
+            };
+            String hint = treasureHints[(int)(Math.random() * treasureHints.length)];
+            System.out.println("\n🗺️ The " + npc + " leans in with valuable information:");
+            textDelay();
+            System.out.println("   " + hint);
+            textDelay();
+            
+            // Small chance for immediate treasure reward
+            if (Math.random() < 0.3) {
+                String[] immediateFinds = {"Old Map Fragment", "Treasure Hunter's Note", "Cryptic Riddle", "Ancient Key"};
+                String find = immediateFinds[(int)(Math.random() * immediateFinds.length)];
+                playerCharacter.addToInventory(find);
+                System.out.println("   \"And here, take this - it might help in your search: " + find + "\"");
+                textDelay();
+            }
         } else {
             // Information/lore
             System.out.println("\n💬 The " + npc + " shares valuable information:");
@@ -1685,14 +1754,63 @@ public class GameEngine {
         String newLocation = locations[(int)(Math.random() * locations.length)];
         System.out.println(playerCharacter.getName() + " arrives at " + newLocation + ".");
         
-        // Chance of random encounter
-        if (Math.random() < 0.3) {
-            String[] encounters = {"a group of traveling merchants", "signs of ancient magic", 
-                                 "a mysterious artifact", "traces of other adventurers",
-                                 "a hidden passage", "an old campsite"};
-            String encounter = encounters[(int)(Math.random() * encounters.length)];
-            System.out.println("During your travels, you encounter " + encounter + "!");
-            gameWorld.handleCharacterAction(playerCharacter.getName(), "encounter", "encountered " + encounter + " while traveling");
+        // Enhanced travel encounters with balanced variety
+        if (Math.random() < 0.45) { // Increased chance for travel encounters
+            double travelRoll = Math.random();
+            if (travelRoll < 0.35) {
+                // Treasure discoveries during travel
+                String[] treasures = {"a hidden cache of gold coins", "an abandoned merchant wagon with goods", 
+                                    "a mysterious glowing crystal", "ancient artifacts in a ruined shrine",
+                                    "a chest buried beneath an old tree", "valuable gems scattered on the ground"};
+                String treasure = treasures[(int)(Math.random() * treasures.length)];
+                System.out.println("\n💰 TRAVEL DISCOVERY!");
+                textDelay();
+                System.out.println("During your journey, you discover " + treasure + "!");
+                textDelay();
+                
+                // Add treasure items
+                String[] items = {"Gold Coins", "Precious Gems", "Ancient Artifact", "Mysterious Crystal", "Valuable Trinket"};
+                String item = items[(int)(Math.random() * items.length)];
+                playerCharacter.addToInventory(item);
+                System.out.println("   └─ You claim: " + item);
+                textDelay();
+                updateQuestProgress("discovery", "found " + treasure);
+                
+            } else if (travelRoll < 0.65) {
+                // Combat encounters during travel
+                String[] roadThreats = {"highway bandits blocking the path", "a pack of wild wolves",
+                                       "roving goblins looking for trouble", "a lone orc warrior",
+                                       "corrupted creatures from the dark woods", "desperate thieves"};
+                String threat = roadThreats[(int)(Math.random() * roadThreats.length)];
+                System.out.println("\n⚔️ TRAVEL DANGER!");
+                textDelay();
+                System.out.println("Your path is blocked by " + threat + "!");
+                textDelay();
+                handleCombatEncounter();
+                
+            } else {
+                // Social/quest encounters during travel
+                String[] encounters = {"a group of traveling merchants", "a lost pilgrim seeking guidance", 
+                                     "a mysterious hooded figure", "fellow adventurers sharing tales",
+                                     "a village messenger with urgent news", "a wise hermit offering counsel"};
+                String encounter = encounters[(int)(Math.random() * encounters.length)];
+                System.out.println("\n👥 TRAVEL ENCOUNTER!");
+                textDelay();
+                System.out.println("During your travels, you meet " + encounter + "!");
+                textDelay();
+                
+                // 50/50 chance for quest vs treasure/info
+                if (Math.random() < 0.5) {
+                    offerQuestFromNPC("Mysterious Traveler");
+                } else {
+                    String[] gifts = {"Travel Rations", "Road Map", "Healing Potion", "Lucky Token", "Traveler's Cloak"};
+                    String gift = gifts[(int)(Math.random() * gifts.length)];
+                    playerCharacter.addToInventory(gift);
+                    System.out.println("   └─ They share with you: " + gift);
+                    textDelay();
+                }
+            }
+            gameWorld.handleCharacterAction(playerCharacter.getName(), "travel_encounter", "encountered something while traveling");
         }
     }
     
