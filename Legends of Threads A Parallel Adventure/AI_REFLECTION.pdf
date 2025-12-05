@@ -1,0 +1,19 @@
+For this project, I used GitHub Copilot to help with writing 
+
+code and setting up the game’s structure. It gave suggestions 
+
+for how to organize the character classes, use threads, and 
+
+manage shared resources safely. Copilot also helped with 
+
+things like locks, atomic variables, and queues, and it offered 
+
+ideas for using Java features like lambdas and streams. I 
+
+checked all the code it suggested, fixed any problems, and 
+
+added my own ideas to make the game work the way I wanted. The 
+
+AI made the work faster and easier, but I reviewed everything 
+
+and made all final decisions myself.

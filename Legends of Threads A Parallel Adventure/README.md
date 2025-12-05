@@ -1,6 +1,6 @@
 # Legends of Threads: A Parallel Adventure
 
-**Student Name:** [Your Name Here]  
+**Student Name:** Jake Blankenship  
 **Course:** CSC325-FA25
 
 ## Game Title and Story Summary

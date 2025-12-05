@@ -1,209 +1,171 @@
-# Concurrency Report: Legends of Threads
+Concurrency in Legends of Threads
 
-**Student Name:** [Your Name Here]  
-**Course:** CSC325-FA25  
-**Project:** Legends of Threads: A Parallel Adventure
+Jake Blankenship
 
-## Overview
+The game Legends of Threads demonstrates how concurrency allows
 
-This document describes the concurrent programming approach implemented in the Legends of Threads game, detailing how multiple threads interact, potential race conditions and their solutions, and the thread coordination mechanisms employed to ensure safe and efficient parallel execution.
+many parts of a program to run at the same time while still
 
-## Thread Interaction Architecture
+working together safely. Concurrency is important in modern
 
-### Primary Thread Categories
+programming because it helps software stay responsive and
 
-**1. Main Application Thread**
-- Handles user input and game initialization
-- Coordinates between player actions and AI character threads
-- Manages the primary game loop and turn-based progression
+efficient. 
 
-**2. Character Threads (3 instances)**
-- Each character class (Knight, Thief, Wizard) runs in its own dedicated thread
-- Player-controlled character thread waits for user input during player turns
-- AI-controlled party member threads execute autonomous actions continuously
-- All character threads share access to common game resources and world state
+In this game, each major component runs in its own thread, 
 
-**3. Background Service Threads**
-- **Resource Generation Thread**: Continuously populates shared treasure vault and loot queues
-- **Monitor Thread**: Tracks system health and thread status for debugging
-- **Loot Distribution Thread**: Manages the producer-consumer pattern for item distribution
+which allows characters, background systems, and the main game 
 
-### Thread Communication Patterns
+loop to operate independently. However, because these threads 
 
-**Turn-Based Coordination**
-```java
-// Player thread signals completion, AI threads resume
-if (gameEngine != null && isPlayerControlled) {
-    gameEngine.endPlayerTurn();
-}
-```
+share information and resources, the program must carefully 
 
-**Shared Resource Access**
-```java
-// Multiple threads accessing treasure vault safely
-treasureLock.readLock().lock();
-try {
-    return new HashMap<>(treasureVault);
-} finally {
-    treasureLock.readLock().unlock();
-}
-```
+control how they interact. The project uses several tools and 
 
-## Race Condition Identification and Solutions
+strategies to make sure the threads work smoothly without 
 
-### 1. **Treasure Vault Access**
-**Potential Race Condition:** Multiple characters simultaneously accessing/modifying the shared treasure vault could lead to inconsistent state or lost updates.
+causing errors.
 
-**Solution Implemented:**
-- **ReentrantReadWriteLock**: Allows multiple readers (characters checking available treasure) but exclusive writers (characters taking/depositing treasure)
-```java
-private final ReentrantReadWriteLock treasureLock = new ReentrantReadWriteLock();
+The main application thread is the center of the game. 
 
-public boolean withdrawTreasure(String treasureType, int amount, String characterName) {
-    treasureLock.writeLock().lock();
-    try {
-        // Safe exclusive access for modifications
-        if (treasureVault.getOrDefault(treasureType, 0) >= amount) {
-            treasureVault.put(treasureType, treasureVault.get(treasureType) - amount);
-            return true;
-        }
-        return false;
-    } finally {
-        treasureLock.writeLock().unlock();
-    }
-}
-```
+It handles player input, initializes the game world, 
 
-### 2. **Global Mana Pool Contention**
-**Potential Race Condition:** Multiple wizard characters simultaneously consuming/restoring mana could cause lost updates or incorrect mana calculations.
+and manages the turn-based system. Since the main thread 
 
-**Solution Implemented:**
-- **AtomicInteger**: Lock-free atomic operations ensure thread-safe counter modifications
-```java
-private final AtomicInteger globalManaPool = new AtomicInteger(1000);
+decides when the player and AI characters may act, 
 
-public boolean consumeGlobalMana(int amount, String characterName) {
-    int currentMana;
-    int newMana;
-    do {
-        currentMana = globalManaPool.get();
-        if (currentMana < amount) return false;
-        newMana = currentMana - amount;
-    } while (!globalManaPool.compareAndSet(currentMana, newMana));
-    return true;
-}
-```
+it plays a key role in coordinating the activities of all the 
 
-### 3. **Loot Queue Competition**
-**Potential Race Condition:** Multiple characters competing for limited loot items could result in duplicate acquisitions or null pointer exceptions.
+other threads. Without this central control, the different 
 
-**Solution Implemented:**
-- **BlockingQueue**: Thread-safe queue with built-in blocking for producer-consumer pattern
-```java
-private final BlockingQueue<String> lootQueue = new ArrayBlockingQueue<>(50);
+parts of the program could run out of order, causing confusion 
 
-public String tryTakeLoot(String characterName) {
-    try {
-        return lootQueue.poll(100, TimeUnit.MILLISECONDS);
-    } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return null;
-    }
-}
-```
+or incorrect behavior.
 
-### 4. **Character State Modifications**
-**Potential Race Condition:** Character health, position, and inventory could be corrupted by concurrent modifications from different threads.
+Each character in the game also runs in its own separate thread. 
 
-**Solution Implemented:**
-- **ReentrantLock**: Each character has individual lock for thread-safe state changes
-```java
-protected ReentrantLock characterLock;
+The Knight, Thief, and Wizard all operate independently, and 
 
-public void takeDamage(int damage) {
-    characterLock.lock();
-    try {
-        health -= damage;
-        if (health <= 0) {
-            isAlive = false;
-        }
-    } finally {
-        characterLock.unlock();
-    }
-}
-```
+the player’s character responds to direct user input. 
 
-## Thread Coordination Mechanisms
+The AI-controlled characters make their own decisions and 
 
-### 1. **Graceful Shutdown Protocol**
-The game implements a comprehensive thread cleanup strategy:
+perform actions in a continuous loop. Because these character 
 
-```java
-// Wait for all character threads using join() with timeouts
-for (Thread thread : characterThreads) {
-    try {
-        thread.join(3000); // Wait up to 3 seconds
-        if (thread.isAlive()) {
-            thread.interrupt();
-            thread.join(1000); // Give 1 more second after interrupt
-        }
-    } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-    }
-}
-```
+threads access the same shared world such as the treasure 
 
-### 2. **Turn-Based Synchronization**
-Player vs. AI coordination using condition-based waiting:
+vault, the mana pool, or the loot system they must do so 
 
-```java
-// AI threads pause during player turn
-while (isAlive && isActive) {
-    if (gameEngine.isPlayerTurn() && !isPlayerControlled) {
-        // AI character waits for player to complete turn
-        Thread.sleep(500);
-        continue;
-    }
-    // Execute character actions
-    act();
-}
-```
+carefully. If two characters try to change the same information 
 
-### 3. **Resource Generation Control**
-Background threads respond to game state changes:
+at the same time, the game could produce incorrect results or 
 
-```java
-private volatile boolean resourceGenerationActive = true;
+even crash.
 
-// Safe shutdown of background threads
-public void setCaveMode(boolean caveMode) {
-    if (caveMode) {
-        resourceGenerationActive = false;
-        if (resourceThread != null) {
-            resourceThread.interrupt();
-            resourceThread.join(1000);
-        }
-    }
-}
-```
+To support the game world, there are also several background 
 
-## Performance and Safety Considerations
+service threads. These include threads that generate treasure, 
 
-### Deadlock Prevention
-- **Lock Ordering**: Consistent ordering of lock acquisition prevents circular waiting
-- **Timeout-based Joins**: Prevents indefinite blocking during shutdown
-- **Interrupt Handling**: All blocking operations properly handle interruptions
+monitor the system’s status, and distribute loot items. They 
 
-### Scalability Design
-- **Lock-free Algorithms**: AtomicInteger operations scale better than synchronized methods
-- **Read-Write Locks**: Allow concurrent reads while maintaining write safety
-- **Bounded Queues**: Prevent memory overflow from unlimited resource generation
+keep the world active by constantly adding new resources and 
 
-### Thread Safety Verification
-- **Immutable Objects**: GameEvent and similar classes are immutable after creation
-- **Defensive Copying**: Shared collections return copies to prevent external modification
-- **Volatile Flags**: Ensure visibility of state changes across threads
+ensuring that the system is running properly. Without these 
 
-## Conclusion
+background tasks, the game would feel empty or unresponsive.
 
-The Legends of Threads implementation demonstrates comprehensive understanding of concurrent programming principles. The solution addresses race conditions through multiple synchronization mechanisms, coordinates threads effectively using both blocking and non-blocking approaches, and maintains system stability through proper resource management and graceful shutdown protocols. The architecture successfully supports complex multi-character interactions while ensuring thread safety and preventing deadlocks.
+A major challenge in any concurrent system is the possibility 
+
+of race conditions. A race condition happens when two or more 
+
+threads try to change the same data at the same time, leading 
+
+to mistakes or inconsistent values. One example in Legends of 
+
+Threads is the shared treasure vault. If multiple characters 
+
+try to take treasure at once, the amount stored in the vault 
+
+could become wrong. To prevent this, the program uses a 
+
+read-write lock. This allows many threads to read the vault’s 
+
+contents but ensures that only one thread at a time can update 
+
+it. This keeps the treasure count accurate even during heavy 
+
+activity.
+
+The global mana pool is another shared resource that needs 
+
+protection. Without safeguards, multiple Wizard characters 
+
+could use or restore mana at the same moment and cause the 
+
+value to update incorrectly. To solve this, the game uses an 
+
+atomic variable, which ensures that changes to the mana happen 
+
+safely and in the correct order, even when many threads are 
+
+active.
+
+The loot system also requires careful handling. Characters 
+
+take loot from a shared queue, and without protection they 
+
+might take the same item or receive an error when no loot is 
+
+available. To control this, the program uses a blocking queue. 
+
+This type of queue is thread-safe and automatically makes 
+
+threads wait when there is no loot available, preventing many 
+
+common errors.
+
+Even each character’s private data, such as health and alive 
+
+status, must be protected from unsafe access. A character might 
+
+take damage, level up, or change equipment while another 
+
+thread is reading or modifying that same information. For this 
+
+reason, every character has its own lock to make sure only one 
+
+thread can update its state at a time.
+
+The game also includes coordination strategies that help the 
+
+threads interact in an organized way. When it is the player’s 
+
+turn, AI threads pause so they do not act at the same time as 
+
+the player. This keeps the turn-based gameplay clear and fair. 
+
+The program also uses a careful shutdown process that waits for 
+
+threads to finish their work and interrupts them if needed. 
+
+This prevents the application from freezing or leaving 
+
+background threads running after the game ends.
+
+Overall, Legends of Threads is an effective example of how 
+
+concurrency can be used in a game environment. By using locks, 
+
+atomic variables, thread-safe queues, and clear coordination 
+
+rules, the game allows many actions to happen at once while 
+
+still protecting shared data and preventing errors. 
+
+The project shows how careful design can make a multi-threaded 
+
+system both dynamic and stable, providing a smooth gaming 
+
+experience and demonstrating important concepts in concurrent 
+
+programming.
